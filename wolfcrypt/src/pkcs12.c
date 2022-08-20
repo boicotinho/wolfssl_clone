@@ -27,7 +27,7 @@
 
 #include <wolfssl/wolfcrypt/settings.h>
 
-#if defined(HAVE_PKCS12) &&  !defined(NO_ASN) && !defined(NO_PWDBASED)
+#if defined(HAVE_PKCS12) && !defined(NO_PWDBASED)
 
 #include <wolfssl/wolfcrypt/asn.h>
 #include <wolfssl/wolfcrypt/asn_public.h>

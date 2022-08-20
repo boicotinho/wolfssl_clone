@@ -91,7 +91,7 @@ int wc_AesCbcEncryptWithKey(byte* out, const byte* in, word32 inSz,
 
 
 
-#if !defined(NO_ASN) && defined(WOLFSSL_ENCRYPTED_KEYS)
+#if defined(WOLFSSL_ENCRYPTED_KEYS)
 
 int wc_BufferKeyDecrypt(EncryptedInfo* info, byte* der, word32 derSz,
     const byte* password, int passwordSz, int hashType)
@@ -172,7 +172,7 @@ int wc_BufferKeyEncrypt(EncryptedInfo* info, byte* der, word32 derSz,
 #endif /* !NO_ASN && WOLFSSL_ENCRYPTED_KEYS */
 
 
-#if !defined(NO_PWDBASED) && !defined(NO_ASN)
+#if !defined(NO_PWDBASED)
 
 #if defined(HAVE_PKCS8) || defined(HAVE_PKCS12)
 /* Decrypt/Encrypt input in place from parameters based on id

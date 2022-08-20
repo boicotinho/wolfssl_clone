@@ -784,7 +784,7 @@ MP_API int sp_div_2(sp_int* a, sp_int* r);
 
 MP_API int sp_add(sp_int* a, sp_int* b, sp_int* r);
 MP_API int sp_sub(sp_int* a, sp_int* b, sp_int* r);
-#if (defined(WOLFSSL_SP_MATH_ALL) && !defined(WOLFSSL_RSA_VERIFY_ONLY)) ||  defined(WOLFSSL_CUSTOM_CURVES) ||  defined(WOLFCRYPT_HAVE_ECCSI) || defined(WOLFCRYPT_HAVE_SAKKE)
+#if (defined(WOLFSSL_SP_MATH_ALL) && !defined(WOLFSSL_RSA_VERIFY_ONLY)) || defined(WOLFCRYPT_HAVE_ECCSI) || defined(WOLFCRYPT_HAVE_SAKKE)
 MP_API int sp_addmod(sp_int* a, sp_int* b, sp_int* m, sp_int* r);
 #endif
 #if defined(WOLFSSL_SP_MATH_ALL) && !defined(WOLFSSL_RSA_VERIFY_ONLY)

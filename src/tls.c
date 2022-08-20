@@ -113,7 +113,6 @@ int BuildTlsFinished(WOLFSSL* ssl, Hashes* hashes, const byte* sender)
     }
 
     if (ret == 0) {
-#ifdef WOLFSSL_HAVE_PRF
         {
             PRIVATE_KEY_UNLOCK();
             ret = wc_PRF_TLS((byte*)hashes, TLS_FINISHED_SZ,
@@ -123,14 +122,6 @@ int BuildTlsFinished(WOLFSSL* ssl, Hashes* hashes, const byte* sender)
                    ssl->heap, ssl->devId);
             PRIVATE_KEY_LOCK();
         }
-#else
-        /* Pseudo random function must be enabled in the configuration. */
-        ret = PRF_MISSING;
-        WOLFSSL_MSG("Pseudo-random function is not enabled");
-
-        (void)side;
-        (void)hashes;
-#endif
     }
 
 
@@ -192,28 +183,10 @@ static int _DeriveTlsKeys(byte* key_dig, word32 key_dig_len,
     XMEMCPY(seed,           sr, RAN_LEN);
     XMEMCPY(seed + RAN_LEN, cr, RAN_LEN);
 
-#ifdef WOLFSSL_HAVE_PRF
     PRIVATE_KEY_UNLOCK();
     ret = wc_PRF_TLS(key_dig, key_dig_len, ms, msLen, key_label, KEY_LABEL_SZ,
                seed, SEED_LEN, tls1_2, hash_type, heap, devId);
     PRIVATE_KEY_LOCK();
-#else
-    /* Pseudo random function must be enabled in the configuration. */
-    ret = PRF_MISSING;
-    WOLFSSL_MSG("Pseudo-random function is not enabled");
-
-    (void)key_dig;
-    (void)key_dig_len;
-    (void)ms;
-    (void)msLen;
-    (void)tls1_2;
-    (void)hash_type;
-    (void)heap;
-    (void)devId;
-    (void)key_label;
-    (void)master_label;
-    (void)ext_master_label;
-#endif
 
 
     return ret;
@@ -262,25 +235,10 @@ static int _MakeTlsMasterSecret(byte* ms, word32 msLen,
     XMEMCPY(seed,           cr, RAN_LEN);
     XMEMCPY(seed + RAN_LEN, sr, RAN_LEN);
 
-#ifdef WOLFSSL_HAVE_PRF
     PRIVATE_KEY_UNLOCK();
     ret = wc_PRF_TLS(ms, msLen, pms, pmsLen, master_label, MASTER_LABEL_SZ,
                seed, SEED_LEN, tls1_2, hash_type, heap, devId);
     PRIVATE_KEY_LOCK();
-#else
-    /* Pseudo random function must be enabled in the configuration. */
-    ret = PRF_MISSING;
-    WOLFSSL_MSG("Pseudo-random function is not enabled");
-
-    (void)ms;
-    (void)msLen;
-    (void)pms;
-    (void)pmsLen;
-    (void)tls1_2;
-    (void)hash_type;
-    (void)heap;
-    (void)devId;
-#endif
 
 
     // Fabio
@@ -312,27 +270,10 @@ static int _MakeTlsExtendedMasterSecret(byte* ms, word32 msLen,
 {
     int ret;
 
-#ifdef WOLFSSL_HAVE_PRF
     PRIVATE_KEY_UNLOCK();
     ret = wc_PRF_TLS(ms, msLen, pms, pmsLen, ext_master_label, EXT_MASTER_LABEL_SZ,
                sHash, sHashLen, tls1_2, hash_type, heap, devId);
     PRIVATE_KEY_LOCK();
-#else
-    /* Pseudo random function must be enabled in the configuration. */
-    ret = PRF_MISSING;
-    WOLFSSL_MSG("Pseudo-random function is not enabled");
-
-    (void)ms;
-    (void)msLen;
-    (void)pms;
-    (void)pmsLen;
-    (void)sHash;
-    (void)sHashLen;
-    (void)tls1_2;
-    (void)hash_type;
-    (void)heap;
-    (void)devId;
-#endif
     return ret;
 }
 
@@ -438,22 +379,12 @@ int wolfSSL_make_eap_keys(WOLFSSL* ssl, void* msk, unsigned int len,
     XMEMCPY(seed,           ssl->arrays->clientRandom, RAN_LEN);
     XMEMCPY(seed + RAN_LEN, ssl->arrays->serverRandom, RAN_LEN);
 
-#ifdef WOLFSSL_HAVE_PRF
     PRIVATE_KEY_UNLOCK();
     ret = wc_PRF_TLS((byte*)msk, len, ssl->arrays->masterSecret, SECRET_LEN,
               (const byte *)label, (word32)XSTRLEN(label), seed, SEED_LEN,
               IsAtLeastTLSv1_2(ssl), ssl->specs.mac_algorithm,
               ssl->heap, ssl->devId);
     PRIVATE_KEY_LOCK();
-#else
-    /* Pseudo random function must be enabled in the configuration. */
-    ret = PRF_MISSING;
-    WOLFSSL_MSG("Pseudo-random function is not enabled");
-
-    (void)msk;
-    (void)len;
-    (void)label;
-#endif
 
 
     return ret;

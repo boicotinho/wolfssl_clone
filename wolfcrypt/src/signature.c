@@ -28,9 +28,7 @@
 #include <wolfssl/wolfcrypt/signature.h>
 #include <wolfssl/wolfcrypt/error-crypt.h>
 #include <wolfssl/wolfcrypt/logging.h>
-#ifndef NO_ASN
 #include <wolfssl/wolfcrypt/asn.h>
-#endif
 #include <wolfssl/wolfcrypt/ecc.h>
 #include <wolfssl/wolfcrypt/rsa.h>
 
@@ -40,7 +38,6 @@
 #ifndef NO_SIG_WRAPPER
 
 
-#if !defined(NO_ASN)
 static int wc_SignatureDerEncode(enum wc_HashType hash_type, byte* hash_data,
     word32 hash_len, word32* hash_enc_len)
 {
@@ -60,7 +57,6 @@ static int wc_SignatureDerEncode(enum wc_HashType hash_type, byte* hash_data,
 
     return ret;
 }
-#endif /* !NO_RSA && !NO_ASN */
 
 int wc_SignatureGetSize(enum wc_SignatureType sig_type,
     const void* key, word32 key_len)
@@ -134,7 +130,6 @@ int wc_SignatureVerifyHash(
     switch (sig_type) {
         case WC_SIGNATURE_TYPE_ECC:
         {
-#if defined(HAVE_ECC_VERIFY)
             int is_valid_sig = 0;
 
             /* Perform verification of signature using provided ECC key */
@@ -146,9 +141,6 @@ int wc_SignatureVerifyHash(
             if (ret != 0 || is_valid_sig != 1) {
                 ret = SIG_VERIFY_E;
             }
-#else
-            ret = SIG_TYPE_E;
-#endif
             break;
         }
 
@@ -210,11 +202,7 @@ int wc_SignatureVerify(
 {
     int ret;
     word32 hash_len, hash_enc_len;
-#if defined(NO_ASN)
-    byte *hash_data;
-#else
     byte hash_data[MAX_DER_DIGEST_SZ];
-#endif
 
     /* Check arguments */
     if (data == NULL || data_len == 0 ||
@@ -242,25 +230,14 @@ int wc_SignatureVerify(
         hash_enc_len += MAX_DER_DIGEST_ASN_SZ;
     }
 
-#if defined(NO_ASN)
-    /* Allocate temporary buffer for hash data */
-    hash_data = (byte*)XMALLOC(hash_enc_len, NULL, DYNAMIC_TYPE_TMP_BUFFER);
-    if (hash_data == NULL) {
-        return MEMORY_E;
-    }
-#endif
 
     /* Perform hash of data */
     ret = wc_Hash(hash_type, data, data_len, hash_data, hash_len);
     if (ret == 0) {
         /* Handle RSA with DER encoding */
         if (sig_type == WC_SIGNATURE_TYPE_RSA_W_ENC) {
-        #if defined(NO_ASN)
-            ret = SIG_TYPE_E;
-        #else
             ret = wc_SignatureDerEncode(hash_type, hash_data, hash_len,
                 &hash_enc_len);
-        #endif
         }
 
         if (ret == 0) {
@@ -270,9 +247,6 @@ int wc_SignatureVerify(
         }
     }
 
-#if defined(NO_ASN)
-    XFREE(hash_data, NULL, DYNAMIC_TYPE_TMP_BUFFER);
-#endif
 
     return ret;
 }
@@ -385,11 +359,7 @@ int wc_SignatureGenerate_ex(
 {
     int ret;
     word32 hash_len, hash_enc_len;
-#if defined(NO_ASN)
-    byte *hash_data;
-#else
     byte hash_data[MAX_DER_DIGEST_SZ];
-#endif
 
     /* Check arguments */
     if (data == NULL || data_len == 0 ||
@@ -419,20 +389,13 @@ int wc_SignatureGenerate_ex(
     }
 #endif
 
-#if defined(NO_ASN)
-    /* Allocate temporary buffer for hash data */
-    hash_data = (byte*)XMALLOC(hash_enc_len, NULL, DYNAMIC_TYPE_TMP_BUFFER);
-    if (hash_data == NULL) {
-        return MEMORY_E;
-    }
-#endif
 
     /* Perform hash of data */
     ret = wc_Hash(hash_type, data, data_len, hash_data, hash_len);
     if (ret == 0) {
         /* Handle RSA with DER encoding */
         if (sig_type == WC_SIGNATURE_TYPE_RSA_W_ENC) {
-        #if defined(NO_ASN) ||  defined(WOLFSSL_RSA_PUBLIC_ONLY)
+        #if defined(WOLFSSL_RSA_PUBLIC_ONLY)
             ret = SIG_TYPE_E;
         #else
             ret = wc_SignatureDerEncode(hash_type, hash_data, hash_len,
@@ -451,9 +414,6 @@ int wc_SignatureGenerate_ex(
             hash_enc_len, sig, *sig_len, key, key_len);
     }
 
-#if defined(NO_ASN)
-    XFREE(hash_data, NULL, DYNAMIC_TYPE_TMP_BUFFER);
-#endif
 
     return ret;
 }

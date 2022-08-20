@@ -57,9 +57,6 @@
 
 
 
-#ifdef NO_ASN
-    #include <wolfssl/wolfcrypt/dh.h>
-#endif
 #endif /* !WOLFCRYPT_ONLY || OPENSSL_EXTRA */
 
 /*
@@ -830,7 +827,6 @@ int wolfSSL_export_dtls_srtp_keying_material(WOLFSSL* ssl,
         return BUFFER_E;
     }
 
-#ifdef WOLFSSL_HAVE_PRF
     XMEMCPY(seed, ssl->arrays->clientRandom, RAN_LEN);
     XMEMCPY(seed + RAN_LEN, ssl->arrays->serverRandom, RAN_LEN);
 
@@ -846,10 +842,6 @@ int wolfSSL_export_dtls_srtp_keying_material(WOLFSSL* ssl,
         ret = WOLFSSL_SUCCESS;
     }
     PRIVATE_KEY_LOCK();
-#else
-    /* Pseudo random function must be enabled in the configuration */
-    ret = PRF_MISSING;
-#endif
 
     return ret;
 }
@@ -6477,8 +6469,6 @@ int wolfSSL_set_compression(WOLFSSL* ssl)
 
 
 
-#ifndef NO_ASN
-#endif /* !NO_ASN */
 
 
 

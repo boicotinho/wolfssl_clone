@@ -27,9 +27,7 @@
 #include <wolfssl/wolfcrypt/settings.h>
 #include <wolfssl/wolfcrypt/logging.h>
 #include <wolfssl/wolfcrypt/error-crypt.h>
-#ifndef NO_ASN
 #include <wolfssl/wolfcrypt/asn.h>
-#endif
 
 #include <wolfssl/wolfcrypt/hash.h>
 #include <wolfssl/wolfcrypt/hmac.h>
@@ -39,27 +37,7 @@
     #include <wolfcrypt/src/misc.c>
 
 
-#ifdef NO_ASN
-enum Hash_Sum  {
-    MD2h      = 646,
-    MD5h      = 649,
-    SHAh      =  88,
-    SHA224h   = 417,
-    SHA256h   = 414,
-    SHA384h   = 415,
-    SHA512h   = 416,
-    SHA512_224h = 418,
-    SHA512_256h = 419,
-    SHA3_224h = 420,
-    SHA3_256h = 421,
-    SHA3_384h = 422,
-    SHA3_512h = 423,
-    SHAKE128h = 424,
-    SHAKE256h = 425
-};
-#endif /* !NO_ASN */
 
-#if !defined(NO_PWDBASED) || !defined(NO_ASN)
 /* function converts int hash type to enum */
 enum wc_HashType wc_HashTypeConvert(int hashType)
 {
@@ -71,7 +49,6 @@ enum wc_HashType wc_HashTypeConvert(int hashType)
     }
     return eHashType;
 }
-#endif /* !NO_PWDBASED || !NO_ASN */
 
 
 int wc_HashGetOID(enum wc_HashType hash_type)

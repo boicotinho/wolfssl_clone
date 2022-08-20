@@ -39,7 +39,6 @@
 #include <wolfssl/wolfcrypt/kdf.h>
 
 
-#ifdef WOLFSSL_HAVE_PRF
 
     #define P_HASH_MAX_SIZE WC_SHA512_DIGEST_SIZE
 
@@ -226,7 +225,6 @@ int wc_PRF_TLS(byte* digest, word32 digLen, const byte* secret, word32 secLen,
 
     return ret;
 }
-#endif /* WOLFSSL_HAVE_PRF */
 
 
 #if defined(HAVE_HKDF)

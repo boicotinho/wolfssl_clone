@@ -4529,7 +4529,7 @@ int sp_copy(const sp_int* a, sp_int* r)
     return err;
 }
 
-#if defined(WOLFSSL_SP_MATH_ALL) || defined(FP_ECC)
+#if defined(WOLFSSL_SP_MATH_ALL)
 /* Initializes r and copies in value from a.
  *
  * @param  [out]  r  SP integer - destination.
@@ -4821,7 +4821,7 @@ int sp_count_bits(const sp_int* a)
     return r;
 }
 
-#if (defined(WOLFSSL_SP_MATH_ALL) && !defined(WOLFSSL_RSA_VERIFY_ONLY) &&  !defined(WOLFSSL_RSA_PUBLIC_ONLY)) || defined(WOLFSSL_HAVE_SP_DH) ||  defined(FP_ECC) ||  defined(WOLFSSL_KEY_GEN)
+#if (defined(WOLFSSL_SP_MATH_ALL) && !defined(WOLFSSL_RSA_VERIFY_ONLY) && !defined(WOLFSSL_RSA_PUBLIC_ONLY)) || defined(WOLFSSL_HAVE_SP_DH) || defined(WOLFSSL_KEY_GEN)
 
 /* Number of entries in array of number of least significant zero bits. */
 #define SP_LNZ_CNT      16
@@ -5367,7 +5367,7 @@ int sp_mul_d(sp_int* a, sp_int_digit d, sp_int* r)
 #if (defined(WOLFSSL_SP_MATH_ALL) && !defined(WOLFSSL_RSA_VERIFY_ONLY)) ||  defined(WOLFSSL_KEY_GEN) ||  defined(WC_MP_TO_RADIX)
 #define WOLFSSL_SP_DIV_D
 #endif
-#if (defined(WOLFSSL_SP_MATH_ALL) && !defined(WOLFSSL_RSA_VERIFY_ONLY)) || defined(WOLFSSL_HAVE_SP_DH) || defined(FP_ECC) || defined(WOLFSSL_KEY_GEN)
+#if (defined(WOLFSSL_SP_MATH_ALL) && !defined(WOLFSSL_RSA_VERIFY_ONLY)) || defined(WOLFSSL_HAVE_SP_DH) || defined(WOLFSSL_KEY_GEN)
 #define WOLFSSL_SP_MOD_D
 #endif
 
@@ -6044,7 +6044,7 @@ int sp_sub(sp_int* a, sp_int* b, sp_int* r)
  * Add/Subtract mod functions
  ****************************/
 
-#if (defined(WOLFSSL_SP_MATH_ALL) && !defined(WOLFSSL_RSA_VERIFY_ONLY)) ||  defined(WOLFSSL_CUSTOM_CURVES) ||  defined(WOLFCRYPT_HAVE_ECCSI) || defined(WOLFCRYPT_HAVE_SAKKE)
+#if (defined(WOLFSSL_SP_MATH_ALL) && !defined(WOLFSSL_RSA_VERIFY_ONLY)) || defined(WOLFCRYPT_HAVE_ECCSI) || defined(WOLFCRYPT_HAVE_SAKKE)
 /* Add two value and reduce: r = (a + b) % m
  *
  * @param  [in]   a  SP integer to add.

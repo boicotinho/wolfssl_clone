@@ -48,7 +48,6 @@ enum max_prf {
 };
 
 
-#ifdef WOLFSSL_HAVE_PRF
 WOLFSSL_API int wc_PRF(byte* result, word32 resLen, const byte* secret,
                     word32 secLen, const byte* seed, word32 seedLen, int hash,
                     void* heap, int devId);
@@ -59,7 +58,6 @@ WOLFSSL_API int wc_PRF_TLS(byte* digest, word32 digLen, const byte* secret,
                     word32 secLen, const byte* label, word32 labLen,
                     const byte* seed, word32 seedLen, int useAtLeastSha256,
                     int hash_type, void* heap, int devId);
-#endif /* WOLFSSL_HAVE_PRF */
 
 #ifdef HAVE_HKDF
 

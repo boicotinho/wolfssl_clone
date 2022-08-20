@@ -234,9 +234,6 @@ int wolfCrypt_Init(void)
             return ret;
     #endif
 
-    #ifdef FP_ECC
-        wc_ecc_fp_init();
-    #endif
     #ifdef ECC_CACHE_CURVE
         if ((ret = wc_ecc_curve_cache_init()) != 0) {
             WOLFSSL_MSG("Error creating curve cache");
@@ -315,9 +312,6 @@ int wolfCrypt_Cleanup(void)
     if (initRefCount == 0) {
         WOLFSSL_ENTER("wolfCrypt_Cleanup");
 
-    #ifdef FP_ECC
-        wc_ecc_fp_free();
-    #endif
     #ifdef ECC_CACHE_CURVE
         wc_ecc_curve_cache_free();
     #endif

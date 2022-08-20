@@ -446,7 +446,7 @@
     #define WOLFSSL_LEANPSK
 // error : inserted by coan: "#define HAVE_NULL_CIPHER" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(482)
 // error : inserted by coan: "#define NO_OLD_TLS" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(483)
-    #define NO_ASN
+// error : inserted by coan: "#define NO_ASN" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(449)
     #define NO_BIG_INT
 // error : inserted by coan: "#define NO_RSA" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(486)
 // error : inserted by coan: "#define NO_DH" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(488)
@@ -1560,8 +1560,6 @@ extern void uITRON4_free(void *p) ;
         #define HAVE_ECC_SIGN
     #endif
     #ifndef NO_ECC_VERIFY
-        #undef HAVE_ECC_VERIFY
-        #define HAVE_ECC_VERIFY
     #endif
     #ifndef NO_ECC_CHECK_KEY
         #undef HAVE_ECC_CHECK_KEY
@@ -1570,8 +1568,6 @@ extern void uITRON4_free(void *p) ;
     #if !defined(NO_ECC_DHE) && !defined(WC_NO_RNG)
     #endif
     #ifndef NO_ECC_KEY_IMPORT
-        #undef HAVE_ECC_KEY_IMPORT
-        #define HAVE_ECC_KEY_IMPORT
     #endif
     #ifndef NO_ECC_KEY_EXPORT
     #endif
@@ -1850,17 +1846,9 @@ extern void uITRON4_free(void *p) ;
 
 
 #if !defined(WOLFCRYPT_ONLY)
-    #undef  WOLFSSL_HAVE_PRF
-    #define WOLFSSL_HAVE_PRF
 #endif
 
 
-#if defined(NO_ASN) && defined(WOLFCRYPT_ONLY)
-    #undef  WOLFSSL_NO_INT_ENCODE
-    #define WOLFSSL_NO_INT_ENCODE
-    #undef  WOLFSSL_NO_INT_DECODE
-    #define WOLFSSL_NO_INT_DECODE
-#endif
 
 #if defined(WOLFCRYPT_ONLY) && defined(WOLFSSL_RSA_VERIFY_ONLY) && \
     defined(WC_NO_RSA_OAEP)
