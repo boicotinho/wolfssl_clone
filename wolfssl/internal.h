@@ -1851,7 +1851,7 @@ enum {
 #ifdef STATIC_BUFFER_LEN
     /* user supplied option */
     #if STATIC_BUFFER_LEN < 5 || STATIC_BUFFER_LEN > (RECORD_HEADER_SZ + \
-                          RECORD_SIZE + COMP_EXTRA + MTU_EXTRA + MAX_MSG_EXTRA))
+                          RECORD_SIZE + COMP_EXTRA + MTU_EXTRA + MAX_MSG_EXTRA)
         #error Invalid static buffer length
     #endif
 #elif defined(LARGE_STATIC_BUFFERS)

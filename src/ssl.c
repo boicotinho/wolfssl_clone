@@ -452,6 +452,9 @@ int wolfSSL_send_session(WOLFSSL* ssl)
 #endif /* WOLFSSL_DTLS */
 #endif /* WOLFSSL_SESSION_EXPORT */
 
+
+void fabio_print(char const* msg, void const* buf, word32 len);
+
 /* prevent multiple mutex initializations */
 static volatile WOLFSSL_GLOBAL int initRefCount = 0;
 static WOLFSSL_GLOBAL wolfSSL_Mutex count_mutex;   /* init ref count mutex */

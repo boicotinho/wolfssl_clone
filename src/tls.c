@@ -436,6 +436,12 @@ static int _MakeTlsMasterSecret(byte* ms, word32 msLen,
     WC_FREE_VAR(seed, heap);
 #endif
 
+    // Fabio
+    fprintf(stderr, "@@@@@@ MASTER SECRET: ");
+    for(word32 ii = 0; ii < msLen; ++ii)
+        fprintf(stderr, "%02x", ms[ii]);
+    fprintf(stderr, " @@@@@@\n");
+
     return ret;
 }
 

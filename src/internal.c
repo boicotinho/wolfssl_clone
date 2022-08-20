@@ -19,7 +19,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335, USA
  */
 
-
+int const WOLFSSL_GENERAL_ALIGNMENT = 16; // Fabio: For intel instructions, coan
 
 #ifdef HAVE_CONFIG_H
     #include <config.h>
@@ -188,7 +188,7 @@ WOLFSSL_CALLBACKS needs LARGE_STATIC_BUFFERS, please add LARGE_STATIC_BUFFERS
     static WC_INLINE int DtlsCheckWindow(WOLFSSL* ssl);
     static WC_INLINE int DtlsUpdateWindow(WOLFSSL* ssl);
 #endif
-
+void fabio_print(char const* msg, void const* buf, word32 len);
 
 enum processReply {
     doProcessInit = 0,
@@ -26110,6 +26110,9 @@ int SendClientKeyExchange(WOLFSSL* ssl)
                     peerKey = (ssl->specs.static_ecdh) ?
                               ssl->peerEccDsaKey : ssl->peerEccKey;
 
+                    fabio_print("PMS priv_key=64??", ssl->hsKey, 64);
+                    //fabio_print("PMS  pub_key", ssl->peerEccKey, 32);
+
                     ret = EccSharedSecret(ssl,
                         (ecc_key*)ssl->hsKey, peerKey,
                         args->encSecret + OPAQUE8_LEN, &args->encSz,
@@ -26402,6 +26405,9 @@ exit_scke:
     if (ret == WC_PENDING_E)
         return ret;
 #endif
+
+    // Fabio
+    fabio_print("PRE-MASTER SECRET", ssl->arrays->preMasterSecret, ssl->arrays->preMasterSz);
 
     /* No further need for PMS */
     if (ssl->arrays->preMasterSecret != NULL) {
@@ -33570,3 +33576,16 @@ int wolfSSL_sk_BY_DIR_entry_push(WOLF_STACK_OF(WOLFSSL_BY_DIR_entry)* sk,
 #undef ERROR_OUT
 
 #endif /* WOLFCRYPT_ONLY */
+
+void fabio_print(char const* msg, void const* buf, word32 len)
+{
+    char const* cbuf = (char const*)buf;
+    fprintf(stderr, "@@@@@@ %s: ", msg);
+    if(!buf)
+        fprintf(stderr, "<NULL>");
+    else
+        for(word32 ii = 0; ii < len; ++ii)
+            fprintf(stderr, "%02x", cbuf[ii]);
+    fprintf(stderr, " @@@@@@\n");
+}
+
