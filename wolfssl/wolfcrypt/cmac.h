@@ -34,7 +34,6 @@
 #endif
 
 /* avoid redefinition of structs */
-#if !defined(HAVE_FIPS)
 
 #ifndef WC_CMAC_TYPE_DEFINED
     typedef struct Cmac Cmac;
@@ -64,7 +63,6 @@ typedef enum CmacType {
 #define WC_CMAC_TAG_MAX_SZ AES_BLOCK_SIZE
 #define WC_CMAC_TAG_MIN_SZ (AES_BLOCK_SIZE/4)
 
-#endif /* HAVE_FIPS */
 
 WOLFSSL_API
 int wc_InitCmac(Cmac* cmac,

@@ -45,8 +45,7 @@
     #include <wolfssl/wolfcrypt/port/cypress/psoc6_crypto.h>
 #endif
 
-#if defined(WOLFSSL_ATMEL) || defined(WOLFSSL_ATECC508A) || \
-    defined(WOLFSSL_ATECC608A)
+#if defined(WOLFSSL_ATMEL)
     #include <wolfssl/wolfcrypt/port/atmel/atmel.h>
 #endif
 #if defined(WOLFSSL_RENESAS_TSIP)
@@ -86,9 +85,6 @@
     #include <wolfssl/wolfcrypt/port/cavium/cavium_octeon_sync.h>
 #endif
 
-#if defined(WOLFSSL_SE050) && defined(WOLFSSL_SE050_INIT)
-#include <wolfssl/wolfcrypt/port/nxp/se050_port.h>
-#endif
 
 #ifdef WOLFSSL_SCE
     #include "hal_data.h"
@@ -196,19 +192,10 @@ int wolfCrypt_Init(void)
         }
     #endif
 
-    #if defined(WOLFSSL_ATMEL) || defined(WOLFSSL_ATECC508A) || \
-        defined(WOLFSSL_ATECC608A)
+    #if defined(WOLFSSL_ATMEL)
         ret = atmel_init();
         if (ret != 0) {
             WOLFSSL_MSG("CryptoAuthLib init failed");
-            return ret;
-        }
-    #endif
-    #if defined(WOLFSSL_CRYPTOCELL)
-        /* enable and initialize the ARM CryptoCell 3xx runtime library */
-        ret = cc310_Init();
-        if (ret != 0) {
-            WOLFSSL_MSG("CRYPTOCELL init failed");
             return ret;
         }
     #endif
@@ -224,14 +211,7 @@ int wolfCrypt_Init(void)
         }
     #endif
 
-    #ifdef WOLFSSL_SILABS_SE_ACCEL
-        /* init handles if it is already initialized */
-        ret = sl_se_init();
-    #endif
 
-    #if defined(WOLFSSL_SE050) && defined(WOLFSSL_SE050_INIT)
-        ret = wc_se050_init(NULL);
-    #endif
 
     #ifdef WOLFSSL_ARMASM
         WOLFSSL_MSG("Using ARM hardware acceleration");
@@ -367,12 +347,6 @@ int wolfCrypt_Cleanup(void)
         defined(WOLFSSL_IMX6_CAAM_BLOB)  || \
         defined(WOLFSSL_SECO_CAAM)
         wc_caamFree();
-    #endif
-    #if defined(WOLFSSL_CRYPTOCELL)
-        cc310_Free();
-    #endif
-    #ifdef WOLFSSL_SILABS_SE_ACCEL
-        ret = sl_se_deinit();
     #endif
     #if defined(WOLFSSL_RENESAS_TSIP_CRYPT)
         tsip_Close();
@@ -2350,9 +2324,3 @@ char* mystrnstr(const char* s1, const char* s2, unsigned int n)
     #include <wolfcrypt/src/port/ti/ti-hash.c> /* md5, sha1, sha224, sha256 */
 #endif
 
-#if defined(WOLFSSL_CRYPTOCELL)
-    #define WOLFSSL_CRYPTOCELL_C
-    #include <wolfcrypt/src/port/arm/cryptoCell.c> /* CC310, RTC and RNG */
-        #define WOLFSSL_CRYPTOCELL_HASH_C
-        #include <wolfcrypt/src/port/arm/cryptoCellHash.c> /* sha256 */
-#endif

@@ -32,38 +32,15 @@
 
 
 
-#if defined(HAVE_FIPS)
-        #define wc_Sha512             Sha512
-        #define WC_SHA512             SHA512
-        #define WC_SHA512_BLOCK_SIZE  SHA512_BLOCK_SIZE
-        #define WC_SHA512_DIGEST_SIZE SHA512_DIGEST_SIZE
-        #define WC_SHA512_PAD_SIZE    SHA512_PAD_SIZE
-        #define wc_Sha512_224         Sha512_224
-        #define wc_Sha512_256         Sha512_256
-        #define wc_Sha384             Sha384
-        #define WC_SHA384             SHA384
-        #define WC_SHA384_BLOCK_SIZE  SHA384_BLOCK_SIZE
-        #define WC_SHA384_DIGEST_SIZE SHA384_DIGEST_SIZE
-        #define WC_SHA384_PAD_SIZE    SHA384_PAD_SIZE
-
-    #define CYASSL_SHA512
-        #define CYASSL_SHA384
-    /* for fips @wc_fips */
-    #include <cyassl/ctaocrypt/sha512.h>
-#endif
 
 #ifdef __cplusplus
     extern "C" {
 #endif
 
 /* avoid redefinition of structs */
-#if !defined(HAVE_FIPS)
 
 #ifdef WOLFSSL_ESP32WROOM32_CRYPT
     #include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
-#endif
-#if defined(WOLFSSL_SILABS_SE_ACCEL)
-    #include <wolfssl/wolfcrypt/port/silabs/silabs_hash.h>
 #endif
 #if defined(WOLFSSL_PSOC6_CRYPTO)
     #include "cy_crypto_core_sha.h"
@@ -120,9 +97,6 @@ enum {
 #if defined(WOLFSSL_IMX6_CAAM)
     #include "wolfssl/wolfcrypt/port/caam/wolfcaam_sha.h"
 #else
-#if defined(WOLFSSL_SE050)
-    #include "wolfssl/wolfcrypt/port/nxp/se050_port.h"
-#endif
 /* wc_Sha512 digest */
 struct wc_Sha512 {
 #ifdef WOLFSSL_PSOC6_CRYPTO
@@ -144,14 +118,8 @@ struct wc_Sha512 {
    !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
     WC_ESP32SHA ctx;
 #endif
-#if defined(WOLFSSL_SILABS_SE_ACCEL)
-  wc_silabs_sha_t silabsCtx;
-#endif
 #ifdef WOLFSSL_KCAPI_HASH
     wolfssl_KCAPI_Hash kcapi;
-#endif
-#if defined(WOLFSSL_SE050)
-    SE050_HASH_Context se050Ctx;
 #endif
 #if defined(WOLFSSL_HASH_KEEP)
     byte*  msg;
@@ -174,7 +142,6 @@ struct wc_Sha512 {
 #endif
 #endif /* WOLFSSL_IMX6_CAAM && !WOLFSSL_QNX_CAAM */
 
-#endif /* HAVE_FIPS */
 
 
 
@@ -234,7 +201,6 @@ WOLFSSL_API int wc_Sha512_256Copy(wc_Sha512* src, wc_Sha512* dst);
 
 
 /* avoid redefinition of structs */
-#if !defined(HAVE_FIPS)
 
 #if !defined(NO_OLD_SHA_NAMES)
     #define SHA384             WC_SHA384
@@ -260,7 +226,6 @@ enum {
     typedef struct wc_Sha512 wc_Sha384;
     #define WC_SHA384_TYPE_DEFINED
 #endif
-#endif /* HAVE_FIPS */
 
 WOLFSSL_API int wc_InitSha384(wc_Sha384* sha);
 WOLFSSL_API int wc_InitSha384_ex(wc_Sha384* sha, void* heap, int devId);

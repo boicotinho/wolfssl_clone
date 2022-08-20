@@ -29,11 +29,6 @@
 #include <wolfssl/wolfcrypt/hash.h>
 
 
-#if defined(HAVE_FIPS)
-/* for fips @wc_fips */
-    #include <cyassl/ctaocrypt/hmac.h>
-    #define WC_HMAC_BLOCK_SIZE HMAC_BLOCK_SIZE
-#endif
 
 
 
@@ -42,7 +37,6 @@
 #endif
 
 /* avoid redefinition of structs */
-#if !defined(HAVE_FIPS)
 
 
 #if defined(WOLFSSL_DEVCRYPTO_AES) || defined(WOLFSSL_DEVCRYPTO_HMAC)
@@ -109,7 +103,6 @@ struct Hmac {
 #endif
 
 
-#endif /* HAVE_FIPS */
 
 /* does init */
 WOLFSSL_API int wc_HmacSetKey(Hmac* hmac, int type, const byte* key, word32 keySz);

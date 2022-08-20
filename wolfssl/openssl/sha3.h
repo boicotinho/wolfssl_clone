@@ -62,7 +62,7 @@ typedef WOLFSSL_SHA3_224_CTX SHA3_224_CTX;
 #define SHA3_224_Init   wolfSSL_SHA3_224_Init
 #define SHA3_224_Update wolfSSL_SHA3_224_Update
 #define SHA3_224_Final  wolfSSL_SHA3_224_Final
-#if defined(NO_OLD_WC_NAMES) && !defined(HAVE_FIPS) && !defined(HAVE_SELFTEST)
+#if defined(NO_OLD_WC_NAMES)
     #define SHA3_224 wolfSSL_SHA3_224
 #endif
 #endif /* WOLFSSL_NOSHA3_224 */
@@ -88,7 +88,7 @@ typedef WOLFSSL_SHA3_256_CTX SHA3_256_CTX;
 #define SHA3_256_Init   wolfSSL_SHA3_256_Init
 #define SHA3_256_Update wolfSSL_SHA3_256_Update
 #define SHA3_256_Final  wolfSSL_SHA3_256_Final
-#if defined(NO_OLD_WC_NAMES) && !defined(HAVE_FIPS) && !defined(HAVE_SELFTEST)
+#if defined(NO_OLD_WC_NAMES)
     #define SHA3_256 wolfSSL_SHA3_256
 #endif
 #endif /* WOLFSSL_NOSHA3_256 */
@@ -111,7 +111,7 @@ typedef WOLFSSL_SHA3_384_CTX SHA3_384_CTX;
 #define SHA3_384_Init   wolfSSL_SHA3_384_Init
 #define SHA3_384_Update wolfSSL_SHA3_384_Update
 #define SHA3_384_Final  wolfSSL_SHA3_384_Final
-#if defined(NO_OLD_WC_NAMES) && !defined(HAVE_FIPS) && !defined(HAVE_SELFTEST)
+#if defined(NO_OLD_WC_NAMES)
     #define SHA3_384 wolfSSL_SHA3_384
 #endif
 
@@ -136,7 +136,7 @@ typedef WOLFSSL_SHA3_512_CTX SHA3_512_CTX;
 #define SHA3_512_Init   wolfSSL_SHA3_512_Init
 #define SHA3_512_Update wolfSSL_SHA3_512_Update
 #define SHA3_512_Final  wolfSSL_SHA3_512_Final
-#if defined(NO_OLD_WC_NAMES) && !defined(HAVE_FIPS) && !defined(HAVE_SELFTEST)
+#if defined(NO_OLD_WC_NAMES)
     #define SHA3_512 wolfSSL_SHA3_512
 #endif
 #endif /* WOLFSSL_NOSHA3_512 */

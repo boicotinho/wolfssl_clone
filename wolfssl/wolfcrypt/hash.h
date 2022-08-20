@@ -50,7 +50,7 @@
     extern "C" {
 #endif
 
-#if !defined(HAVE_FIPS) && !defined(NO_OLD_WC_NAMES)
+#if !defined(NO_OLD_WC_NAMES)
     #define MAX_DIGEST_SIZE WC_MAX_DIGEST_SIZE
 #endif
 

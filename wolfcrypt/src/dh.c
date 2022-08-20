@@ -1222,11 +1222,9 @@ static int GeneratePublicDh(DhKey* key, byte* priv, word32 privSz,
     byte* pub, word32* pubSz)
 {
     int ret = 0;
-#ifndef WOLFSSL_SP_MATH
     word32 binSz = 0;
     mp_int x[1];
     mp_int y[1];
-#endif
 
 #ifdef WOLFSSL_HAVE_SP_DH
 #ifndef WOLFSSL_SP_NO_2048
@@ -1243,7 +1241,6 @@ static int GeneratePublicDh(DhKey* key, byte* priv, word32 privSz,
 #endif
 #endif
 
-#if !defined(WOLFSSL_SP_MATH)
     if (mp_init_multi(x, y, 0, 0, 0, 0) != MP_OKAY) {
         return MP_INIT_E;
     }
@@ -1269,9 +1266,6 @@ static int GeneratePublicDh(DhKey* key, byte* priv, word32 privSz,
 
     mp_clear(y);
     mp_clear(x);
-#else
-    ret = WC_KEY_SIZE_E;
-#endif
 
     return ret;
 }
@@ -1410,13 +1404,9 @@ static int _ffc_validate_public_key(DhKey* key, const byte* pub, word32 pubSz,
 #endif
 
             {
-#if !defined(WOLFSSL_SP_MATH)
                 /* calculate (y^q) mod(p), store back into y */
                 if (mp_exptmod(y, q, p, y) != MP_OKAY)
                     ret = MP_EXPTMOD_E;
-#else
-                ret = WC_KEY_SIZE_E;
-#endif
             }
 
             /* verify above == 1 */
@@ -1647,12 +1637,8 @@ static int _ffc_pairwise_consistency_test(DhKey* key,
 #endif
 #endif
         {
-#if !defined(WOLFSSL_SP_MATH)
             if (mp_exptmod(&key->g, privateKey, &key->p, checkKey) != MP_OKAY)
                 ret = MP_EXPTMOD_E;
-#else
-            ret = WC_KEY_SIZE_E;
-#endif
         }
     }
 
@@ -1720,10 +1706,8 @@ static int wc_DhAgree_Sync(DhKey* key, byte* agree, word32* agreeSz,
 {
     int ret = 0;
     mp_int y[1];
-#if !defined(WOLFSSL_SP_MATH)
     mp_int x[1];
     mp_int z[1];
-#endif
 
     if (mp_iseven(&key->p) == MP_YES) {
         return MP_VAL;
@@ -1804,7 +1788,6 @@ static int wc_DhAgree_Sync(DhKey* key, byte* agree, word32* agreeSz,
 #endif
 #endif
 
-#if !defined(WOLFSSL_SP_MATH)
     if (mp_init_multi(x, y, z, 0, 0, 0) != MP_OKAY) {
         return MP_INIT_E;
     }
@@ -1836,9 +1819,6 @@ static int wc_DhAgree_Sync(DhKey* key, byte* agree, word32* agreeSz,
 
     RESTORE_VECTOR_REGISTERS();
 
-#else
-    ret = WC_KEY_SIZE_E;
-#endif
 
 
     return ret;
@@ -2492,7 +2472,7 @@ int wc_DhGenerateParams(WC_RNG *rng, int modSz, DhKey *dh)
                 groupSz = 32;
                 break;
             default:
-        #if !defined(HAVE_FIPS) && defined(WOLFSSL_NO_DH186)
+        #if defined(WOLFSSL_NO_DH186)
                 /* in non fips mode attempt to match strength of group size with
                  * mod size */
                 if (modSz < 2048)

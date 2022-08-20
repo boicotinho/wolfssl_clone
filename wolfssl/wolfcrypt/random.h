@@ -32,9 +32,6 @@
 
 
 /* included for fips @wc_fips */
-#if defined(HAVE_FIPS)
-#include <cyassl/ctaocrypt/random.h>
-#endif
 
 #ifdef __cplusplus
     extern "C" {
@@ -70,7 +67,6 @@
 
 
 /* avoid redefinition of structs */
-#if !defined(HAVE_FIPS)
 
 /* RNG supports the following sources (in order):
  * 1. CUSTOM_RAND_GENERATE_BLOCK: Defines name of function as RNG source and
@@ -138,17 +134,13 @@ struct WC_RNG {
     void* heap;
     /* Hash-based Deterministic Random Bit Generator */
     struct DRBG* drbg;
-#if defined(WOLFSSL_NO_MALLOC)
-    struct DRBG_internal drbg_data;
-#endif
     byte status;
 };
 
-#endif /* NO FIPS or have FIPS v2*/
 
 /* NO_OLD_RNGNAME removes RNG struct name to prevent possible type conflicts,
  * can't be used with CTaoCrypt FIPS */
-#if !defined(NO_OLD_RNGNAME) && !defined(HAVE_FIPS)
+#if !defined(NO_OLD_RNGNAME)
     #define RNG WC_RNG
 #endif
 

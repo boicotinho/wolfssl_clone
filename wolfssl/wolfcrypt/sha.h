@@ -31,16 +31,6 @@
 
 
 
-#if defined(HAVE_FIPS)
-#define wc_Sha             Sha
-#define WC_SHA             SHA
-#define WC_SHA_BLOCK_SIZE  SHA_BLOCK_SIZE
-#define WC_SHA_DIGEST_SIZE SHA_DIGEST_SIZE
-#define WC_SHA_PAD_SIZE    SHA_PAD_SIZE
-
-/* for fips @wc_fips */
-#include <cyassl/ctaocrypt/sha.h>
-#endif
 
 #ifdef FREESCALE_LTC_SHA
     #include "fsl_ltc.h"
@@ -55,7 +45,6 @@
 #endif
 
 /* avoid redefinition of structs */
-#if !defined(HAVE_FIPS)
 
 #ifdef WOLFSSL_MICROCHIP_PIC32MZ
     #include <wolfssl/wolfcrypt/port/pic32/pic32mz-crypt.h>
@@ -65,9 +54,6 @@
 #endif
 #ifdef WOLFSSL_ESP32WROOM32_CRYPT
     #include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
-#endif
-#if defined(WOLFSSL_SILABS_SE_ACCEL)
-    #include <wolfssl/wolfcrypt/port/silabs/silabs_hash.h>
 #endif
 
 #if !defined(NO_OLD_SHA_NAMES)
@@ -100,9 +86,6 @@ enum {
     #include "wolfssl/wolfcrypt/port/Renesas/renesas-tsip-crypt.h"
 #else
 
-#if defined(WOLFSSL_SE050) && defined(WOLFSSL_SE050_HASH)
-    #include "wolfssl/wolfcrypt/port/nxp/se050_port.h"
-#endif
 
 #if defined(WOLFSSL_HAVE_PSA) && !defined(WOLFSSL_PSA_NO_HASH)
 #include <psa/crypto.h>
@@ -114,12 +97,8 @@ enum {
 struct wc_Sha {
 #ifdef FREESCALE_LTC_SHA
         ltc_hash_ctx_t ctx;
-#elif defined(WOLFSSL_SE050) && defined(WOLFSSL_SE050_HASH)
-        SE050_HASH_Context se050Ctx;
 #elif defined(STM32_HASH)
         STM32_HASH_Context stmCtx;
-#elif defined(WOLFSSL_SILABS_SE_ACCEL)
-        wc_silabs_sha_t silabsCtx;
 #elif defined(WOLFSSL_IMXRT_DCP)
         dcp_handle_t handle;
         dcp_hash_ctx_t ctx;
@@ -162,7 +141,6 @@ struct wc_Sha {
 #endif /* WOLFSSL_TI_HASH */
 
 
-#endif /* HAVE_FIPS */
 
 WOLFSSL_API int wc_InitSha(wc_Sha* sha);
 WOLFSSL_API int wc_InitSha_ex(wc_Sha* sha, void* heap, int devId);

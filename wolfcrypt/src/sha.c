@@ -34,47 +34,6 @@
 
 
 /* fips wrapper calls, user can call direct */
-#if defined(HAVE_FIPS)
-
-    int wc_InitSha(wc_Sha* sha)
-    {
-        if (sha == NULL) {
-            return BAD_FUNC_ARG;
-        }
-        return InitSha_fips(sha);
-    }
-    int wc_InitSha_ex(wc_Sha* sha, void* heap, int devId)
-    {
-        (void)heap;
-        (void)devId;
-        if (sha == NULL) {
-            return BAD_FUNC_ARG;
-        }
-        return InitSha_fips(sha);
-    }
-
-    int wc_ShaUpdate(wc_Sha* sha, const byte* data, word32 len)
-    {
-        if (sha == NULL || (data == NULL && len > 0)) {
-            return BAD_FUNC_ARG;
-        }
-        return ShaUpdate_fips(sha, data, len);
-    }
-
-    int wc_ShaFinal(wc_Sha* sha, byte* out)
-    {
-        if (sha == NULL || out == NULL) {
-            return BAD_FUNC_ARG;
-        }
-        return ShaFinal_fips(sha,out);
-    }
-    void wc_ShaFree(wc_Sha* sha)
-    {
-        (void)sha;
-        /* Not supported in FIPS */
-    }
-
-#else /* else build without fips, or for FIPS v2 */
 
 
 #if defined(WOLFSSL_TI_HASH)
@@ -311,45 +270,6 @@
 #elif defined(WOLFSSL_IMXRT_DCP)
     #include <wolfssl/wolfcrypt/port/nxp/dcp_port.h>
     /* implemented in wolfcrypt/src/port/nxp/dcp_port.c */
-
-#elif defined(WOLFSSL_SILABS_SE_ACCEL)
-
-    /* implemented in wolfcrypt/src/port/silabs/silabs_hash.c */
-#elif defined(WOLFSSL_SE050) && defined(WOLFSSL_SE050_HASH)
-
-    #include <wolfssl/wolfcrypt/port/nxp/se050_port.h>
-    int wc_InitSha_ex(wc_Sha* sha, void* heap, int devId)
-    {
-        if (sha == NULL) {
-            return BAD_FUNC_ARG;
-        }
-        (void)devId;
-
-        return se050_hash_init(&sha->se050Ctx, heap);
-    }
-
-    int wc_ShaUpdate(wc_Sha* sha, const byte* data, word32 len)
-    {
-        return se050_hash_update(&sha->se050Ctx, data, len);
-
-    }
-
-    int wc_ShaFinal(wc_Sha* sha, byte* hash)
-    {
-        int ret = 0;
-        ret = se050_hash_final(&sha->se050Ctx, hash, WC_SHA_DIGEST_SIZE,
-                               kAlgorithm_SSS_SHA1);
-        (void)wc_InitSha(sha);
-        return ret;
-    }
-    int wc_ShaFinalRaw(wc_Sha* sha, byte* hash)
-    {
-        int ret = 0;
-        ret = se050_hash_final(&sha->se050Ctx, hash, WC_SHA_DIGEST_SIZE,
-                               kAlgorithm_SSS_SHA1);
-        (void)wc_InitSha(sha);
-        return ret;
-    }
 
 #elif defined(WOLFSSL_HAVE_PSA) && !defined(WOLFSSL_PSA_NO_HASH)
 /* implemented in wolfcrypt/src/port/psa/psa_hash.c */
@@ -772,9 +692,6 @@ void wc_ShaFree(wc_Sha* sha)
 #ifdef WOLFSSL_PIC32MZ_HASH
     wc_ShaPic32Free(sha);
 #endif
-#if defined(WOLFSSL_SE050) && defined(WOLFSSL_SE050_HASH)
-   se050_hash_free(&sha->se050Ctx);
-#endif
 #if (defined(WOLFSSL_RENESAS_TSIP_CRYPT) && \
     !defined(NO_WOLFSSL_RENESAS_TSIP_CRYPT_HASH))
     if (sha->msg != NULL) {
@@ -789,7 +706,6 @@ void wc_ShaFree(wc_Sha* sha)
 
 #endif /* !defined(WOLFSSL_HAVE_PSA) || defined(WOLFSSL_PSA_NO_HASH) */
 #endif /* !WOLFSSL_TI_HASH */
-#endif /* HAVE_FIPS */
 
 #if !defined(WOLFSSL_TI_HASH) && !defined(WOLFSSL_IMXRT_DCP)
 
@@ -836,10 +752,6 @@ int wc_ShaCopy(wc_Sha* src, wc_Sha* dst)
 
     XMEMCPY(dst, src, sizeof(wc_Sha));
 
-#ifdef WOLFSSL_SILABS_SE_ACCEL
-    dst->silabsCtx.hash_ctx.cmd_ctx = &(dst->silabsCtx.cmd_ctx);
-    dst->silabsCtx.hash_ctx.hash_type_ctx = &(dst->silabsCtx.hash_type_ctx);
-#endif
 
 #ifdef WOLFSSL_PIC32MZ_HASH
     ret = wc_Pic32HashCopy(&src->cache, &dst->cache);

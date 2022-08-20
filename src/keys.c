@@ -550,7 +550,7 @@ static int SetKeys(Ciphers* enc, Ciphers* dec, Keys* keys, CipherSpecs* specs,
                 if (gcmRet != 0) return gcmRet;
                 XMEMCPY(keys->aead_enc_imp_IV, keys->client_write_IV,
                         AEAD_MAX_IMP_SZ);
-#if !defined(NO_PUBLIC_GCM_SET_IV) &&  (!defined(HAVE_FIPS) && !defined(HAVE_SELFTEST) )
+#if !defined(NO_PUBLIC_GCM_SET_IV)
                 if (!tls13) {
                     gcmRet = wc_AesGcmSetIV(enc->aes, AESGCM_NONCE_SZ,
                             keys->client_write_IV, AESGCM_IMP_IV_SZ, rng);
@@ -573,7 +573,7 @@ static int SetKeys(Ciphers* enc, Ciphers* dec, Keys* keys, CipherSpecs* specs,
                 if (gcmRet != 0) return gcmRet;
                 XMEMCPY(keys->aead_enc_imp_IV, keys->server_write_IV,
                         AEAD_MAX_IMP_SZ);
-#if !defined(NO_PUBLIC_GCM_SET_IV) &&  (!defined(HAVE_FIPS) && !defined(HAVE_SELFTEST) )
+#if !defined(NO_PUBLIC_GCM_SET_IV)
                 if (!tls13) {
                     gcmRet = wc_AesGcmSetIV(enc->aes, AESGCM_NONCE_SZ,
                             keys->server_write_IV, AESGCM_IMP_IV_SZ, rng);

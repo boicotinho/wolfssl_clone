@@ -55,20 +55,12 @@ RSA keys can be used to encrypt, decrypt, sign and verify data.
 #endif
 
 /* allow for user to plug in own crypto */
-#if !defined(HAVE_FIPS) && (defined(HAVE_USER_RSA) || defined(HAVE_FAST_RSA))
+#if defined(HAVE_USER_RSA) || defined(HAVE_FAST_RSA)
     #include "user_rsa.h"
 #else
 
-#if defined(HAVE_FIPS)
-/* for fips @wc_fips */
-#include <cyassl/ctaocrypt/rsa.h>
-#if defined(CYASSL_KEY_GEN) && !defined(WOLFSSL_KEY_GEN)
-    #define WOLFSSL_KEY_GEN
-#endif
-#else
     #include <wolfssl/wolfcrypt/integer.h>
     #include <wolfssl/wolfcrypt/random.h>
-#endif /* HAVE_FIPS && HAVE_FIPS_VERION 1 */
 
 /* header file needed for OAEP padding */
 #include <wolfssl/wolfcrypt/hash.h>
@@ -77,9 +69,6 @@ RSA keys can be used to encrypt, decrypt, sign and verify data.
 #include "xsecure_rsa.h"
 #endif
 
-#if defined(WOLFSSL_CRYPTOCELL)
-    #include <wolfssl/wolfcrypt/port/arm/cryptoCell.h>
-#endif
 
 #if defined(WOLFSSL_KCAPI_RSA)
     #include <wolfssl/wolfcrypt/port/kcapi/kcapi_rsa.h>
@@ -102,7 +91,6 @@ RSA keys can be used to encrypt, decrypt, sign and verify data.
 #endif
 
 /* avoid redefinition of structs */
-#if !defined(HAVE_FIPS)
 
 
 enum {
@@ -173,9 +161,6 @@ struct RsaKey {
     int alFd;
     int rdFd;
 #endif
-#if defined(WOLFSSL_CRYPTOCELL)
-    rsa_context_t ctx;
-#endif
 #if defined(WOLFSSL_CAAM)
     word32 blackKey;
 #endif
@@ -189,7 +174,6 @@ struct RsaKey {
     #define WC_RSAKEY_TYPE_DEFINED
 #endif
 
-#endif /* HAVE_FIPS */
 
 WOLFSSL_API int  wc_InitRsaKey(RsaKey* key, void* heap);
 WOLFSSL_API int  wc_InitRsaKey_ex(RsaKey* key, void* heap, int devId);
@@ -261,7 +245,6 @@ WOLFSSL_API int  wc_RsaPSS_VerifyCheck(byte* in, word32 inLen,
 
 WOLFSSL_API int  wc_RsaEncryptSize(const RsaKey* key);
 
-#if !defined(HAVE_FIPS)
 /* to avoid asn duplicate symbols @wc_fips */
 WOLFSSL_API int  wc_RsaPrivateKeyDecode(const byte* input, word32* inOutIdx,
                                         RsaKey* key, word32 inSz);
@@ -318,7 +301,6 @@ WOLFSSL_API int wc_RsaDirect(byte* in, word32 inLen, byte* out, word32* outSz,
                    RsaKey* key, int type, WC_RNG* rng);
 #endif
 
-#endif /* HAVE_FIPS */
 
 WOLFSSL_API int  wc_RsaFlattenPublicKey(RsaKey* key, byte* e, word32* eSz,
                                         byte* n, word32* nSz);

@@ -39,15 +39,6 @@ block cipher mechanism that uses n-bit binary string parameter key with 128-bits
 
 
 /* included for fips @wc_fips */
-#if defined(HAVE_FIPS)
-#include <cyassl/ctaocrypt/aes.h>
-#if defined(CYASSL_AES_COUNTER) && !defined(WOLFSSL_AES_COUNTER)
-    #define WOLFSSL_AES_COUNTER
-#endif
-#if !defined(WOLFSSL_AES_DIRECT) && defined(CYASSL_AES_DIRECT)
-    #define WOLFSSL_AES_DIRECT
-#endif
-#endif
 
 #ifndef WC_NO_RNG
     #include <wolfssl/wolfcrypt/random.h>
@@ -64,9 +55,6 @@ block cipher mechanism that uses n-bit binary string parameter key with 128-bits
 #include "xsecure_aes.h"
 #endif
 
-#ifdef WOLFSSL_SE050
-    #include <wolfssl/wolfcrypt/port/nxp/se050_port.h>
-#endif
 
 #if defined(WOLFSSL_AFALG) || defined(WOLFSSL_AFALG_XILINX_AES)
 /* included for struct msghdr */
@@ -81,9 +69,6 @@ block cipher mechanism that uses n-bit binary string parameter key with 128-bits
 #include <wolfssl/wolfcrypt/port/devcrypto/wc_devcrypto.h>
 #endif
 
-#ifdef WOLFSSL_SILABS_SE_ACCEL
-    #include <wolfssl/wolfcrypt/port/silabs/silabs_aes.h>
-#endif
 
 
 #if !defined(WC_NO_RNG)
@@ -94,9 +79,6 @@ block cipher mechanism that uses n-bit binary string parameter key with 128-bits
 #include <psa/crypto.h>
 #endif
 
-#if defined(WOLFSSL_CRYPTOCELL)
-    #include <wolfssl/wolfcrypt/port/arm/cryptoCell.h>
-#endif
 
 #if defined(WOLFSSL_RENESAS_TSIP_TLS) && \
     defined(WOLFSSL_RENESAS_TSIP_TLS_AES_CRYPT)
@@ -120,7 +102,6 @@ enum {
 #endif
 
 /* avoid redefinition of structs */
-#if !defined(HAVE_FIPS)
 
 
 enum {
@@ -165,11 +146,6 @@ struct Aes {
     word32 nonceSz;
     ALIGN16 byte H[AES_BLOCK_SIZE];
 
-#ifdef WOLFSSL_SE050
-    sss_symmetric_t aes_ctx; /* used as the function context */
-    int ctxInitDone;
-    int keyId;
-#endif
 #ifdef WOLFSSL_CAAM
     int blackKey; /* black key / hsm key id */
 #endif
@@ -222,9 +198,6 @@ struct Aes {
     (defined(WOLFSSL_DEVCRYPTO_AES) || defined(WOLFSSL_DEVCRYPTO_CBC))
     WC_CRYPTODEV ctx;
 #endif
-#if defined(WOLFSSL_CRYPTOCELL)
-    aes_context_t ctx;
-#endif
 #if defined(WOLFSSL_RENESAS_TSIP_TLS) && \
     defined(WOLFSSL_RENESAS_TSIP_TLS_AES_CRYPT)
     TSIP_AES_CTX ctx;
@@ -234,9 +207,6 @@ struct Aes {
 #endif
 #if defined(WOLFSSL_IMXRT_DCP)
     dcp_handle_t handle;
-#endif
-#if defined(WOLFSSL_SILABS_SE_ACCEL)
-    silabs_aes_t ctx;
 #endif
 #if defined(WOLFSSL_HAVE_PSA) && !defined(WOLFSSL_PSA_NO_AES)
     psa_key_id_t key_id;
@@ -273,7 +243,6 @@ typedef struct XtsAes {
 typedef struct Gmac {
     Aes aes;
 } Gmac;
-#endif /* HAVE_FIPS */
 
 
 /* Authenticate cipher function prototypes */
@@ -340,12 +309,7 @@ WOLFSSL_API int wc_AesEcbDecrypt(Aes* aes, byte* out,
 #endif
 /* AES-DIRECT */
 #if defined(WOLFSSL_AES_DIRECT)
-#if defined(HAVE_FIPS)
- WOLFSSL_API void wc_AesEncryptDirect(Aes* aes, byte* out, const byte* in);
- WOLFSSL_API void wc_AesDecryptDirect(Aes* aes, byte* out, const byte* in);
- WOLFSSL_API int wc_AesSetKeyDirect(Aes* aes, const byte* key, word32 len,
-                                const byte* iv, int dir);
-#elif defined(BUILDING_WOLFSSL)
+#if defined(BUILDING_WOLFSSL)
  WOLFSSL_API WARN_UNUSED_RESULT int wc_AesEncryptDirect(Aes* aes, byte* out,
                                                         const byte* in);
  WOLFSSL_API WARN_UNUSED_RESULT int wc_AesDecryptDirect(Aes* aes, byte* out,

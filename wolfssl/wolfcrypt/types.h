@@ -256,9 +256,6 @@ decouple library dependencies with standard string, memory and so on.
         #endif
     #endif
 
-    #if defined(HAVE_FIPS) || defined(HAVE_SELFTEST)
-        #define INLINE WC_INLINE
-    #endif
 
 
     /* set up rotate style */
@@ -395,23 +392,6 @@ decouple library dependencies with standard string, memory and so on.
         #define XREALLOC(p, n, h, t) m2mb_os_realloc((p), (n))
 
     #elif defined(NO_WOLFSSL_MEMORY)
-        #ifdef WOLFSSL_NO_MALLOC
-            /* this platform does not support heap use */
-            #ifdef WOLFSSL_MALLOC_CHECK
-                #include <stdio.h>
-                static inline void* malloc_check(size_t sz) {
-                    fprintf(stderr, "wolfSSL_malloc failed");
-                    return NULL;
-                };
-                #define XMALLOC(s, h, t)     malloc_check((s))
-                #define XFREE(p, h, t)
-                #define XREALLOC(p, n, h, t) (NULL)
-            #else
-                #define XMALLOC(s, h, t)     (NULL)
-                #define XFREE(p, h, t)
-                #define XREALLOC(p, n, h, t) (NULL)
-            #endif
-        #else
         /* just use plain C stdlib stuff if desired */
         #include <stdlib.h>
         #define XMALLOC(s, h, t)     malloc((size_t)(s))
@@ -421,7 +401,6 @@ decouple library dependencies with standard string, memory and so on.
             #define XFREE(p, h, t)       {void* xp = (p); if (xp) free(xp);}
         #endif
         #define XREALLOC(p, n, h, t) realloc((p), (size_t)(n))
-        #endif
 
     #elif !defined(MICRIUM_MALLOC) && !defined(WOLFSSL_SAFERTOS) && !defined(FREESCALE_FREE_RTOS)  && !defined(WOLFSSL_LEANPSK) && !defined(WOLFSSL_uITRON4)
         /* default C runtime, can install different routines at runtime via cbs */
@@ -481,16 +460,6 @@ decouple library dependencies with standard string, memory and so on.
                 XFREE((VAR_NAME)[idx##VAR_NAME], (HEAP), DYNAMIC_TYPE_TMP_BUFFER); \
             }
 
-    #if defined(HAVE_FIPS) || defined(HAVE_SELFTEST)
-        /* These are here for the FIPS code that can't be changed. New definitions don't need to be added here. */
-        #define DECLARE_VAR                 WC_DECLARE_VAR
-        #define DECLARE_ARRAY               WC_DECLARE_ARRAY
-        #define FREE_VAR                    WC_FREE_VAR
-        #define FREE_ARRAY                  WC_FREE_ARRAY
-        #define DECLARE_ARRAY_DYNAMIC_DEC   WC_DECLARE_ARRAY_DYNAMIC_DEC
-        #define DECLARE_ARRAY_DYNAMIC_EXE   WC_DECLARE_ARRAY_DYNAMIC_EXE
-        #define FREE_ARRAY_DYNAMIC          WC_FREE_ARRAY_DYNAMIC
-    #endif /* HAVE_FIPS */
 
     #if !defined(USE_WOLF_STRTOK) && \
             ((defined(__MINGW32__) && !defined(__MINGW64_VERSION_MAJOR)) || \
@@ -818,37 +787,6 @@ decouple library dependencies with standard string, memory and so on.
 
     /* hash types */
     enum wc_HashType {
-    #if defined(HAVE_SELFTEST) || defined(HAVE_FIPS)
-        /* In selftest build, WC_* types are not mapped to WC_HASH_TYPE types.
-         * Values here are based on old selftest hmac.h enum, with additions.
-         * These values are fixed for backwards FIPS compatibility */
-        WC_HASH_TYPE_NONE = 15,
-        WC_HASH_TYPE_MD2 = 16,
-        WC_HASH_TYPE_MD4 = 17,
-        WC_HASH_TYPE_MD5 = 0,
-        WC_HASH_TYPE_SHA = 1, /* SHA-1 (not old SHA-0) */
-        WC_HASH_TYPE_SHA224 = 8,
-        WC_HASH_TYPE_SHA256 = 2,
-        WC_HASH_TYPE_SHA384 = 5,
-        WC_HASH_TYPE_SHA512 = 4,
-        WC_HASH_TYPE_MD5_SHA = 18,
-        WC_HASH_TYPE_SHA3_224 = 10,
-        WC_HASH_TYPE_SHA3_256 = 11,
-        WC_HASH_TYPE_SHA3_384 = 12,
-        WC_HASH_TYPE_SHA3_512 = 13,
-        WC_HASH_TYPE_BLAKE2B = 14,
-        WC_HASH_TYPE_BLAKE2S = 19,
-        WC_HASH_TYPE_MAX = WC_HASH_TYPE_BLAKE2S
-        #ifndef WOLFSSL_NOSHA512_224
-            #define WOLFSSL_NOSHA512_224
-        #endif
-        #ifndef WOLFSSL_NOSHA512_256
-            #define WOLFSSL_NOSHA512_256
-        #endif
-        #ifndef WOLFSSL_NO_SHAKE256
-            #define WOLFSSL_NO_SHAKE256
-        #endif
-    #else
         WC_HASH_TYPE_NONE = 0,
         WC_HASH_TYPE_MD2 = 1,
         WC_HASH_TYPE_MD4 = 2,
@@ -885,7 +823,6 @@ decouple library dependencies with standard string, memory and so on.
         WC_HASH_TYPE_MAX = _WC_HASH_TYPE_MAX
 #undef _WC_HASH_TYPE_MAX
 
-    #endif /* HAVE_SELFTEST */
     };
 
     /* cipher types */

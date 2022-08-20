@@ -30,9 +30,6 @@
     #define WOLFSSL_MISC_INCLUDED
     #include <wolfcrypt/src/misc.c>
 
-#ifdef WOLFSSL_HAVE_SP_ECC
-    #include <wolfssl/wolfcrypt/sp.h>
-#endif
 
 #ifdef WOLFCRYPT_HAVE_SAKKE
 
@@ -295,58 +292,6 @@ static int sakke_load_base_point(SakkeKey* key)
     return err;
 }
 
-#ifdef WOLFSSL_HAVE_SP_ECC
-/*
- * Scalar multiply the base point.
- *
- * @param  [in]   key   SAKKE key.
- * @param  [in]   n     MP integer that is the scalar.
- * @param  [out]  res   ECC point to hold the result.
- * @param  [in]   map   Map the result to affine co-ordinates.
- * @return  0 on success.
- * @return  MEMORY_E when dynamic memory allocation fails.
- */
-static int sakke_mulmod_base(SakkeKey* key, const mp_int* n, ecc_point* res,
-        int map)
-{
-    int err = NOT_COMPILED_IN;
-
-#ifdef WOLFSSL_SP_1024
-    if ((key->ecc.idx != ECC_CUSTOM_IDX) &&
-            (ecc_sets[key->ecc.idx].id == ECC_SAKKE_1)) {
-        err = sp_ecc_mulmod_base_1024(n, res, map, key->heap);
-    }
-#endif
-
-    return err;
-}
-
-/*
- * Scalar multiply the base point and add a point.
- *
- * @param  [in]   key   SAKKE key.
- * @param  [in]   n     MP integer that is the scalar.
- * @param  [in]   a     ECC point to add.
- * @param  [out]  res   ECC point to hold the result.
- * @param  [in]   map   Map the result to affine co-ordinates.
- * @return  0 on success.
- * @return  MEMORY_E when dynamic memory allocation fails.
- */
-static int sakke_mulmod_base_add(SakkeKey* key, const mp_int* n,
-        const ecc_point* a, ecc_point* res, int map)
-{
-    int err = NOT_COMPILED_IN;
-
-#ifdef WOLFSSL_SP_1024
-    if ((key->ecc.idx != ECC_CUSTOM_IDX) &&
-            (ecc_sets[key->ecc.idx].id == ECC_SAKKE_1)) {
-        err = sp_ecc_mulmod_base_add_1024(n, a, 0, res, map, key->heap);
-    }
-#endif
-
-    return err;
-}
-#else
 /*
  * Scalar multiply the base point.
  *
@@ -404,41 +349,7 @@ static int sakke_mulmod_base_add(SakkeKey* key, const mp_int* n, ecc_point* a,
 
     return err;
 }
-#endif
 
-#ifdef WOLFSSL_HAVE_SP_ECC
-/*
- * Scalar multiply a point.
- *
- * @param  [in]   key    SAKKE key.
- * @param  [in]   n      MP integer that is the scalar.
- * @param  [in]   p      ECC point to multiply.
- * @param  [in]   table  Precomputation table for p. May be NULL.
- * @param  [out]  res    ECC point to hold the result.
- * @param  [in]   map    Map the result to affine co-ordinates.
- * @return  0 on success.
- * @return  MEMORY_E when dynamic memory allocation fails.
- */
-static int sakke_mulmod_point(SakkeKey* key, const mp_int* n,
-        const ecc_point* p, byte* table, ecc_point* res, int map)
-{
-    int err = NOT_COMPILED_IN;
-
-#ifdef WOLFSSL_SP_1024
-    if ((key->ecc.idx != ECC_CUSTOM_IDX) &&
-            (ecc_sets[key->ecc.idx].id == ECC_SAKKE_1)) {
-        if (table == NULL) {
-            err = sp_ecc_mulmod_1024(n, p, res, map, key->heap);
-        }
-        else {
-            err = sp_ecc_mulmod_table_1024(n, p, table, res, map, key->heap);
-        }
-    }
-#endif
-
-    return err;
-}
-#else
 /*
  * Scalar multiply a point.
  *
@@ -462,7 +373,6 @@ static int sakke_mulmod_point(SakkeKey* key, const mp_int* n, ecc_point* p,
     (void)table;
     return err;
 }
-#endif
 
 #ifdef WOLFCRYPT_SAKKE_KMS
 /**
@@ -1187,7 +1097,6 @@ static int sakke_load_pairing_base(SakkeKey* key)
     return err;
 }
 
-#ifndef WOLFSSL_HAVE_SP_ECC
 /*
  * Put point into Montgomery form.
  *
@@ -1268,88 +1177,7 @@ static int sakke_z_to_mont(SakkeKey* key, mp_int* tmp)
 
     return err;
 }
-#endif
 
-#ifdef WOLFSSL_HAVE_SP_ECC
-/**
- * Generate a pre-computation table for the RSK point.
- *
- * The table contains sensitive data.
- *
- * @param  [in]      key    SAKKE key.
- * @param  [in]      rsk    Point to generate table for.
- * @param  [out]     table  Pre-generated values. Passing NULL indicates that
- *                          the length of the table is required.
- * @param  [in,out]  len    On in, the size of table buffer in bytes.
- *                          On out, the size of the pre-generated data in bytes.
- * @return  0 on success.
- * @return  BAD_FUNC_ARG when key, rsk or len is NULL.
- * @return  LENGTH_ONLY_E when table is NULL.
- * @return  BAD_LENGTH_E when table is specified and len is too small.
- * @return  MEMORY_E when dynamic memory allocation fails.
- */
-int wc_GenerateSakkeRskTable(const SakkeKey* key, const ecc_point* rsk,
-        byte* table, word32* len)
-{
-    int err = 0;
-
-    if ((key == NULL) || (rsk == NULL) || (len == 0)) {
-        err = BAD_FUNC_ARG;
-    }
-    if (err == 0) {
-        SAVE_VECTOR_REGISTERS(return _svr_ret;);
-#ifdef WOLFSSL_SP_1024
-        err = sp_Pairing_gen_precomp_1024(rsk, table, len);
-#else
-        err = NOT_COMPILED_IN;
-#endif
-        RESTORE_VECTOR_REGISTERS();
-    }
-
-    return err;
-}
-
-/*
- * Calculate r = pairing <P, Q>.
- *
- * That is, multiply base in PF_p[q] by the scalar s, such that s.P = Q.
- *
- * @param  [in]   key  SAKKE key.
- * @param  [in]   p    First point on E(F_p)[q].
- * @param  [in]   q    Second point on E(F_p)[q].
- * @param  [out]  r    Result of calculation.
- * @return  0 on success.
- * @return  MEMORY_E when dynamic memory allocation fails.
- * @return  Other -ve value on internal failure.
- */
-static int sakke_pairing(const SakkeKey* key, const ecc_point* p,
-    const ecc_point* q, mp_int* r, const byte* table, word32 len)
-{
-    int err = NOT_COMPILED_IN;
-
-#ifdef WOLFSSL_SP_1024
-    if ((key->ecc.idx != ECC_CUSTOM_IDX) &&
-            (ecc_sets[key->ecc.idx].id == ECC_SAKKE_1)) {
-        if (table == NULL) {
-            err = sp_Pairing_1024(p, q, r);
-        }
-        else {
-            err = sp_Pairing_precomp_1024(p, q, r, table, len);
-        }
-    }
-#else
-    (void)key;
-    (void)p;
-    (void)q;
-    (void)r;
-    (void)table;
-    (void)len;
-#endif
-
-    return err;
-}
-
-#else /* WOLFSSL_HAVE_SP_ECC */
 /**
  * Generate a pre-computation table for the RSK point.
  *
@@ -2240,7 +2068,6 @@ static int sakke_pairing(SakkeKey* key, ecc_point* p, ecc_point* q, mp_int* r,
 
     return err;
 }
-#endif /* WOLFSSL_HAVE_SP_ECC */
 
 /**
  * Set the Receiver Secret Key (RSK) and any table associated with it.
@@ -2299,12 +2126,10 @@ static int sakke_compute_point_i(SakkeKey* key, const byte* id, word16 idSz,
     if (err == 0) {
         err = sakke_load_base_point(key);
     }
-#ifndef WOLFSSL_HAVE_SP_ECC
     /* Convert to montgomery form for add operation. */
     if (err == 0) {
         err = sakke_z_to_mont(key, &key->tmp.m2);
     }
-#endif
     /* [b]P + Z_S */
     if (err == 0) {
         ecc_point* z = &key->ecc.pubkey;
@@ -2417,33 +2242,6 @@ int wc_GetSakkeAuthSize(SakkeKey* key, word16* authSz)
     return err;
 }
 
-#ifdef WOLFSSL_HAVE_SP_ECC
-/*
- * Modular exponentiate the value in F_p*.
- *
- * @param  [in]   key  SAKKE key.
- * @param  [in]   b    MP integer that is the base to exponentiate.
- * @param  [in]   e    MP integer that is the exponent.
- * @param  [out]  r    Result of exponentiation.
- * @return  0 on success.
- * @return  MEMORY_E when dynamic memory allocation fails.
- * @return  Other -ve value on internal failure.
- */
-static int sakke_modexp(const SakkeKey* key, const mp_int* b, mp_int* e,
-        mp_int* r)
-{
-    int err = NOT_COMPILED_IN;
-
-#ifdef WOLFSSL_SP_1024
-    if ((key->ecc.idx != ECC_CUSTOM_IDX) &&
-            (ecc_sets[key->ecc.idx].id == ECC_SAKKE_1)) {
-        err = sp_ModExp_Fp_star_1024(b, e, r);
-    }
-#endif
-
-    return err;
-}
-#else
 #ifdef WOLFSSL_SAKKE_SMALL
 /*
  * Modular exponentiate the value in F_p*.
@@ -5990,7 +5788,6 @@ static int sakke_modexp(SakkeKey* key, mp_int* b, mp_int* e, mp_int* r)
 
     return err;
 }
-#endif /* WOLFSSL_HAVE_SP_ECC */
 
 /*
  * Calculate the hash values h and v.
@@ -6398,17 +6195,6 @@ int wc_GenerateSakkePointITable(SakkeKey* key, byte* table, word32* len)
         err = BAD_FUNC_ARG;
     }
 
-#ifdef WOLFSSL_HAVE_SP_ECC
-    if (err == 0) {
-        SAVE_VECTOR_REGISTERS(return _svr_ret;);
-        err = sp_ecc_gen_table_1024(key->i.i, table, len, key->heap);
-        RESTORE_VECTOR_REGISTERS();
-    }
-    if (err == 0) {
-        key->i.table = table;
-        key->i.tableLen = *len;
-    }
-#else
     if ((err == 0) && (table == NULL)) {
         *len = 0;
         err = LENGTH_ONLY_E;
@@ -6423,7 +6209,6 @@ int wc_GenerateSakkePointITable(SakkeKey* key, byte* table, word32* len)
         key->i.tableLen = *len;
     }
     (void)table;
-#endif
 
     return err;
 }
@@ -6441,29 +6226,14 @@ int wc_GenerateSakkePointITable(SakkeKey* key, byte* table, word32* len)
 int wc_SetSakkePointITable(SakkeKey* key, byte* table, word32 len)
 {
     int err = 0;
-#ifdef WOLFSSL_HAVE_SP_ECC
-    word32 sz = 0;
-#endif
 
     if ((key == NULL) || (table == NULL)) {
         err = BAD_FUNC_ARG;
     }
 
-#ifdef WOLFSSL_HAVE_SP_ECC
-    if (err == 0) {
-        err = sp_ecc_gen_table_1024(key->i.i, NULL, &sz, NULL);
-        if (err == LENGTH_ONLY_E) {
-            err = 0;
-        }
-    }
-    if ((err == 0) && (len != sz)) {
-        err = BUFFER_E;
-    }
-#else
     if ((err == 0) && (len != 0)) {
         err = BUFFER_E;
     }
-#endif
 
     if (err == 0) {
         key->i.table = table;

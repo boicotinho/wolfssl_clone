@@ -77,7 +77,7 @@ typedef WOLFSSL_MD5_CTX MD5_CTX;
  * If FIPS V2 and NO_OLD_WC_NAMES defined
  * If FIPS v1 not allowed
  */
-#if defined(NO_OLD_MD5_NAME) && !defined(HAVE_FIPS)
+#if defined(NO_OLD_MD5_NAME)
 
     #define MD5               wolfSSL_MD5
 #endif

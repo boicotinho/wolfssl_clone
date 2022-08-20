@@ -323,9 +323,6 @@ WC_STATIC WC_INLINE int ConstantCompare(const byte* a, const byte* b, int length
 
 #ifndef WOLFSSL_HAVE_MIN
     #define WOLFSSL_HAVE_MIN
-    #if defined(HAVE_FIPS) && !defined(min) /* so ifdef check passes */
-        #define min min
-    #endif
     /* returns the smaller of a and b */
     WC_STATIC WC_INLINE word32 min(word32 a, word32 b)
     {
@@ -335,9 +332,6 @@ WC_STATIC WC_INLINE int ConstantCompare(const byte* a, const byte* b, int length
 
 #ifndef WOLFSSL_HAVE_MAX
     #define WOLFSSL_HAVE_MAX
-    #if defined(HAVE_FIPS) && !defined(max) /* so ifdef check passes */
-        #define max max
-    #endif
     WC_STATIC WC_INLINE word32 max(word32 a, word32 b)
     {
         return a > b ? a : b;

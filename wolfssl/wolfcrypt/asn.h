@@ -46,9 +46,6 @@ that can be serialized and deserialized in a cross-platform way.
 #include <wolfssl/wolfcrypt/integer.h>
 
 /* fips declare of RsaPrivateKeyDecode @wc_fips */
-#if defined(HAVE_FIPS)
-    #include <cyassl/ctaocrypt/rsa.h>
-#endif
 
     #include <wolfssl/wolfcrypt/dh.h>
     #include <wolfssl/wolfcrypt/sha.h>

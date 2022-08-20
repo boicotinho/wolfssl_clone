@@ -975,10 +975,6 @@ int EccSharedSecret(WOLFSSL* ssl, ecc_key* priv_key, ecc_key* pub_key,
 
 
     {
-#if defined(ECC_TIMING_RESISTANT) &&  !defined(HAVE_SELFTEST)
-        ret = wc_ecc_set_rng(priv_key, ssl->rng);
-        if (ret == 0)
-#endif
         {
             PRIVATE_KEY_UNLOCK();
             ret = wc_ecc_shared_secret(priv_key, pub_key, out, outlen);
@@ -1022,9 +1018,7 @@ int EccMakeKey(WOLFSSL* ssl, ecc_key* key, ecc_key* peer)
     /* make sure the curve is set for TLS */
     if (ret == 0 && key->dp) {
         ssl->ecdhCurveOID = key->dp->oidSum;
-    #if defined(HAVE_FFDHE)
         ssl->namedGroup = 0;
-    #endif
     }
 
     /* Handle async pending response */
@@ -1077,7 +1071,6 @@ int DhAgree(WOLFSSL* ssl, DhKey* dhKey,
 
 
     {
-#if !defined(HAVE_FIPS) && !defined(HAVE_SELFTEST)
         /* check the public key has valid number */
         if (dhKey != NULL && (prime == NULL || primeSz == 0)) {
             /* wc_DhCheckPubKey does not do exponentiation */
@@ -1092,7 +1085,6 @@ int DhAgree(WOLFSSL* ssl, DhKey* dhKey,
 
         }
         else
-#endif
         {
             PRIVATE_KEY_UNLOCK();
             ret = wc_DhAgree(dhKey, agree, agreeSz, priv, privSz, otherPub,
@@ -1285,10 +1277,7 @@ int SetSSL_CTX(WOLFSSL* ssl, WOLFSSL_CTX* ctx, int writeDup)
     ssl->options.quietShutdown = ctx->quietShutdown;
     ssl->options.groupMessages = ctx->groupMessages;
 
-    #if !defined(WOLFSSL_OLD_PRIME_CHECK) && !defined(HAVE_FIPS) && \
-        !defined(HAVE_SELFTEST)
         ssl->options.dhKeyTested = ctx->dhKeyTested;
-    #endif
     ssl->buffers.serverDH_P = ctx->serverDH_P;
     ssl->buffers.serverDH_G = ctx->serverDH_G;
 
@@ -1438,10 +1427,7 @@ int InitSSL(WOLFSSL* ssl, WOLFSSL_CTX* ctx, int writeDup)
     ssl->options.buildMsgState = BUILD_MSG_BEGIN;
     ssl->encrypt.state = CIPHER_STATE_BEGIN;
     ssl->decrypt.state = CIPHER_STATE_BEGIN;
-    #if !defined(WOLFSSL_OLD_PRIME_CHECK) && !defined(HAVE_FIPS) && \
-        !defined(HAVE_SELFTEST)
         ssl->options.dhDoKeyTest = 1;
-    #endif
 
 #ifdef HAVE_NETX
     ssl->IOCB_ReadCtx  = &ssl->nxCtx;  /* default NetX IO ctx, same for read */
@@ -1540,17 +1526,10 @@ int InitSSL(WOLFSSL* ssl, WOLFSSL_CTX* ctx, int writeDup)
         ssl->options.weOwnRng = 1;
 
         /* FIPS RNG API does not accept a heap hint */
-#ifndef HAVE_FIPS
         if ( (ret = wc_InitRng_ex(ssl->rng, ssl->heap, ssl->devId)) != 0) {
             WOLFSSL_MSG("RNG Init error");
             return ret;
         }
-#else
-        if ( (ret = wc_InitRng(ssl->rng)) != 0) {
-            WOLFSSL_MSG("RNG Init error");
-            return ret;
-        }
-#endif
     }
 
 #ifdef HAVE_WRITE_DUP
@@ -5494,7 +5473,7 @@ static int ChachaAEADDecrypt(WOLFSSL* ssl, byte* plain, const byte* input,
 
 
 
-#if !defined(NO_GCM_ENCRYPT_EXTRA) &&  (!defined(HAVE_FIPS) && !defined(HAVE_SELFTEST) )
+#if !defined(NO_GCM_ENCRYPT_EXTRA)
 /* The following type is used to share code between AES-GCM and AES-CCM. */
     typedef int (*AesAuthEncryptFunc)(Aes* aes, byte* out,
                                        const byte* in, word32 sz,
@@ -5559,12 +5538,6 @@ static WC_INLINE int EncryptDo(WOLFSSL* ssl, byte* out, const byte* input,
              * IV length minus the authentication tag size. */
             c16toa(sz - AESGCM_EXP_IV_SZ - ssl->specs.aead_mac_size,
                                 ssl->encrypt.additional + AEAD_LEN_OFFSET);
-#if !defined(NO_PUBLIC_GCM_SET_IV) &&  (defined(HAVE_FIPS) || defined(HAVE_SELFTEST) )
-            XMEMCPY(ssl->encrypt.nonce,
-                                ssl->keys.aead_enc_imp_IV, AESGCM_IMP_IV_SZ);
-            XMEMCPY(ssl->encrypt.nonce + AESGCM_IMP_IV_SZ,
-                                ssl->keys.aead_exp_IV, AESGCM_EXP_IV_SZ);
-#endif
             ret = aes_auth_fn(ssl->encrypt.aes,
                     out + AESGCM_EXP_IV_SZ, input + AESGCM_EXP_IV_SZ,
                     sz - AESGCM_EXP_IV_SZ - ssl->specs.aead_mac_size,
@@ -5572,7 +5545,7 @@ static WC_INLINE int EncryptDo(WOLFSSL* ssl, byte* out, const byte* input,
                     out + sz - ssl->specs.aead_mac_size,
                     ssl->specs.aead_mac_size,
                     ssl->encrypt.additional, AEAD_AUTH_DATA_SZ);
-#if !defined(NO_PUBLIC_GCM_SET_IV) &&  (!defined(HAVE_FIPS) && !defined(HAVE_SELFTEST) )
+#if !defined(NO_PUBLIC_GCM_SET_IV)
             XMEMCPY(out,
                     ssl->encrypt.nonce + AESGCM_IMP_IV_SZ, AESGCM_EXP_IV_SZ);
 #endif
@@ -5649,9 +5622,6 @@ static WC_INLINE int Encrypt(WOLFSSL* ssl, byte* out, const byte* input,
                 ssl->specs.bulk_cipher_algorithm == wolfssl_aes_gcm)
             {
                 /* finalize authentication cipher */
-#if !defined(NO_PUBLIC_GCM_SET_IV) &&  (defined(HAVE_FIPS) || defined(HAVE_SELFTEST) )
-                AeadIncrementExpIV(ssl);
-#endif
                 if (ssl->encrypt.nonce)
                     ForceZero(ssl->encrypt.nonce, AESGCM_NONCE_SZ);
             }
@@ -7285,12 +7255,6 @@ int BuildMessage(WOLFSSL* ssl, byte* output, int outSz, const byte* input,
                 if (ret != 0)
                     goto exit_buildmsg;
             }
-#if !defined(NO_PUBLIC_GCM_SET_IV) &&  (defined(HAVE_FIPS) || defined(HAVE_SELFTEST) )
-            if (ssl->specs.cipher_type == aead) {
-                if (ssl->specs.bulk_cipher_algorithm != wolfssl_chacha)
-                    XMEMCPY(args->iv, ssl->keys.aead_exp_IV, AESGCM_EXP_IV_SZ);
-            }
-#endif
 
             args->size = (word16)(args->sz - args->headerSz);    /* include mac and digest */
             AddRecordHeader(output, args->size, (byte)type, ssl, epochOrder);
@@ -8907,9 +8871,7 @@ int PickHashSigAlgo(WOLFSSL* ssl, const byte* hashSigAlgo, word32 hashSigAlgoSz)
             if (ret != 0 || hashAlgo <= ssl->suites->hashAlgo) {
                 ssl->suites->hashAlgo = hashAlgo;
                 ssl->suites->sigAlgo = sigAlgo;
-            #if defined(HAVE_FFDHE)
                 ssl->namedGroup = 0;
-            #endif
                 ret = 0;
             }
 
@@ -9715,12 +9677,10 @@ static int GetDhPublicKey(WOLFSSL* ssl, const byte* input, word32 size,
 {
     int             ret = 0;
     word16          length;
-#ifdef HAVE_FFDHE
 #ifdef HAVE_PUBLIC_FFDHE
     const DhParams* params = NULL;
 #endif
     word16          group = 0;
-#endif
 
     if (ssl->buffers.weOwnDH) {
         if (ssl->buffers.serverDH_P.buffer) {
@@ -9880,7 +9840,6 @@ static int GetDhPublicKey(WOLFSSL* ssl, const byte* input, word32 size,
     ssl->buffers.weOwnDH = 1;
     args->idx += length;
 
-#ifdef HAVE_FFDHE
     switch (ssl->options.dhKeySz) {
         case 2048/8:
             #ifdef HAVE_PUBLIC_FFDHE
@@ -9946,12 +9905,8 @@ static int GetDhPublicKey(WOLFSSL* ssl, const byte* input, word32 size,
     }
     else {
         ssl->namedGroup = group;
-    #if !defined(WOLFSSL_OLD_PRIME_CHECK) && !defined(HAVE_FIPS) && \
-        !defined(HAVE_SELFTEST)
         ssl->options.dhDoKeyTest = 0;
-    #endif
     }
-#endif /* HAVE_FFDHE */
 
 exit_gdpk:
     return ret;
@@ -10018,9 +9973,7 @@ static int DoServerKeyExchange(WOLFSSL* ssl, const byte* input,
                         ERROR_OUT(ECC_CURVE_ERROR, exit_dske);
                     }
                     ssl->ecdhCurveOID = curveOid;
-                #if defined(HAVE_FFDHE)
                     ssl->namedGroup = 0;
-                #endif
 
                     length = input[args->idx++];
                     if ((args->idx - args->begin) + length > size) {
@@ -10596,7 +10549,7 @@ int SendClientKeyExchange(WOLFSSL* ssl)
                         goto exit_scke;
                     }
 
-#if defined(HAVE_FFDHE) && !defined(HAVE_PUBLIC_FFDHE)
+#if !defined(HAVE_PUBLIC_FFDHE)
                     if (ssl->namedGroup) {
                         ret = wc_DhSetNamedKey(ssl->buffers.serverDH_Key,
                                 ssl->namedGroup);
@@ -10608,8 +10561,6 @@ int SendClientKeyExchange(WOLFSSL* ssl)
                     }
                     else
 #endif
-                    #if !defined(HAVE_FIPS) && !defined(HAVE_SELFTEST) && \
-                        !defined(WOLFSSL_OLD_PRIME_CHECK)
                     if (ssl->options.dhDoKeyTest &&
                         !ssl->options.dhKeyTested)
                     {
@@ -10625,7 +10576,6 @@ int SendClientKeyExchange(WOLFSSL* ssl)
                         ssl->options.dhKeyTested = 1;
                     }
                     else
-                    #endif
                     {
                         ret = wc_DhSetKey(ssl->buffers.serverDH_Key,
                             ssl->buffers.serverDH_P.buffer,
@@ -10650,7 +10600,6 @@ int SendClientKeyExchange(WOLFSSL* ssl)
                 {
                     ssl->arrays->preMasterSz = ENCRYPT_LEN;
 
-                #if defined(HAVE_ECC_KEY_EXPORT)
 
                     /* Place ECC key in buffer, leaving room for size */
                     PRIVATE_KEY_UNLOCK();
@@ -10660,7 +10609,6 @@ int SendClientKeyExchange(WOLFSSL* ssl)
                     if (ret != 0) {
                         ERROR_OUT(ECC_EXPORT_ERROR, exit_scke);
                     }
-                #endif /* HAVE_ECC */
                     break;
                 }
 

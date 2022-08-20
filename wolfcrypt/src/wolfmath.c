@@ -40,7 +40,7 @@
     #include <wolfcrypt/src/misc.c>
 
 
-#if !defined(WC_NO_CACHE_RESISTANT) &&  ( defined(ECC_TIMING_RESISTANT) ||  defined(TFM_TIMING_RESISTANT))
+#if !defined(WC_NO_CACHE_RESISTANT) && defined(TFM_TIMING_RESISTANT)
 
     /* all off / all on pointer addresses for constant calculations */
     /* ecc.c uses same table */
@@ -115,8 +115,7 @@ int mp_cond_copy(mp_int* a, int copy, mp_int* b)
             b->dp[i] ^= (get_digit(a, i) ^ get_digit(b, i)) & mask;
         }
         b->used ^= (a->used ^ b->used) & (int)mask;
-#if (!defined(WOLFSSL_SP_MATH) && !defined(WOLFSSL_SP_MATH_ALL)) || \
-    defined(WOLFSSL_SP_INT_NEGATIVE)
+#if !defined(WOLFSSL_SP_MATH_ALL) ||  defined(WOLFSSL_SP_INT_NEGATIVE)
         b->sign ^= (a->sign ^ b->sign) & (int)mask;
 #endif
     }
@@ -143,7 +142,7 @@ int mp_rand(mp_int* a, int digits, WC_RNG* rng)
         ret = BAD_FUNC_ARG;
     }
 
-#if defined(WOLFSSL_SP_MATH) || defined(WOLFSSL_SP_MATH_ALL)
+#if defined(WOLFSSL_SP_MATH_ALL)
     if ((ret == MP_OKAY) && (digits > SP_INT_DIGITS))
 #else
     if ((ret == MP_OKAY) && (digits > FP_SIZE))

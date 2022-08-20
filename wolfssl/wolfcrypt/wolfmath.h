@@ -46,7 +46,7 @@ This library provides big integer math functions.
 #endif
 
 /* timing resistance array */
-#if !defined(WC_NO_CACHE_RESISTANT) &&  ( defined(ECC_TIMING_RESISTANT) ||  defined(TFM_TIMING_RESISTANT))
+#if !defined(WC_NO_CACHE_RESISTANT) && defined(TFM_TIMING_RESISTANT)
 
     extern const wc_ptr_t wc_off_on_addr[2];
 #endif

@@ -518,8 +518,7 @@ int wolfSSL_SetTlsHmacInner(WOLFSSL* ssl, byte* inner, word32 sz, int content,
 }
 
 
-#if !defined(WOLFSSL_NO_HASH_RAW) && !defined(HAVE_FIPS) && \
-    !defined(HAVE_SELFTEST)
+#if !defined(WOLFSSL_NO_HASH_RAW)
 
 /* Update the hash in the HMAC.
  *
@@ -768,8 +767,7 @@ static int Hmac_UpdateFinal_CT(Hmac* hmac, byte* digest, const byte* in,
 
 #endif
 
-#if defined(WOLFSSL_NO_HASH_RAW) || defined(HAVE_FIPS) || \
-    defined(HAVE_SELFTEST) || defined(HAVE_BLAKE2)
+#if defined(WOLFSSL_NO_HASH_RAW) || defined(HAVE_BLAKE2)
 
 /* Calculate the HMAC of the header + message data.
  * Constant time implementation using normal hashing operations.
@@ -918,8 +916,7 @@ int TLS_hmac(WOLFSSL* ssl, byte* digest, const byte* in, word32 sz, int padSz,
     if (ret == 0) {
         /* Constant time verification required. */
         if (verify && padSz >= 0) {
-#if !defined(WOLFSSL_NO_HASH_RAW) && !defined(HAVE_FIPS) && \
-    !defined(HAVE_SELFTEST)
+#if !defined(WOLFSSL_NO_HASH_RAW)
     #ifdef HAVE_BLAKE2
             if (wolfSSL_GetHmacType(ssl) == WC_HASH_TYPE_BLAKE2B) {
                 ret = Hmac_UpdateFinal(&hmac, digest, in,
@@ -2310,12 +2307,7 @@ int TLSX_UseCertificateStatusRequestV2(TLSX** extensions, byte status_type,
             if (options & WOLFSSL_CSR2_OCSP_USE_NONCE) {
                 WC_RNG rng;
 
-            #ifndef HAVE_FIPS
                 ret = wc_InitRng_ex(&rng, heap, devId);
-            #else
-                ret = wc_InitRng(&rng);
-                (void)devId;
-            #endif
                 if (ret == 0) {
                     if (wc_RNG_GenerateBlock(&rng, csr2->request.ocsp[0].nonce,
                                                         MAX_OCSP_NONCE_SZ) == 0)
@@ -2467,7 +2459,6 @@ static int TLSX_PointFormat_Append(PointFormat* list, byte format, void* heap)
 }
 
 
-#if defined(HAVE_FFDHE)
 static void TLSX_SupportedCurve_ValidateRequest(const WOLFSSL* ssl,
                                                 const byte* semaphore)
 {
@@ -2477,29 +2468,6 @@ static void TLSX_SupportedCurve_ValidateRequest(const WOLFSSL* ssl,
     (void)ssl;
     (void)semaphore;
 }
-#else
-static void TLSX_SupportedCurve_ValidateRequest(WOLFSSL* ssl, byte* semaphore)
-{
-    word16 i;
-
-    for (i = 0; i < ssl->suites->suiteSz; i += 2) {
-        if (ssl->suites->suites[i] == TLS13_BYTE)
-            return;
-        if ((ssl->suites->suites[i] == ECC_BYTE) ||
-                (ssl->suites->suites[i] == CHACHA_BYTE)) {
-            return;
-        }
-        #ifdef HAVE_FFDHE
-        else {
-            return;
-        }
-        #endif
-    }
-
-    /* turns semaphore on to avoid sending this extension. */
-    TURN_ON(semaphore, TLSX_ToSemaphore(TLSX_SUPPORTED_GROUPS));
-}
-#endif
 
 /* Only send PointFormats if TLSv13, ECC or CHACHA cipher suite present.
  */
@@ -2515,13 +2483,8 @@ static void TLSX_PointFormat_ValidateRequest(WOLFSSL* ssl, byte* semaphore)
             return;
         }
     }
-#ifdef HAVE_FFDHE
     (void)semaphore;
     return;
-#else
-   /* turns semaphore on to avoid sending this extension. */
-   TURN_ON(semaphore, TLSX_ToSemaphore(TLSX_EC_POINT_FORMATS));
-#endif
 }
 
 
@@ -3682,8 +3645,6 @@ static int TLSX_PopulateSupportedGroups(WOLFSSL* ssl, TLSX** extensions)
                 if (ret != WOLFSSL_SUCCESS) return ret;
         #endif
 
-        #ifndef HAVE_FIPS
-        #endif /* HAVE_FIPS */
 
         #if ECC_MIN_KEY_SZ <= 256
                 ret = TLSX_UseSupportedCurve(extensions,
@@ -3691,8 +3652,6 @@ static int TLSX_PopulateSupportedGroups(WOLFSSL* ssl, TLSX** extensions)
                 if (ret != WOLFSSL_SUCCESS) return ret;
         #endif
 
-        #ifndef HAVE_FIPS
-        #endif /* HAVE_FIPS */
 
         #if ECC_MIN_KEY_SZ <= 224
                 ret = TLSX_UseSupportedCurve(extensions,
@@ -3700,8 +3659,6 @@ static int TLSX_PopulateSupportedGroups(WOLFSSL* ssl, TLSX** extensions)
                 if (ret != WOLFSSL_SUCCESS) return ret;
         #endif
 
-    #ifndef HAVE_FIPS
-    #endif /* HAVE_FIPS */
 
             /* Add FFDHE supported groups. */
         #ifdef HAVE_FFDHE_8192

@@ -135,7 +135,6 @@ void* wolfSSL_Malloc(size_t size)
     #endif
     }
     else {
-    #ifndef WOLFSSL_NO_MALLOC
         #ifdef WOLFSSL_TRAP_MALLOC_SZ
         if (size > WOLFSSL_TRAP_MALLOC_SZ) {
             WOLFSSL_MSG("Malloc too big!");
@@ -144,9 +143,6 @@ void* wolfSSL_Malloc(size_t size)
         #endif
 
         res = malloc(size);
-    #else
-        WOLFSSL_MSG("No malloc available");
-    #endif
     }
 
 #ifdef WOLFSSL_DEBUG_MEMORY
@@ -207,11 +203,7 @@ void wolfSSL_Free(void *ptr)
     #endif
     }
     else {
-    #ifndef WOLFSSL_NO_MALLOC
         free(ptr);
-    #else
-        WOLFSSL_MSG("No free available");
-    #endif
     }
 }
 
@@ -231,11 +223,7 @@ void* wolfSSL_Realloc(void *ptr, size_t size)
     #endif
     }
     else {
-    #ifndef WOLFSSL_NO_MALLOC
         res = realloc(ptr, size);
-    #else
-        WOLFSSL_MSG("No realloc available");
-    #endif
     }
 
     return res;

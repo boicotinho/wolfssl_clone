@@ -32,22 +32,6 @@
 
 
 
-#if defined(HAVE_FIPS)
-    #define wc_Sha256             Sha256
-    #define WC_SHA256             SHA256
-    #define WC_SHA256_BLOCK_SIZE  SHA256_BLOCK_SIZE
-    #define WC_SHA256_DIGEST_SIZE SHA256_DIGEST_SIZE
-    #define WC_SHA256_PAD_SIZE    SHA256_PAD_SIZE
-
-        #define wc_Sha224             Sha224
-        #define WC_SHA224             SHA224
-        #define WC_SHA224_BLOCK_SIZE  SHA224_BLOCK_SIZE
-        #define WC_SHA224_DIGEST_SIZE SHA224_DIGEST_SIZE
-        #define WC_SHA224_PAD_SIZE    SHA224_PAD_SIZE
-
-    /* for fips @wc_fips */
-    #include <cyassl/ctaocrypt/sha256.h>
-#endif
 
 #ifdef FREESCALE_LTC_SHA
     #include "fsl_ltc.h"
@@ -69,7 +53,6 @@
 #endif
 
 /* avoid redefinition of structs */
-#if !defined(HAVE_FIPS)
 
 #ifdef WOLFSSL_MICROCHIP_PIC32MZ
     #include <wolfssl/wolfcrypt/port/pic32/pic32mz-crypt.h>
@@ -82,12 +65,6 @@
 #endif
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT)
     #include "wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h"
-#endif
-#if defined(WOLFSSL_CRYPTOCELL)
-    #include <wolfssl/wolfcrypt/port/arm/cryptoCell.h>
-#endif
-#if defined(WOLFSSL_SILABS_SE_ACCEL)
-    #include <wolfssl/wolfcrypt/port/silabs/silabs_hash.h>
 #endif
 #if defined(WOLFSSL_KCAPI_HASH)
     #include "wolfssl/wolfcrypt/port/kcapi/kcapi_hash.h"
@@ -139,20 +116,13 @@ enum {
     #include "wolfssl/wolfcrypt/port/Renesas/renesas-sce-crypt.h"
 #else
 
-#if defined(WOLFSSL_SE050) && defined(WOLFSSL_SE050_HASH)
-    #include "wolfssl/wolfcrypt/port/nxp/se050_port.h"
-#endif
 
 /* wc_Sha256 digest */
 struct wc_Sha256 {
 #ifdef FREESCALE_LTC_SHA
     ltc_hash_ctx_t ctx;
-#elif defined(WOLFSSL_SE050) && defined(WOLFSSL_SE050_HASH)
-    SE050_HASH_Context se050Ctx;
 #elif defined(STM32_HASH_SHA2)
     STM32_HASH_Context stmCtx;
-#elif defined(WOLFSSL_SILABS_SE_ACCEL)
-  wc_silabs_sha_t silabsCtx;
 #elif defined(WOLFSSL_IMXRT_DCP)
     dcp_handle_t handle;
     dcp_hash_ctx_t ctx;
@@ -189,9 +159,6 @@ struct wc_Sha256 {
    !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
     WC_ESP32SHA ctx;
 #endif
-#ifdef WOLFSSL_CRYPTOCELL
-    CRYS_HASHUserContext_t ctx;
-#endif
 #ifdef WOLFSSL_KCAPI_HASH
     wolfssl_KCAPI_Hash kcapi;
 #endif
@@ -207,7 +174,6 @@ struct wc_Sha256 {
 
 #endif
 
-#endif /* HAVE_FIPS */
 
 WOLFSSL_API int wc_InitSha256(wc_Sha256* sha);
 WOLFSSL_API int wc_InitSha256_ex(wc_Sha256* sha, void* heap, int devId);
@@ -231,7 +197,6 @@ WOLFSSL_API void wc_Sha256SizeSet(wc_Sha256* sha256, word32 len);
 #endif
 
 /* avoid redefinition of structs */
-#if !defined(HAVE_FIPS)
 
 #if !defined(NO_OLD_SHA_NAMES)
     #define SHA224             WC_SHA224
@@ -257,7 +222,6 @@ enum {
     typedef struct wc_Sha256 wc_Sha224;
     #define WC_SHA224_TYPE_DEFINED
 #endif
-#endif /* HAVE_FIPS */
 
 WOLFSSL_API int wc_InitSha224(wc_Sha224* sha224);
 WOLFSSL_API int wc_InitSha224_ex(wc_Sha224* sha224, void* heap, int devId);

@@ -44,52 +44,6 @@ This library contains implementation for the random number generator.
 
 
 /* If building for old FIPS. */
-#if defined(HAVE_FIPS)
-
-int wc_GenerateSeed(OS_Seed* os, byte* seed, word32 sz)
-{
-    return GenerateSeed(os, seed, sz);
-}
-
-int wc_InitRng_ex(WC_RNG* rng, void* heap, int devId)
-{
-    (void)heap;
-    (void)devId;
-    return InitRng_fips(rng);
-}
-
-int wc_InitRng(WC_RNG* rng)
-{
-    return InitRng_fips(rng);
-}
-
-
-int wc_RNG_GenerateBlock(WC_RNG* rng, byte* b, word32 sz)
-{
-    return RNG_GenerateBlock_fips(rng, b, sz);
-}
-
-
-int wc_RNG_GenerateByte(WC_RNG* rng, byte* b)
-{
-    return RNG_GenerateByte(rng, b);
-}
-
-
-    int wc_FreeRng(WC_RNG* rng)
-    {
-        return FreeRng_fips(rng);
-    }
-
-    int wc_RNG_HealthTest(int reseed, const byte* seedA, word32 seedASz,
-                                      const byte* seedB, word32 seedBSz,
-                                      byte* output, word32 outputSz)
-    {
-        return RNG_HealthTest_fips(reseed, seedA, seedASz,
-                              seedB, seedBSz, output, outputSz);
-   }
-
-#else /* else build without fips, or for new fips */
 
 #ifndef WC_NO_RNG /* if not FIPS and RNG is disabled then do not compile */
 
@@ -143,9 +97,6 @@ int wc_RNG_GenerateByte(WC_RNG* rng, byte* b)
         #include <unistd.h>
 #endif
 
-#if defined(WOLFSSL_SILABS_SE_ACCEL)
-#include <wolfssl/wolfcrypt/port/silabs/silabs_random.h>
-#endif
 
 #if defined(WOLFSSL_IOTSAFE) && defined(HAVE_IOTSAFE_HWRNG)
 #include <wolfssl/wolfcrypt/port/iotsafe/iotsafe.h>
@@ -735,7 +686,6 @@ static int _InitRng(WC_RNG* rng, byte* nonce, word32 nonceSz,
         byte seed[MAX_SEED_SZ];
     #endif
 
-#if !defined(WOLFSSL_NO_MALLOC)
         rng->drbg =
                 (struct DRBG*)XMALLOC(sizeof(DRBG_internal), rng->heap,
                                                           DYNAMIC_TYPE_RNG);
@@ -743,9 +693,6 @@ static int _InitRng(WC_RNG* rng, byte* nonce, word32 nonceSz,
             ret = MEMORY_E;
             rng->status = DRBG_FAILED;
         }
-#else
-        rng->drbg = (struct DRBG*)&rng->drbg_data;
-#endif
         if (ret == 0) {
 #ifdef WC_RNG_SEED_CB
             if (seedCb == NULL) {
@@ -773,9 +720,7 @@ static int _InitRng(WC_RNG* rng, byte* nonce, word32 nonceSz,
                             nonce, nonceSz, rng->heap, devId);
 
             if (ret != DRBG_SUCCESS) {
-            #if !defined(WOLFSSL_NO_MALLOC)
                 XFREE(rng->drbg, rng->heap, DYNAMIC_TYPE_RNG);
-            #endif
                 rng->drbg = NULL;
             }
         }
@@ -882,9 +827,6 @@ int wc_RNG_GenerateBlock(WC_RNG* rng, byte* output, word32 sz)
     if (IS_INTEL_RDRAND(intel_flags))
         return wc_GenerateRand_IntelRD(NULL, output, sz);
 
-#if defined(WOLFSSL_SILABS_SE_ACCEL) && defined(WOLFSSL_SILABS_TRNG)
-    return silabs_GenerateRand(output, sz);
-#endif
 
 
 #ifdef CUSTOM_RAND_GENERATE_BLOCK
@@ -957,9 +899,7 @@ int wc_FreeRng(WC_RNG* rng)
       if (Hash_DRBG_Uninstantiate((DRBG_internal *)rng->drbg) != DRBG_SUCCESS)
             ret = RNG_FAILURE_E;
 
-    #if !defined(WOLFSSL_NO_MALLOC)
         XFREE(rng->drbg, rng->heap, DYNAMIC_TYPE_RNG);
-    #endif
         rng->drbg = NULL;
     }
 
@@ -1767,13 +1707,6 @@ int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz)
      */
     #define USE_TEST_GENSEED
 
-#elif defined(WOLFSSL_SILABS_SE_ACCEL)
-    int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz)
-    {
-        (void)os;
-        return silabs_GenerateRand(output, sz);
-    }
-
 #elif defined(STM32_RNG)
      /* Generate a RNG seed using the hardware random number generator
       * on the STM32F2/F4/F7/L4. */
@@ -2425,25 +2358,6 @@ int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz)
             }
             return 0;
         }
-#elif defined(WOLFSSL_SE050)
-     #include <wolfssl/wolfcrypt/port/nxp/se050_port.h>
-
-    int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz){
-        int ret = 0;
-
-        (void)os;
-
-        if (output == NULL) {
-            return BUFFER_E;
-        }
-        ret = wolfSSL_CryptHwMutexLock();
-        if (ret == 0) {
-            ret = se050_get_random_number(sz, output);
-            wolfSSL_CryptHwMutexUnLock();
-        }
-        return ret;
-    }
-
 #elif defined(DOLPHIN_EMULATOR)
 
         int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz)
@@ -2605,4 +2519,3 @@ int wc_hwrng_generate_block(byte *output, word32 sz)
 #endif
 
 #endif /* WC_NO_RNG */
-#endif /* HAVE_FIPS */

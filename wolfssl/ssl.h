@@ -2664,20 +2664,6 @@ WOLFSSL_API int wolfSSL_SecureResume(WOLFSSL* ssl);
 WOLFSSL_API long wolfSSL_SSL_get_secure_renegotiation_support(WOLFSSL* ssl);
 
 
-#if defined(HAVE_SELFTEST) && \
-    (!defined(HAVE_SELFTEST_VERSION) || (HAVE_SELFTEST_VERSION < 2))
-
-    /* Needed by session ticket stuff below */
-    #ifndef WOLFSSL_AES_KEY_SIZE_ENUM
-    #define WOLFSSL_AES_KEY_SIZE_ENUM
-    enum SSL_Misc {
-        AES_IV_SIZE         = 16,
-        AES_128_KEY_SIZE    = 16,
-        AES_192_KEY_SIZE    = 24,
-        AES_256_KEY_SIZE    = 32
-    };
-    #endif
-#endif
 
 /* Session Ticket */
 

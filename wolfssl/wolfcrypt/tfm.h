@@ -325,7 +325,7 @@
 typedef struct fp_int {
     int      used;
     int      sign;
-#if defined(ALT_ECC_SIZE) || defined(HAVE_WOLF_BIGINT)
+#if defined(HAVE_WOLF_BIGINT)
     int      size;
 #endif
     fp_digit dp[FP_SIZE];

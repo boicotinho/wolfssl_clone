@@ -33,7 +33,7 @@
    may not be faster on all
 */
 #include <wolfssl/wolfcrypt/types.h>       /* will set MP_xxBIT if not default */
-#if defined(WOLFSSL_SP_MATH) || defined(WOLFSSL_SP_MATH_ALL)
+#if defined(WOLFSSL_SP_MATH_ALL)
     #include <wolfssl/wolfcrypt/sp_int.h>
 #else
     #include <wolfssl/wolfcrypt/tfm.h>

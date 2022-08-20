@@ -1618,7 +1618,7 @@ static int wc_PKCS7_RsaSign(PKCS7* pkcs7, byte* in, word32 inSz, ESD* esd)
             /* If not using old FIPS or CAVP selftest, or not using FAST,
              * or USER RSA, able to check RSA key. */
             if (ret == 0) {
-        #if !defined(WOLFSSL_RSA_PUBLIC_ONLY) && !defined(HAVE_FAST_RSA) &&  !defined(HAVE_USER_RSA) && !defined(HAVE_FIPS) &&  !defined(HAVE_SELFTEST) && !defined(HAVE_INTEL_QA)
+        #if !defined(WOLFSSL_RSA_PUBLIC_ONLY) && !defined(HAVE_FAST_RSA) && !defined(HAVE_USER_RSA) && !defined(HAVE_INTEL_QA)
 
             #if defined(WOLFSSL_KEY_GEN) && !defined(WOLFSSL_NO_RSA_KEY_CHECK)
                 /* verify imported private key is a valid key before using it */
@@ -5237,16 +5237,7 @@ static int wc_PKCS7_KariGenerateKEK(WC_PKCS7_KARI* kari, WC_RNG* rng,
     if (secret == NULL)
         return MEMORY_E;
 
-#if defined(ECC_TIMING_RESISTANT) &&  !defined(HAVE_SELFTEST)
-    ret = wc_ecc_set_rng(kari->senderKey, rng);
-    if (ret != 0)
-        return ret;
-    ret = wc_ecc_set_rng(kari->recipKey, rng);
-    if (ret != 0)
-        return ret;
-#else
     (void)rng;
-#endif
 
     if (kari->direction == WC_PKCS7_ENCODE) {
         PRIVATE_KEY_UNLOCK();

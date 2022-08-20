@@ -63,58 +63,10 @@ where 0 <= L < 2^64.
 
 
 /* fips wrapper calls, user can call direct */
-#if defined(HAVE_FIPS)
-
-    int wc_InitSha256(wc_Sha256* sha)
-    {
-        if (sha == NULL) {
-            return BAD_FUNC_ARG;
-        }
-        return InitSha256_fips(sha);
-    }
-    int wc_InitSha256_ex(wc_Sha256* sha, void* heap, int devId)
-    {
-        (void)heap;
-        (void)devId;
-        if (sha == NULL) {
-            return BAD_FUNC_ARG;
-        }
-        return InitSha256_fips(sha);
-    }
-    int wc_Sha256Update(wc_Sha256* sha, const byte* data, word32 len)
-    {
-        if (sha == NULL ||  (data == NULL && len > 0)) {
-            return BAD_FUNC_ARG;
-        }
-
-        if (data == NULL && len == 0) {
-            /* valid, but do nothing */
-            return 0;
-        }
-
-        return Sha256Update_fips(sha, data, len);
-    }
-    int wc_Sha256Final(wc_Sha256* sha, byte* out)
-    {
-        if (sha == NULL || out == NULL) {
-            return BAD_FUNC_ARG;
-        }
-        return Sha256Final_fips(sha, out);
-    }
-    void wc_Sha256Free(wc_Sha256* sha)
-    {
-        (void)sha;
-        /* Not supported in FIPS */
-    }
-
-#else /* else build without fips, or for FIPS v2 */
 
 
 #if defined(WOLFSSL_TI_HASH)
     /* #include <wolfcrypt/src/port/ti/ti-hash.c> included by wc_port.c */
-#elif defined(WOLFSSL_CRYPTOCELL)
-    /* wc_port.c includes wolfcrypt/src/port/arm/cryptoCellHash.c */
-
 #elif defined(WOLFSSL_PSOC6_CRYPTO)
 
 
@@ -127,9 +79,6 @@ where 0 <= L < 2^64.
 
 #ifdef WOLFSSL_DEVCRYPTO_HASH
     #include <wolfssl/wolfcrypt/port/devcrypto/wc_devcrypto.h>
-#endif
-#if defined(WOLFSSL_SE050) && defined(WOLFSSL_SE050_HASH)
-    #include <wolfssl/wolfcrypt/port/nxp/se050_port.h>
 #endif
 
 
@@ -155,7 +104,7 @@ where 0 <= L < 2^64.
 #endif
 
 
-#if !defined(WOLFSSL_PIC32MZ_HASH) && !defined(STM32_HASH_SHA2) &&  (!defined(WOLFSSL_IMX6_CAAM) || defined(NO_IMX6_CAAM_HASH) ) &&  !defined(WOLFSSL_AFALG_HASH) && !defined(WOLFSSL_DEVCRYPTO_HASH) &&  (!defined(WOLFSSL_ESP32WROOM32_CRYPT) || defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)) &&  (!defined(WOLFSSL_RENESAS_TSIP_CRYPT) || defined(NO_WOLFSSL_RENESAS_TSIP_HASH)) &&  !defined(WOLFSSL_PSOC6_CRYPTO) && !defined(WOLFSSL_IMXRT_DCP) && !defined(WOLFSSL_SILABS_SE_ACCEL) &&  !defined(WOLFSSL_KCAPI_HASH) && !defined(WOLFSSL_SE050_HASH) &&  (!defined(WOLFSSL_RENESAS_SCEPROTECT) || defined(NO_WOLFSSL_RENESAS_SCEPROTECT_HASH)) &&  (!defined(WOLFSSL_HAVE_PSA) || defined(WOLFSSL_PSA_NO_HASH))
+#if !defined(WOLFSSL_PIC32MZ_HASH) && !defined(STM32_HASH_SHA2) && (!defined(WOLFSSL_IMX6_CAAM) || defined(NO_IMX6_CAAM_HASH) ) && !defined(WOLFSSL_AFALG_HASH) && !defined(WOLFSSL_DEVCRYPTO_HASH) && (!defined(WOLFSSL_ESP32WROOM32_CRYPT) || defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)) && (!defined(WOLFSSL_RENESAS_TSIP_CRYPT) || defined(NO_WOLFSSL_RENESAS_TSIP_HASH)) && !defined(WOLFSSL_PSOC6_CRYPTO) && !defined(WOLFSSL_IMXRT_DCP) && !defined(WOLFSSL_KCAPI_HASH) && !defined(WOLFSSL_SE050_HASH) && (!defined(WOLFSSL_RENESAS_SCEPROTECT) || defined(NO_WOLFSSL_RENESAS_SCEPROTECT_HASH)) && (!defined(WOLFSSL_HAVE_PSA) || defined(WOLFSSL_PSA_NO_HASH))
 
 
 
@@ -902,32 +851,6 @@ static int InitSha256(wc_Sha256* sha256)
 
         return ret;
     }
-#elif defined(WOLFSSL_SE050) && defined(WOLFSSL_SE050_HASH)
-
-    int wc_InitSha224_ex(wc_Sha224* sha224, void* heap, int devId)
-    {
-        if (sha224 == NULL) {
-            return BAD_FUNC_ARG;
-        }
-        (void)devId;
-
-        return se050_hash_init(&sha224->se050Ctx, heap);
-    }
-
-    int wc_Sha224Update(wc_Sha224* sha224, const byte* data, word32 len)
-    {
-        return se050_hash_update(&sha224->se050Ctx, data, len);
-    }
-
-    int wc_Sha224Final(wc_Sha224* sha224, byte* hash)
-    {
-        int ret = 0;
-        ret = se050_hash_final(&sha224->se050Ctx, hash, WC_SHA224_DIGEST_SIZE,
-                               kAlgorithm_SSS_SHA224);
-        (void)wc_InitSha224(sha224);
-        return ret;
-    }
-
 #elif defined(WOLFSSL_IMX6_CAAM) && !defined(NO_IMX6_CAAM_HASH)
     /* functions defined in wolfcrypt/src/port/caam/caam_sha256.c */
 
@@ -936,9 +859,6 @@ static int InitSha256(wc_Sha256* sha256)
 
 #elif defined(WOLFSSL_DEVCRYPTO_HASH)
     /* implemented in wolfcrypt/src/port/devcrypto/devcrypt_hash.c */
-
-#elif defined(WOLFSSL_SILABS_SE_ACCEL)
-    /* implemented in wolfcrypt/src/port/silabs/silabs_hash.c */
 
 #elif defined(WOLFSSL_KCAPI_HASH) && !defined(WOLFSSL_NO_KCAPI_SHA224)
     /* implemented in wolfcrypt/src/port/kcapi/kcapi_hash.c */
@@ -1159,7 +1079,6 @@ int wc_Sha224_Grow(wc_Sha224* sha224, const byte* in, int inSz)
 #endif /* WOLFSSL_HASH_KEEP */
 
 #endif /* !WOLFSSL_TI_HASH */
-#endif /* HAVE_FIPS */
 
 
 #ifndef WOLFSSL_TI_HASH
@@ -1199,10 +1118,6 @@ int wc_Sha224_Grow(wc_Sha224* sha224, const byte* in, int inSz)
         dst->W = NULL;
     #endif
 
-    #ifdef WOLFSSL_SILABS_SE_ACCEL
-        dst->silabsCtx.hash_ctx.cmd_ctx = &(dst->silabsCtx.cmd_ctx);
-        dst->silabsCtx.hash_ctx.hash_type_ctx = &(dst->silabsCtx.hash_type_ctx);
-    #endif
 
     #ifdef WOLFSSL_HASH_FLAGS
         dst->flags |= WC_HASH_FLAG_ISCOPY;
@@ -1310,10 +1225,6 @@ int wc_Sha256Copy(wc_Sha256* src, wc_Sha256* dst)
     dst->W = NULL;
 #endif
 
-#ifdef WOLFSSL_SILABS_SE_ACCEL
-    dst->silabsCtx.hash_ctx.cmd_ctx = &(dst->silabsCtx.cmd_ctx);
-    dst->silabsCtx.hash_ctx.hash_type_ctx = &(dst->silabsCtx.hash_type_ctx);
-#endif
 
 #ifdef WOLFSSL_PIC32MZ_HASH
     ret = wc_Pic32HashCopy(&src->cache, &dst->cache);

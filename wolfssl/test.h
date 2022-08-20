@@ -296,31 +296,6 @@
     /* Whitewood netRandom default config file */
     #define wnrConfig     "wnr-example.conf"
 #endif
-#elif defined(NETOS) && defined(HAVE_FIPS)
-    /* These defines specify the file system volume and root directory used by
-     * the FTP server used in the only supported NETOS FIPS solution (at this
-     * time), these can be tailored in the event a future FIPS solution is added
-     * for an alternate NETOS use-case */
-    #define FS_VOLUME1     "FLASH0"
-    #define FS_VOLUME1_DIR FS_VOLUME1 "/"
-    #define caCertFile     FS_VOLUME1_DIR "certs/ca-cert.pem"
-    #define eccCertFile    FS_VOLUME1_DIR "certs/server-ecc.pem"
-    #define eccKeyFile     FS_VOLUME1_DIR "certs/ecc-key.pem"
-    #define svrCertFile    FS_VOLUME1_DIR "certs/server-cert.pem"
-    #define svrKeyFile     FS_VOLUME1_DIR "certs/server-key.pem"
-    #define cliCertFile    FS_VOLUME1_DIR "certs/client-cert.pem"
-    #define cliKeyFile     FS_VOLUME1_DIR "certs/client-key.pem"
-    #define ntruCertFile   FS_VOLUME1_DIR "certs/ntru-cert.pem"
-    #define ntruKeyFile    FS_VOLUME1_DIR "certs/ntru-key.raw"
-    #define dhParamFile    FS_VOLUME1_DIR "certs/dh2048.pem"
-    #define cliEccKeyFile  FS_VOLUME1_DIR "certs/ecc-client-key.pem"
-    #define cliEccCertFile FS_VOLUME1_DIR "certs/client-ecc-cert.pem"
-    #define caEccCertFile  FS_VOLUME1_DIR "certs/ca-ecc-cert/pem"
-    #define crlPemDir      FS_VOLUME1_DIR "certs/crl"
-    #ifdef HAVE_WNR
-        /* Whitewood netRandom default config file */
-        #define wnrConfig  "wnr-example.conf"
-    #endif
 #else
 #define caCertFile        "./certs/ca-cert.pem"
 #define eccCertFile       "./certs/server-ecc.pem"

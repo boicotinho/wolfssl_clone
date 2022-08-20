@@ -35,9 +35,6 @@
 #include <wolfssl/wolfcrypt/error-crypt.h>
 #include <wolfssl/wolfcrypt/eccsi.h>
 #include <wolfssl/wolfcrypt/asn_public.h>
-#ifdef WOLFSSL_HAVE_SP_ECC
-    #include <wolfssl/wolfcrypt/sp.h>
-#endif
 
 /**
  * Initialize the components of the ECCSI key and use the specified curve.
@@ -283,7 +280,6 @@ static int eccsi_encode_base(EccsiKey* key, byte* data, word32* dataSz)
     return err;
 }
 
-#ifndef WOLFSSL_HAVE_SP_ECC
 /*
  * Convert the KPAK to montgomery form.
  *
@@ -319,7 +315,6 @@ static int eccsi_kpak_to_mont(EccsiKey* key)
 
     return err;
 }
-#endif
 
 /*
  * Convert the KPAK from montgomery form.
@@ -1334,16 +1329,6 @@ static int eccsi_mulmod_base_add(EccsiKey* key, const mp_int* n,
 {
     int err = 0;
 
-#ifdef WOLFSSL_HAVE_SP_ECC
-#ifndef WOLFSSL_SP_NO_256
-    if ((key->ecc.idx != ECC_CUSTOM_IDX) &&
-            (ecc_sets[key->ecc.idx].id == ECC_SECP256R1)) {
-        err = sp_ecc_mulmod_base_add_256(n, a, 1, res, map, key->heap);
-    }
-    else
-#endif
-#endif
-#ifndef WOLFSSL_SP_MATH
     {
         EccsiKeyParams* params = &key->params;
         err = wc_ecc_mulmod(n, params->base, params->base, &params->a,
@@ -1357,12 +1342,6 @@ static int eccsi_mulmod_base_add(EccsiKey* key, const mp_int* n,
             err = ecc_map(res, &params->prime, mp);
         }
     }
-#else
-    {
-        err = NOT_COMPILED_IN;
-    }
-    (void)mp;
-#endif
 
     return err;
 }
@@ -1385,15 +1364,6 @@ static int eccsi_mulmod_point(EccsiKey* key, const mp_int* n, ecc_point* point,
 {
     int err;
 
-#ifdef WOLFSSL_HAVE_SP_ECC
-#ifndef WOLFSSL_SP_NO_256
-    if ((key->ecc.idx != ECC_CUSTOM_IDX) &&
-            (ecc_sets[key->ecc.idx].id == ECC_SECP256R1)) {
-        err = sp_ecc_mulmod_256(n, point, res, map, key->heap);
-    }
-    else
-#endif
-#endif
     {
         EccsiKeyParams* params = &key->params;
 
@@ -1421,20 +1391,6 @@ static int eccsi_mulmod_point(EccsiKey* key, const mp_int* n, ecc_point* point,
 static int eccsi_mulmod_point_add(EccsiKey* key, const mp_int* n,
         ecc_point* point, ecc_point* a, ecc_point* res, mp_digit mp, int map)
 {
-#ifdef WOLFSSL_HAVE_SP_ECC
-#ifndef WOLFSSL_SP_NO_256
-    int err = NOT_COMPILED_IN;
-
-    if ((key->ecc.idx != ECC_CUSTOM_IDX) &&
-            (ecc_sets[key->ecc.idx].id == ECC_SECP256R1)) {
-        err = sp_ecc_mulmod_add_256(n, point, a, 0, res, map, key->heap);
-    }
-
-    (void)mp;
-
-    return err;
-#endif
-#else
     int err;
     EccsiKeyParams* params = &key->params;
 
@@ -1448,7 +1404,6 @@ static int eccsi_mulmod_point_add(EccsiKey* key, const mp_int* n,
     }
 
     return err;
-#endif
 }
 
 /**
@@ -2087,12 +2042,10 @@ static int eccsi_calc_y(EccsiKey* key, ecc_point* pvt, mp_digit mp,
     mp_int* hs = &key->ssk;
 
     err = mp_read_unsigned_bin(hs, key->idHash, key->idHashSz);
-#ifndef WOLFSSL_HAVE_SP_ECC
     /* Need KPAK in montgomery form. */
     if (err == 0) {
         err = eccsi_kpak_to_mont(key);
     }
-#endif
     /* [HS]PVT + KPAK */
     if (err == 0) {
         ecc_point* kpak = &key->ecc.pubkey;

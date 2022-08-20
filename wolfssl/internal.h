@@ -704,22 +704,8 @@ enum Misc {
     SESSION_FLUSH_COUNT = 256, /* Flush session cache unless user turns off */
     TLS_MAX_PAD_SZ      = 255, /* Max padding in TLS */
 
-#if defined(HAVE_FIPS)
-    MAX_SYM_KEY_SIZE    = AES_256_KEY_SIZE,
-#else
         MAX_SYM_KEY_SIZE    = WC_MAX_SYM_KEY_SIZE,
-#endif
 
-#if defined(HAVE_SELFTEST) && \
-    (!defined(HAVE_SELFTEST_VERSION) || (HAVE_SELFTEST_VERSION < 2))
-    #ifndef WOLFSSL_AES_KEY_SIZE_ENUM
-    #define WOLFSSL_AES_KEY_SIZE_ENUM
-    AES_IV_SIZE         = 16,
-    AES_128_KEY_SIZE    = 16,
-    AES_192_KEY_SIZE    = 24,
-    AES_256_KEY_SIZE    = 32,
-    #endif
-#endif
 
     MAX_IV_SZ           = AES_BLOCK_SIZE,
 
@@ -1607,10 +1593,7 @@ struct WOLFSSL_CTX {
     byte        haveEMS:1;        /* have extended master secret extension */
     byte        useClientOrder:1; /* Use client's cipher preference order */
     byte        mutualAuth:1;     /* Mutual authentication required */
-    #if !defined(WOLFSSL_OLD_PRIME_CHECK) && !defined(HAVE_FIPS) && \
-        !defined(HAVE_SELFTEST)
     byte        dhKeyTested:1;   /* Set when key has been tested. */
-    #endif
     byte        useSecureReneg:1; /* when set will set WOLFSSL objects generated to enable */
     byte        disallowEncThenMac:1;  /* Don't do Encrypt-Then-MAC */
     word16      minProto:1; /* sets min to min available */
@@ -2093,11 +2076,8 @@ typedef struct Options {
     word16            useClientOrder:1;   /* Use client's cipher order */
     word16            mutualAuth:1;       /* Mutual authentication is required */
     word16            peerAuthGood:1;     /* Any required peer auth done */
-    #if !defined(WOLFSSL_OLD_PRIME_CHECK) && \
-        !defined(HAVE_FIPS) && !defined(HAVE_SELFTEST)
         word16        dhDoKeyTest:1;      /* Need to do the DH Key prime test */
         word16        dhKeyTested:1;      /* Set when key has been tested. */
-    #endif
     word16            disallowEncThenMac:1;   /* Don't do Encrypt-Then-MAC */
     word16            encThenMac:1;           /* Doing Encrypt-Then-MAC */
     word16            startedETMRead:1;       /* Doing Encrypt-Then-MAC read */
@@ -2464,9 +2444,7 @@ struct WOLFSSL {
     byte*           peerSceTsipEncRsaKeyIndex;
 #endif
     byte            peerRsaKeyPresent;
-#if defined(HAVE_FFDHE)
     word16          namedGroup;
-#endif
     word16          pssAlgo;
     int             eccVerifyRes;
     word32          ecdhCurveOID;            /* curve Ecc_Sum     */

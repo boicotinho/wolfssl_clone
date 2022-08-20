@@ -74,7 +74,7 @@ WOLFSSL_LOCAL int sp_ModExp_4096(mp_int* base, mp_int* exp, mp_int* mod,
 #endif
 
 
-#if !defined(WOLFSSL_SP_MATH) && !defined(WOLFSSL_SP_MATH_ALL)
+#if !defined(WOLFSSL_SP_MATH_ALL)
 /* math settings check */
 word32 CheckRunTimeSettings(void)
 {
@@ -1292,7 +1292,7 @@ int fp_mulmod(fp_int *a, fp_int *b, fp_int *c, fp_int *d)
   fp_init(t);
   err = fp_mul(a, b, t);
   if (err == FP_OKAY) {
-  #if defined(ALT_ECC_SIZE) || defined(HAVE_WOLF_BIGINT)
+  #if defined(HAVE_WOLF_BIGINT)
     if (d->size < FP_SIZE) {
       err = fp_mod(t, c, t);
       fp_copy(t, d);
@@ -1316,7 +1316,7 @@ int fp_submod(fp_int *a, fp_int *b, fp_int *c, fp_int *d)
   fp_init(t);
   err = fp_sub(a, b, t);
   if (err == FP_OKAY) {
-  #if defined(ALT_ECC_SIZE) || defined(HAVE_WOLF_BIGINT)
+  #if defined(HAVE_WOLF_BIGINT)
     if (d->size < FP_SIZE) {
       err = fp_mod(t, c, t);
       fp_copy(t, d);
@@ -1340,7 +1340,7 @@ int fp_addmod(fp_int *a, fp_int *b, fp_int *c, fp_int *d)
   fp_init(t);
   err = fp_add(a, b, t);
   if (err == FP_OKAY) {
-  #if defined(ALT_ECC_SIZE) || defined(HAVE_WOLF_BIGINT)
+  #if defined(HAVE_WOLF_BIGINT)
     if (d->size < FP_SIZE) {
       err = fp_mod(t, c, t);
       fp_copy(t, d);
@@ -1846,11 +1846,7 @@ static int _fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
   fp_int  *res;
   fp_digit buf, mp;
   int      err, bitbuf, bitcpy, bitcnt, mode, digidx, x, y, winsize;
-#ifndef WOLFSSL_NO_MALLOC
   fp_int  *M;
-#else
-  fp_int   M[(1 << 6) + 1];
-#endif
 
   /* find window size */
   x = fp_count_bits (X);
@@ -1871,14 +1867,12 @@ static int _fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
      return err;
   }
 
-#ifndef WOLFSSL_NO_MALLOC
   /* only allocate space for what's needed for window plus res */
   M = (fp_int*)XMALLOC(sizeof(fp_int)*((1 << winsize) + 1), NULL,
                                                            DYNAMIC_TYPE_BIGINT);
   if (M == NULL) {
      return FP_MEM;
   }
-#endif
   res = &M[(word32)(1 << winsize)];
 
   /* init M array */
@@ -1898,9 +1892,7 @@ static int _fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
   /* now we need R mod m */
   err = fp_montgomery_calc_normalization (res, P);
   if (err != FP_OKAY) {
-#ifndef WOLFSSL_NO_MALLOC
     XFREE(M, NULL, DYNAMIC_TYPE_BIGINT);
-#endif
     return err;
   }
 
@@ -1909,9 +1901,7 @@ static int _fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
      /* G > P so we reduce it first */
      err = fp_mod(G, P, &M[1]);
      if (err != FP_OKAY) {
-     #ifndef WOLFSSL_NO_MALLOC
         XFREE(M, NULL, DYNAMIC_TYPE_BIGINT);
-     #endif
         return err;
      }
   } else {
@@ -1919,9 +1909,7 @@ static int _fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
   }
   err = fp_mulmod (&M[1], res, P, &M[1]);
   if (err != FP_OKAY) {
-  #ifndef WOLFSSL_NO_MALLOC
      XFREE(M, NULL, DYNAMIC_TYPE_BIGINT);
-  #endif
      return err;
   }
 
@@ -1932,16 +1920,12 @@ static int _fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
     err = fp_sqr (&M[(word32)(1 << (winsize - 1))],
                   &M[(word32)(1 << (winsize - 1))]);
     if (err != FP_OKAY) {
-#ifndef WOLFSSL_NO_MALLOC
       XFREE(M, NULL, DYNAMIC_TYPE_BIGINT);
-#endif
       return err;
     }
     err = fp_montgomery_reduce_ex(&M[(word32)(1 << (winsize - 1))], P, mp, 0);
     if (err != FP_OKAY) {
-#ifndef WOLFSSL_NO_MALLOC
       XFREE(M, NULL, DYNAMIC_TYPE_BIGINT);
-#endif
       return err;
     }
   }
@@ -1950,16 +1934,12 @@ static int _fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
   for (x = (1 << (winsize - 1)) + 1; x < (1 << winsize); x++) {
     err = fp_mul(&M[x - 1], &M[1], &M[x]);
     if (err != FP_OKAY) {
-#ifndef WOLFSSL_NO_MALLOC
       XFREE(M, NULL, DYNAMIC_TYPE_BIGINT);
-#endif
       return err;
     }
     err = fp_montgomery_reduce_ex(&M[x], P, mp, 0);
     if (err != FP_OKAY) {
-#ifndef WOLFSSL_NO_MALLOC
       XFREE(M, NULL, DYNAMIC_TYPE_BIGINT);
-#endif
       return err;
     }
   }
@@ -2001,16 +1981,12 @@ static int _fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
     if (mode == 1 && y == 0) {
       err = fp_sqr(res, res);
       if (err != FP_OKAY) {
-#ifndef WOLFSSL_NO_MALLOC
         XFREE(M, NULL, DYNAMIC_TYPE_BIGINT);
-#endif
         return err;
       }
       err = fp_montgomery_reduce_ex(res, P, mp, 0);
       if (err != FP_OKAY) {
-#ifndef WOLFSSL_NO_MALLOC
         XFREE(M, NULL, DYNAMIC_TYPE_BIGINT);
-#endif
         return err;
       }
       continue;
@@ -2026,16 +2002,12 @@ static int _fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
       for (x = 0; x < winsize; x++) {
         err = fp_sqr(res, res);
         if (err != FP_OKAY) {
-#ifndef WOLFSSL_NO_MALLOC
           XFREE(M, NULL, DYNAMIC_TYPE_BIGINT);
-#endif
           return err;
         }
         err = fp_montgomery_reduce_ex(res, P, mp, 0);
         if (err != FP_OKAY) {
-#ifndef WOLFSSL_NO_MALLOC
           XFREE(M, NULL, DYNAMIC_TYPE_BIGINT);
-#endif
           return err;
         }
       }
@@ -2043,16 +2015,12 @@ static int _fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
       /* then multiply */
       err = fp_mul(res, &M[bitbuf], res);
       if (err != FP_OKAY) {
-#ifndef WOLFSSL_NO_MALLOC
         XFREE(M, NULL, DYNAMIC_TYPE_BIGINT);
-#endif
         return err;
       }
       err = fp_montgomery_reduce_ex(res, P, mp, 0);
       if (err != FP_OKAY) {
-#ifndef WOLFSSL_NO_MALLOC
         XFREE(M, NULL, DYNAMIC_TYPE_BIGINT);
-#endif
         return err;
       }
 
@@ -2069,16 +2037,12 @@ static int _fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
     for (x = 0; x < bitcpy; x++) {
       err = fp_sqr(res, res);
       if (err != FP_OKAY) {
-#ifndef WOLFSSL_NO_MALLOC
         XFREE(M, NULL, DYNAMIC_TYPE_BIGINT);
-#endif
         return err;
       }
       err = fp_montgomery_reduce_ex(res, P, mp, 0);
       if (err != FP_OKAY) {
-#ifndef WOLFSSL_NO_MALLOC
         XFREE(M, NULL, DYNAMIC_TYPE_BIGINT);
-#endif
         return err;
       }
 
@@ -2088,16 +2052,12 @@ static int _fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
         /* then multiply */
         err = fp_mul(res, &M[1], res);
         if (err != FP_OKAY) {
-#ifndef WOLFSSL_NO_MALLOC
           XFREE(M, NULL, DYNAMIC_TYPE_BIGINT);
-#endif
           return err;
         }
         err = fp_montgomery_reduce_ex(res, P, mp, 0);
         if (err != FP_OKAY) {
-#ifndef WOLFSSL_NO_MALLOC
           XFREE(M, NULL, DYNAMIC_TYPE_BIGINT);
-#endif
           return err;
         }
       }
@@ -2115,9 +2075,7 @@ static int _fp_exptmod_nct(fp_int * G, fp_int * X, fp_int * P, fp_int * Y)
   /* swap res with Y */
   fp_copy (res, Y);
 
-#ifndef WOLFSSL_NO_MALLOC
   XFREE(M, NULL, DYNAMIC_TYPE_BIGINT);
-#endif
   return err;
 }
 
@@ -3181,7 +3139,7 @@ int fp_montgomery_reduce(fp_int *a, fp_int *m, fp_digit mp)
 
 int fp_read_unsigned_bin(fp_int *a, const unsigned char *b, int c)
 {
-#if defined(ALT_ECC_SIZE) || defined(HAVE_WOLF_BIGINT)
+#if defined(HAVE_WOLF_BIGINT)
   const word32 maxC = (a->size * sizeof(fp_digit));
 #else
   const word32 maxC = (FP_SIZE * sizeof(fp_digit));
@@ -3626,7 +3584,7 @@ int fp_sub_d(fp_int *a, fp_digit b, fp_int *c)
 
    fp_init(tmp);
    fp_set(tmp, b);
-#if defined(ALT_ECC_SIZE) || defined(HAVE_WOLF_BIGINT)
+#if defined(HAVE_WOLF_BIGINT)
    if (c->size < FP_SIZE) {
      err = fp_sub(a, tmp, tmp);
      fp_copy(tmp, c);
@@ -3653,7 +3611,7 @@ int mp_init (mp_int * a)
 
 void fp_init(fp_int *a)
 {
-#if defined(ALT_ECC_SIZE) || defined(HAVE_WOLF_BIGINT)
+#if defined(HAVE_WOLF_BIGINT)
     a->size = FP_SIZE;
 #endif
 #ifdef HAVE_WOLF_BIGINT
@@ -3667,7 +3625,7 @@ void fp_zero(fp_int *a)
     int size;
     a->used = 0;
     a->sign = FP_ZPOS;
-#if defined(ALT_ECC_SIZE) || defined(HAVE_WOLF_BIGINT)
+#if defined(HAVE_WOLF_BIGINT)
     size = a->size;
 #else
     size = FP_SIZE;
@@ -3680,7 +3638,7 @@ void fp_clear(fp_int *a)
     int size;
     a->used = 0;
     a->sign = FP_ZPOS;
-#if defined(ALT_ECC_SIZE) || defined(HAVE_WOLF_BIGINT)
+#if defined(HAVE_WOLF_BIGINT)
     size = a->size;
 #else
     size = FP_SIZE;
@@ -3694,7 +3652,7 @@ void fp_forcezero (mp_int * a)
     int size;
     a->used = 0;
     a->sign = FP_ZPOS;
-#if defined(ALT_ECC_SIZE) || defined(HAVE_WOLF_BIGINT)
+#if defined(HAVE_WOLF_BIGINT)
     size = a->size;
 #else
     size = FP_SIZE;
@@ -3950,7 +3908,7 @@ void fp_copy(const fp_int *a, fp_int *b)
 {
     /* if source and destination are different */
     if (a != b) {
-#if defined(ALT_ECC_SIZE) || defined(HAVE_WOLF_BIGINT)
+#if defined(HAVE_WOLF_BIGINT)
         /* verify a will fit in b */
         if (b->size >= a->used) {
             int x, oldused;
@@ -4054,7 +4012,7 @@ int fp_sqrmod(fp_int *a, fp_int *b, fp_int *c)
   fp_init(t);
   err = fp_sqr(a, t);
   if (err == FP_OKAY) {
-  #if defined(ALT_ECC_SIZE) || defined(HAVE_WOLF_BIGINT)
+  #if defined(HAVE_WOLF_BIGINT)
     if (c->size < FP_SIZE) {
       err = fp_mod(t, b, t);
       fp_copy(t, c);
@@ -4971,14 +4929,6 @@ int mp_div_2_mod_ct(mp_int *a, mp_int *b, mp_int *c)
   return fp_div_2_mod_ct(a, b, c);
 }
 
-#ifdef HAVE_COMP_KEY
-
-int mp_cnt_lsb(fp_int* a)
-{
-    return fp_cnt_lsb(a);
-}
-
-#endif /* HAVE_COMP_KEY */
 
 
 /* fast math conversion */
@@ -5129,7 +5079,7 @@ void mp_dump(const char* desc, mp_int* a, byte verbose)
   char buffer[FP_SIZE * sizeof(fp_digit) * 2];
   int size;
 
-#if defined(ALT_ECC_SIZE) || defined(HAVE_WOLF_BIGINT)
+#if defined(HAVE_WOLF_BIGINT)
   size = a->size;
 #else
   size = FP_SIZE;

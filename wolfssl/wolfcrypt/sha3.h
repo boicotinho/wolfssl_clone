@@ -26,10 +26,6 @@
 #include <wolfssl/wolfcrypt/types.h>
 
 
-#ifdef HAVE_FIPS
-    /* for fips @wc_fips */
-    #include <wolfssl/wolfcrypt/fips.h>
-#endif
 
 #ifdef __cplusplus
     extern "C" {
@@ -59,15 +55,12 @@ enum {
         WC_SHAKE256          = WC_HASH_TYPE_SHAKE256,
     #endif
 
-#if !defined(HAVE_SELFTEST) || \
-    defined(HAVE_SELFTEST_VERSION) && (HAVE_SELFTEST_VERSION >= 2)
     /* These values are used for HMAC, not SHA-3 directly.
      * They come from from FIPS PUB 202. */
     WC_SHA3_224_BLOCK_SIZE = 144,
     WC_SHA3_256_BLOCK_SIZE = 136,
     WC_SHA3_384_BLOCK_SIZE = 104,
     WC_SHA3_512_BLOCK_SIZE = 72,
-#endif
 };
 
 #ifndef NO_OLD_WC_NAMES

@@ -240,11 +240,7 @@
 #endif
 
 #define WOLFSSL_MAKE_FIPS_VERSION(major, minor) (((major) * 256) + (minor))
-#if !defined(HAVE_FIPS)
     #define WOLFSSL_FIPS_VERSION_CODE WOLFSSL_MAKE_FIPS_VERSION(0,0)
-#else
-    #define WOLFSSL_FIPS_VERSION_CODE WOLFSSL_MAKE_FIPS_VERSION(1,0)
-#endif
 
 #define FIPS_VERSION_LT(major,minor) (WOLFSSL_FIPS_VERSION_CODE < WOLFSSL_MAKE_FIPS_VERSION(major,minor))
 #define FIPS_VERSION_LE(major,minor) (WOLFSSL_FIPS_VERSION_CODE <= WOLFSSL_MAKE_FIPS_VERSION(major,minor))
@@ -253,17 +249,6 @@
 #define FIPS_VERSION_GT(major,minor) (WOLFSSL_FIPS_VERSION_CODE > WOLFSSL_MAKE_FIPS_VERSION(major,minor))
 
 /* make sure old RNG name is used with CTaoCrypt FIPS */
-#ifdef HAVE_FIPS
-    #if FIPS_VERSION_LT(2,0)
-        #define WC_RNG RNG
-    #else
-        #ifndef WOLFSSL_STM32L4
-            #define RNG WC_RNG
-        #endif
-    #endif
-    /* blinding adds API not available yet in FIPS mode */
-    #undef WC_RSA_BLINDING
-#endif
 
 
 #if defined(_WIN32) && !defined(_M_X64)
@@ -300,7 +285,7 @@
     #define WOLFSSL_NO_CURRDIR
 
     #define TFM_TIMING_RESISTANT
-    #define ECC_TIMING_RESISTANT
+// error : inserted by coan: "#define ECC_TIMING_RESISTANT" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(303)
     #define WC_RSA_BLINDING
 
 #if defined(WOLFSSL_ESPWROOM32) || defined(WOLFSSL_ESPWROOM32SE)
@@ -435,15 +420,6 @@
     #endif
 #endif
 
-#ifdef WOLFSSL_ATECC508A
-    /* backwards compatibility */
-#ifndef WOLFSSL_ATECC_NO_ECDH_ENC
-    #define WOLFSSL_ATECC_ECDH_ENC
-#endif
-    #ifdef WOLFSSL_ATECC508A_DEBUG
-        #define WOLFSSL_ATECC_DEBUG
-    #endif
-#endif
 
 #ifdef MBED
 // error : inserted by coan: "#define WOLFSSL_USER_IO" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(457)
@@ -560,9 +536,9 @@
     #define WOLFSSL_HAVE_MIN
     #define NO_WRITEV
 
-    #define ALT_ECC_SIZE
+// error : inserted by coan: "#define ALT_ECC_SIZE" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(563)
     #define TFM_TIMING_RESISTANT
-    #define ECC_TIMING_RESISTANT
+// error : inserted by coan: "#define ECC_TIMING_RESISTANT" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(565)
 
     /* used in wolfCrypt test */
     #define NO_MAIN_DRIVER
@@ -794,7 +770,7 @@ extern void uITRON4_free(void *p) ;
      * specified in user_settings.
      */
     #define TFM_TIMING_RESISTANT
-    #define ECC_TIMING_RESISTANT
+// error : inserted by coan: "#define ECC_TIMING_RESISTANT" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(797)
     #define WC_RSA_BLINDING
     #define NO_DEV_RANDOM
     #define NO_FILESYSTEM
@@ -847,9 +823,7 @@ extern void uITRON4_free(void *p) ;
 
 #ifdef WOLFSSL_SAFERTOS
         #include "SafeRTOS/semphr.h"
-    #ifndef WOLFSSL_NO_MALLOC
         #include "SafeRTOS/heap.h"
-    #endif
     #if !defined(XMALLOC_USER) && !defined(NO_WOLFSSL_MEMORY)
         #define XMALLOC(s, h, type)  pvPortMalloc((s))
         #define XFREE(p, h, type)    vPortFree((p))
@@ -944,7 +918,7 @@ extern void uITRON4_free(void *p) ;
     #define BENCH_EMBEDDED
 
     #define TFM_TIMING_RESISTANT
-    #define ECC_TIMING_RESISTANT
+// error : inserted by coan: "#define ECC_TIMING_RESISTANT" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(947)
 
 // error : inserted by coan: "#undef HAVE_ECC" contradicts -D symbol at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(1131)
     #ifndef WOLFCRYPT_FIPS_RAND
@@ -1060,8 +1034,7 @@ extern void uITRON4_free(void *p) ;
             /* #define FREESCALE_LTC_TFM_RSA_4096_ENABLE */
 
             /* ECC-384, ECC-256, ECC-224 and ECC-192 have been enabled with LTC PKHA acceleration */
-                #undef  ECC_TIMING_RESISTANT
-                #define ECC_TIMING_RESISTANT
+// error : inserted by coan: "#define ECC_TIMING_RESISTANT" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(1064)
 
                 /* the LTC PKHA hardware limit is 512 bits (64 bytes) for ECC.
                    the LTC_MAX_ECC_BITS defines the size of local variables that hold ECC parameters
@@ -1219,7 +1192,7 @@ extern void uITRON4_free(void *p) ;
     #define XMALLOC_USER
 
     /* disable fall-back case, malloc, realloc and free are unavailable */
-    #define WOLFSSL_NO_MALLOC
+// error : inserted by coan: "#define WOLFSSL_NO_MALLOC" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(1222)
 
     /* file system has not been ported since it is a separate product. */
 
@@ -1231,7 +1204,7 @@ extern void uITRON4_free(void *p) ;
     #endif
 
     #define TFM_TIMING_RESISTANT
-    #define ECC_TIMING_RESISTANT
+// error : inserted by coan: "#define ECC_TIMING_RESISTANT" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(1234)
     #define WC_RSA_BLINDING
 
     #define TFM_ECC192
@@ -1265,10 +1238,10 @@ extern void uITRON4_free(void *p) ;
     #include <string.h>
 
     #define TFM_TIMING_RESISTANT
-    #define ECC_TIMING_RESISTANT
+// error : inserted by coan: "#define ECC_TIMING_RESISTANT" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(1268)
     #define WC_RSA_BLINDING
 
-    #define ALT_ECC_SIZE
+// error : inserted by coan: "#define ALT_ECC_SIZE" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(1271)
     #define TFM_ECC192
     #define TFM_ECC224
     #define TFM_ECC384
@@ -1278,7 +1251,7 @@ extern void uITRON4_free(void *p) ;
     #define NO_WOLFSSL_DIR
     #define NO_WRITEV
 
-    #if ! defined(WOLFSSL_SILABS_SE_ACCEL) && !defined(CUSTOM_RAND_GENERATE)
+    #if !defined(CUSTOM_RAND_GENERATE)
         #define CUSTOM_RAND_TYPE     RAND_NBR
         #define CUSTOM_RAND_GENERATE Math_Rand
     #endif
@@ -1410,10 +1383,6 @@ extern void uITRON4_free(void *p) ;
 #ifdef WOLFSSL_KCAPI_AES
     #define WOLFSSL_AES_GCM_FIXED_IV_AAD
 #endif
-#ifdef WOLFSSL_KCAPI_ECC
-    #undef  ECC_USER_CURVES
-    #define ECC_USER_CURVES
-#endif
 
 #if defined(WOLFSSL_APACHE_MYNEWT)
     #include "os/os_malloc.h"
@@ -1527,12 +1496,10 @@ extern void uITRON4_free(void *p) ;
         #define USER_TICKS
         #define WOLFSSL_LOG_PRINTF
         #define WOLFSSL_DH_CONST
-    #if !defined(HAVE_FIPS)
         #define WC_RSA_BLINDING
-    #endif
 
     #define NO_FILESYSTEM
-    #define ECC_TIMING_RESISTANT
+// error : inserted by coan: "#define ECC_TIMING_RESISTANT" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(1535)
     #define TFM_TIMING_RESISTANT
 // error : inserted by coan: "#define SINGLE_THREADED" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(1802)
     #define NO_ASN_TIME /* can not use headers such as windows.h */
@@ -1568,9 +1535,7 @@ extern void uITRON4_free(void *p) ;
 /* user can specify what curves they want with ECC_USER_CURVES otherwise
  * all curves are on by default for now */
 #ifndef ECC_USER_CURVES
-    #if !defined(WOLFSSL_SP_MATH)
 // error : inserted by coan: "#define HAVE_ALL_CURVES" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(1856)
-    #endif
 #endif
 
 /* The minimum allowed ECC key size */
@@ -1609,8 +1574,6 @@ extern void uITRON4_free(void *p) ;
         #define HAVE_ECC_KEY_IMPORT
     #endif
     #ifndef NO_ECC_KEY_EXPORT
-        #undef HAVE_ECC_KEY_EXPORT
-        #define HAVE_ECC_KEY_EXPORT
     #endif
 
 /* Curve25519 Configs */
@@ -1656,15 +1619,12 @@ extern void uITRON4_free(void *p) ;
 // error : inserted by coan: "#define WOLFSSL_AEAD_ONLY" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(2040)
 #endif
 
-#if !defined(HAVE_PUBLIC_FFDHE) &&  !defined(WOLFSSL_NO_PUBLIC_FFDHE) &&  (defined(HAVE_SELFTEST) || FIPS_VERSION_LE(2,0))
+#if !defined(HAVE_PUBLIC_FFDHE) && !defined(WOLFSSL_NO_PUBLIC_FFDHE) && FIPS_VERSION_LE(2,0)
     /* This should only be enabled for FIPS v2 or older. It enables use of the
      * older wc_Dh_ffdhe####_Get() API's */
     #define HAVE_PUBLIC_FFDHE
 #endif
 
-#if !defined(HAVE_FFDHE)
-        #define HAVE_FFDHE
-#endif
 #if defined(HAVE_FFDHE_8192)
     #define MIN_FFDHE_FP_MAX_BITS 16384
 #elif defined(HAVE_FFDHE_6144)
@@ -1835,12 +1795,10 @@ extern void uITRON4_free(void *p) ;
 
 #if defined(NO_OLD_WC_NAMES)
     /* added to have compatibility with SHA256() */
-    #if !defined(NO_OLD_SHA_NAMES) && (!defined(HAVE_FIPS) || \
-            FIPS_VERSION_GT(2,0))
+    #if !defined(NO_OLD_SHA_NAMES)
         #define NO_OLD_SHA_NAMES
     #endif
-    #if !defined(NO_OLD_MD5_NAME) && (!defined(HAVE_FIPS) || \
-            FIPS_VERSION_GT(2,0))
+    #if !defined(NO_OLD_MD5_NAME)
         #define NO_OLD_MD5_NAME
     #endif
 #endif
@@ -1963,9 +1921,6 @@ extern void uITRON4_free(void *p) ;
 #endif
 
 /* Do not allow using small stack with no malloc */
-#if defined(WOLFSSL_NO_MALLOC) &&  defined(WOLFSSL_SMALL_STACK_CACHE)
-    #error Small stack cannot be used with no malloc (WOLFSSL_NO_MALLOC)
-#endif
 
 /* Enable DH Extra for QT, openssl all, openssh and static ephemeral */
 /* Allows export/import of DH key and params as DER */
@@ -1974,14 +1929,8 @@ extern void uITRON4_free(void *p) ;
 #endif
 
 /* DH Extra is not supported on FIPS v1 or v2 (is missing DhKey .pub/.priv) */
-#if defined(WOLFSSL_DH_EXTRA) && defined(HAVE_FIPS) && FIPS_VERSION_LE(2,0)
-    #undef WOLFSSL_DH_EXTRA
-#endif
 
 /* wc_Sha512.devId isn't available before FIPS 5.1 */
-#if defined(HAVE_FIPS) && FIPS_VERSION_LT(5,1)
-    #define NO_SHA2_CRYPTO_CB
-#endif
 
 /* Enable HAVE_ONE_TIME_AUTH by default for use with TLS cipher suites
  * when poly1305 is enabled

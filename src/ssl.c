@@ -1070,11 +1070,8 @@ int wolfSSL_SetTmpDH(WOLFSSL* ssl, const unsigned char* p, int pSz,
     if (ssl->options.side == WOLFSSL_CLIENT_END)
         return SIDE_ERROR;
 
-    #if !defined(WOLFSSL_OLD_PRIME_CHECK) && !defined(HAVE_FIPS) && \
-        !defined(HAVE_SELFTEST)
         ssl->options.dhKeyTested = 0;
         ssl->options.dhDoKeyTest = 1;
-    #endif
 
     if (ssl->buffers.serverDH_P.buffer && ssl->buffers.weOwnDH) {
         XFREE(ssl->buffers.serverDH_P.buffer, ssl->heap, DYNAMIC_TYPE_PUBLIC_KEY);
@@ -1128,8 +1125,6 @@ int wolfSSL_SetTmpDH(WOLFSSL* ssl, const unsigned char* p, int pSz,
 }
 
 
-#if !defined(WOLFSSL_OLD_PRIME_CHECK) && !defined(HAVE_FIPS) && \
-    !defined(HAVE_SELFTEST)
 /* Enables or disables the session's DH key prime test. */
 int wolfSSL_SetEnableDhKeyTest(WOLFSSL* ssl, int enable)
 {
@@ -1146,7 +1141,6 @@ int wolfSSL_SetEnableDhKeyTest(WOLFSSL* ssl, int enable)
     WOLFSSL_LEAVE("wolfSSL_SetEnableDhKeyTest", WOLFSSL_SUCCESS);
     return WOLFSSL_SUCCESS;
 }
-#endif
 
 
 /* server ctx Diffie-Hellman parameters, WOLFSSL_SUCCESS on ok */
@@ -1161,8 +1155,6 @@ int wolfSSL_CTX_SetTmpDH(WOLFSSL_CTX* ctx, const unsigned char* p, int pSz,
     if ((word16)pSz > ctx->maxDhKeySz)
         return DH_KEY_SIZE_E;
 
-    #if !defined(WOLFSSL_OLD_PRIME_CHECK) && !defined(HAVE_FIPS) && \
-        !defined(HAVE_SELFTEST)
     {
         WC_RNG rng;
         int error, freeKey = 0;
@@ -1184,7 +1176,6 @@ int wolfSSL_CTX_SetTmpDH(WOLFSSL_CTX* ctx, const unsigned char* p, int pSz,
 
         ctx->dhKeyTested = 1;
     }
-    #endif
 
     XFREE(ctx->serverDH_P.buffer, ctx->heap, DYNAMIC_TYPE_PUBLIC_KEY);
     ctx->serverDH_P.buffer = NULL;
@@ -6932,7 +6923,6 @@ const WOLFSSL_CIPHER* wolfSSL_get_cipher_by_value(word16 value)
 
 
 
-#ifdef HAVE_FFDHE
 static const char* wolfssl_ffdhe_name(word16 group)
 {
     const char* str = NULL;
@@ -6957,7 +6947,6 @@ static const char* wolfssl_ffdhe_name(word16 group)
     }
     return str;
 }
-#endif
 /* Return the name of the curve used for key exchange as a printable string.
  *
  * ssl  The SSL/TLS object.
@@ -6970,11 +6959,9 @@ const char* wolfSSL_get_curve_name(WOLFSSL* ssl)
     if (ssl == NULL)
         return NULL;
 
-#ifdef HAVE_FFDHE
     if (ssl->namedGroup != 0) {
         cName = wolfssl_ffdhe_name(ssl->namedGroup);
     }
-#endif
 
 
 

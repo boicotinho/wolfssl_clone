@@ -46,72 +46,6 @@
 
 /* fips wrapper calls, user can call direct */
 /* If building for old FIPS. */
-#if defined(HAVE_FIPS)
-
-    /* does init */
-    int wc_HmacSetKey(Hmac* hmac, int type, const byte* key, word32 keySz)
-    {
-        if (hmac == NULL || (key == NULL && keySz != 0) ||
-           !(type == WC_MD5 || type == WC_SHA || type == WC_SHA256 ||
-                type == WC_SHA384 || type == WC_SHA512)) {
-            return BAD_FUNC_ARG;
-        }
-
-        return HmacSetKey_fips(hmac, type, key, keySz);
-    }
-    int wc_HmacUpdate(Hmac* hmac, const byte* in, word32 sz)
-    {
-        if (hmac == NULL || (in == NULL && sz > 0)) {
-            return BAD_FUNC_ARG;
-        }
-
-        return HmacUpdate_fips(hmac, in, sz);
-    }
-    int wc_HmacFinal(Hmac* hmac, byte* out)
-    {
-        if (hmac == NULL) {
-            return BAD_FUNC_ARG;
-        }
-
-        return HmacFinal_fips(hmac, out);
-    }
-    int wolfSSL_GetHmacMaxSize(void)
-    {
-        return CyaSSL_GetHmacMaxSize();
-    }
-
-    int wc_HmacInit(Hmac* hmac, void* heap, int devId)
-    {
-    #ifndef WOLFSSL_KCAPI_HMAC
-        (void)hmac;
-        (void)heap;
-        (void)devId;
-        return 0;
-    #else
-        return HmacInit(hmac, heap, devId);
-    #endif
-    }
-    void wc_HmacFree(Hmac* hmac)
-    {
-    #ifndef WOLFSSL_KCAPI_HMAC
-        (void)hmac;
-    #else
-        HmacFree(hmac);
-    #endif
-    }
-
-    #ifdef HAVE_HKDF
-        int wc_HKDF(int type, const byte* inKey, word32 inKeySz,
-                    const byte* salt, word32 saltSz,
-                    const byte* info, word32 infoSz,
-                    byte* out, word32 outSz)
-        {
-            return HKDF(type, inKey, inKeySz, salt, saltSz,
-                info, infoSz, out, outSz);
-        }
-    #endif /* HAVE_HKDF */
-
-#else /* else build without fips, or for new fips */
 
 
 int wc_HmacSizeByType(int type)
@@ -261,7 +195,6 @@ int wc_HmacSetKey(Hmac* hmac, int type, const byte* key, word32 length)
         return BAD_FUNC_ARG;
     }
 
-#ifndef HAVE_FIPS
     /* if set key has already been run then make sure and free existing */
     /* This is for async and PIC32MZ situations, and just normally OK,
        provided the user calls wc_HmacInit() first. That function is not
@@ -270,7 +203,6 @@ int wc_HmacSetKey(Hmac* hmac, int type, const byte* key, word32 length)
     if (hmac->macType != WC_HASH_TYPE_NONE) {
         wc_HmacFree(hmac);
     }
-#endif
 
     hmac->innerHashKeyed = 0;
     hmac->macType = (byte)type;
@@ -279,10 +211,6 @@ int wc_HmacSetKey(Hmac* hmac, int type, const byte* key, word32 length)
     if (ret != 0)
         return ret;
 
-#ifdef HAVE_FIPS
-    if (length < HMAC_FIPS_MIN_KEY)
-        return HMAC_MIN_KEYLEN_E;
-#endif
 
 
     ip = (byte*)hmac->ipad;
@@ -1062,4 +990,3 @@ int wolfSSL_GetHmacMaxSize(void)
 
 #endif /* HAVE_HKDF */
 
-#endif /* HAVE_FIPS */
