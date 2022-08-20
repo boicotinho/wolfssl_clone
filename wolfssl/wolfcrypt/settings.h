@@ -924,8 +924,7 @@ extern void uITRON4_free(void *p) ;
     #ifndef WOLFCRYPT_FIPS_RAND
     #endif
 // error : inserted by coan: "#define HAVE_AESCCM" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(1137)
-        #undef  WOLFSSL_AES_COUNTER
-        #define WOLFSSL_AES_COUNTER
+// error : inserted by coan: "#define WOLFSSL_AES_COUNTER" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(928)
         #undef  WOLFSSL_AES_DIRECT
         #define WOLFSSL_AES_DIRECT
 
@@ -1451,8 +1450,7 @@ extern void uITRON4_free(void *p) ;
     #undef  WOLFSSL_IMX6_CAAM_RNG
     #define WOLFSSL_IMX6_CAAM_RNG
 
-    #undef  WOLFSSL_IMX6_CAAM_BLOB
-    #define WOLFSSL_IMX6_CAAM_BLOB
+// error : inserted by coan: "#define WOLFSSL_IMX6_CAAM_BLOB" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(1455)
 
     /* large performance gain with HAVE_AES_ECB defined */
     #undef HAVE_AES_ECB
@@ -1464,10 +1462,6 @@ extern void uITRON4_free(void *p) ;
 #endif
 
 /* If DCP is used without SINGLE_THREADED, enforce WOLFSSL_CRYPT_HW_MUTEX */
-#if defined(WOLFSSL_IMXRT_DCP)
-    #undef WOLFSSL_CRYPT_HW_MUTEX
-    #define WOLFSSL_CRYPT_HW_MUTEX 1
-#endif
 
 #if !defined(XMALLOC_USER) && !defined(MICRIUM_MALLOC) && \
     !defined(WOLFSSL_LEANPSK) && !defined(NO_WOLFSSL_MEMORY) && \
@@ -1597,23 +1591,13 @@ extern void uITRON4_free(void *p) ;
      #endif
 
     #ifndef NO_AES_DECRYPT
-        #undef  HAVE_AES_DECRYPT
-        #define HAVE_AES_DECRYPT
     #endif
     #ifndef NO_AES_CBC
-        #undef  HAVE_AES_CBC
-        #define HAVE_AES_CBC
     #endif
     #ifdef WOLFSSL_AES_XTS
         /* AES-XTS makes calls to AES direct functions */
     #endif
-    #ifdef WOLFSSL_AES_CFB
-        /* AES-CFB makes calls to AES direct functions */
-    #endif
 
-#if  !defined(HAVE_AES_CBC)
-// error : inserted by coan: "#define WOLFSSL_AEAD_ONLY" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(2040)
-#endif
 
 #if !defined(HAVE_PUBLIC_FFDHE) && !defined(WOLFSSL_NO_PUBLIC_FFDHE) && FIPS_VERSION_LE(2,0)
     /* This should only be enabled for FIPS v2 or older. It enables use of the

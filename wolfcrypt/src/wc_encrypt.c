@@ -40,8 +40,6 @@
     #define WOLFSSL_MISC_INCLUDED
     #include <wolfcrypt/src/misc.c>
 
-#if defined(HAVE_AES_CBC)
-#ifdef HAVE_AES_DECRYPT
 int wc_AesCbcDecryptWithKey(byte* out, const byte* in, word32 inSz,
                                   const byte* key, word32 keySz, const byte* iv)
 {
@@ -65,7 +63,6 @@ int wc_AesCbcDecryptWithKey(byte* out, const byte* in, word32 inSz,
 
     return ret;
 }
-#endif /* HAVE_AES_DECRYPT */
 
 int wc_AesCbcEncryptWithKey(byte* out, const byte* in, word32 inSz,
                             const byte* key, word32 keySz, const byte* iv)
@@ -86,7 +83,6 @@ int wc_AesCbcEncryptWithKey(byte* out, const byte* in, word32 inSz,
 
     return ret;
 }
-#endif /* !NO_AES && HAVE_AES_CBC */
 
 
 
@@ -124,11 +120,9 @@ int wc_BufferKeyDecrypt(EncryptedInfo* info, byte* der, word32 derSz,
     }
 #endif
 
-#if defined(HAVE_AES_CBC) && defined(HAVE_AES_DECRYPT)
     if (info->cipherType == WC_CIPHER_AES_CBC)
         ret = wc_AesCbcDecryptWithKey(der, der, derSz, key, info->keySz,
             info->iv);
-#endif /* !NO_AES && HAVE_AES_CBC && HAVE_AES_DECRYPT */
 
 
     return ret;
@@ -159,11 +153,9 @@ int wc_BufferKeyEncrypt(EncryptedInfo* info, byte* der, word32 derSz,
     }
 #endif
 
-#if defined(HAVE_AES_CBC)
     if (info->cipherType == WC_CIPHER_AES_CBC)
         ret = wc_AesCbcEncryptWithKey(der, der, derSz, key, info->keySz,
             info->iv);
-#endif /* !NO_AES && HAVE_AES_CBC */
 
 
     return ret;
@@ -285,7 +277,6 @@ int wc_CryptKey(const char* password, int passwordSz, byte* salt,
     }
 
     switch (id) {
-#if defined(HAVE_AES_CBC)
     #ifdef WOLFSSL_AES_256
         case PBE_AES256_CBC:
         case PBE_AES128_CBC:
@@ -322,7 +313,6 @@ int wc_CryptKey(const char* password, int passwordSz, byte* salt,
             break;
         }
     #endif /* WOLFSSL_AES_256 */
-#endif /* !NO_AES && HAVE_AES_CBC */
 #ifdef WC_RC2
         case PBE_SHA1_40RC2_CBC:
         {

@@ -64,16 +64,8 @@
     #include <wolfssl/wolfcrypt/mem_track.h>
 #endif
 
-#if defined(WOLFSSL_IMX6_CAAM) || defined(WOLFSSL_IMX6_CAAM_RNG) || \
-    defined(WOLFSSL_IMX6UL_CAAM) || defined(WOLFSSL_IMX6_CAAM_BLOB) || \
-    defined(WOLFSSL_SECO_CAAM)
+#if defined(WOLFSSL_IMX6_CAAM) || defined(WOLFSSL_IMX6_CAAM_RNG) ||  defined(WOLFSSL_IMX6UL_CAAM)
     #include <wolfssl/wolfcrypt/port/caam/wolfcaam.h>
-#endif
-#if defined(WOLFSSL_DEVCRYPTO)
-    #include <wolfssl/wolfcrypt/port/devcrypto/wc_devcrypto.h>
-#endif
-#ifdef WOLFSSL_IMXRT_DCP
-    #include <wolfssl/wolfcrypt/port/nxp/dcp_port.h>
 #endif
 
 
@@ -254,25 +246,13 @@ int wolfCrypt_Init(void)
         }
 #endif
 
-#if defined(WOLFSSL_DEVCRYPTO)
-        if ((ret = wc_DevCryptoInit()) != 0) {
-            return ret;
-        }
-#endif
 
-#if defined(WOLFSSL_IMX6_CAAM) || defined(WOLFSSL_IMX6_CAAM_RNG) || \
-    defined(WOLFSSL_IMX6UL_CAAM) || defined(WOLFSSL_IMX6_CAAM_BLOB) || \
-    defined(WOLFSSL_SECO_CAAM)
+#if defined(WOLFSSL_IMX6_CAAM) || defined(WOLFSSL_IMX6_CAAM_RNG) ||  defined(WOLFSSL_IMX6UL_CAAM)
         if ((ret = wc_caamInit()) != 0) {
             return ret;
         }
 #endif
 
-#ifdef WOLFSSL_IMXRT_DCP
-        if ((ret = wc_dcp_init()) != 0) {
-            return ret;
-        }
-#endif
 
 #if defined(WOLFSSL_DSP) && !defined(WOLFSSL_DSP_BUILD)
         if ((ret = wolfSSL_InitHandle()) != 0) {
@@ -337,16 +317,11 @@ int wolfCrypt_Cleanup(void)
         WOLFSSL_SCE_GSCE_HANDLE.p_api->close(WOLFSSL_SCE_GSCE_HANDLE.p_ctrl);
     #endif
 
-    #if defined(WOLFSSL_IMX6_CAAM) || defined(WOLFSSL_IMX6_CAAM_RNG) || \
-        defined(WOLFSSL_IMX6_CAAM_BLOB)  || \
-        defined(WOLFSSL_SECO_CAAM)
+    #if defined(WOLFSSL_IMX6_CAAM) || defined(WOLFSSL_IMX6_CAAM_RNG)
         wc_caamFree();
     #endif
     #if defined(WOLFSSL_RENESAS_TSIP_CRYPT)
         tsip_Close();
-    #endif
-    #if defined(WOLFSSL_DEVCRYPTO)
-        wc_DevCryptoCleanup();
     #endif
     #if defined(WOLFSSL_DSP) && !defined(WOLFSSL_DSP_BUILD)
         rpcmem_deinit();

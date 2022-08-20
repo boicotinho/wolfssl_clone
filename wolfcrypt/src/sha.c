@@ -267,10 +267,6 @@
 
     /* implemented in wolfcrypt/src/port/Renesas/renesas_tsip_sha.c */
 
-#elif defined(WOLFSSL_IMXRT_DCP)
-    #include <wolfssl/wolfcrypt/port/nxp/dcp_port.h>
-    /* implemented in wolfcrypt/src/port/nxp/dcp_port.c */
-
 #elif defined(WOLFSSL_HAVE_PSA) && !defined(WOLFSSL_PSA_NO_HASH)
 /* implemented in wolfcrypt/src/port/psa/psa_hash.c */
 #else
@@ -699,15 +695,12 @@ void wc_ShaFree(wc_Sha* sha)
         sha->msg = NULL;
     }
 #endif
-#ifdef WOLFSSL_IMXRT_DCP
-    DCPShaFree(sha);
-#endif
 }
 
 #endif /* !defined(WOLFSSL_HAVE_PSA) || defined(WOLFSSL_PSA_NO_HASH) */
 #endif /* !WOLFSSL_TI_HASH */
 
-#if !defined(WOLFSSL_TI_HASH) && !defined(WOLFSSL_IMXRT_DCP)
+#if !defined(WOLFSSL_TI_HASH)
 
 #if !defined(WOLFSSL_RENESAS_TSIP_CRYPT) || \
     defined(NO_WOLFSSL_RENESAS_TSIP_CRYPT_HASH)

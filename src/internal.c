@@ -5152,11 +5152,9 @@ static WC_INLINE int EncryptDo(WOLFSSL* ssl, byte* out, const byte* input,
     switch (ssl->specs.bulk_cipher_algorithm) {
 
 
-    #if defined(HAVE_AES_CBC)
         case wolfssl_aes:
             ret = wc_AesCbcEncrypt(ssl->encrypt.aes, out, input, sz);
             break;
-    #endif
 
         case wolfssl_aes_gcm:
         case wolfssl_aes_ccm:/* GCM AEAD macros use same size as CCM */
@@ -5291,11 +5289,9 @@ static WC_INLINE int DecryptDo(WOLFSSL* ssl, byte* plain, const byte* input,
     {
 
 
-    #if defined(HAVE_AES_CBC)
         case wolfssl_aes:
             ret = wc_AesCbcDecrypt(ssl->decrypt.aes, plain, input, sz);
             break;
-    #endif
 
         case wolfssl_aes_gcm:
         case wolfssl_aes_ccm: /* GCM AEAD macros use same size as CCM */

@@ -42,14 +42,12 @@
 
 
 
-#if defined(HAVE_AES_CBC)
 WOLFSSL_API int wc_AesCbcEncryptWithKey(byte* out, const byte* in, word32 inSz,
                                         const byte* key, word32 keySz,
                                         const byte* iv);
 WOLFSSL_API int wc_AesCbcDecryptWithKey(byte* out, const byte* in, word32 inSz,
                                         const byte* key, word32 keySz,
                                         const byte* iv);
-#endif /* !NO_AES */
 
 
 

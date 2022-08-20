@@ -2100,8 +2100,7 @@ int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz)
         return 0;
     }
 
-#elif (defined(WOLFSSL_IMX6_CAAM) || defined(WOLFSSL_IMX6_CAAM_RNG) || \
-       defined(WOLFSSL_SECO_CAAM))
+#elif defined(WOLFSSL_IMX6_CAAM) || defined(WOLFSSL_IMX6_CAAM_RNG)
 
     #include <wolfssl/wolfcrypt/port/caam/wolfcaam.h>
 

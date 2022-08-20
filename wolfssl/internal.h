@@ -156,7 +156,6 @@
 
 
 
-        #if defined(HAVE_AES_CBC)
             #if defined(WOLFSSL_STATIC_RSA)
                 #ifdef WOLFSSL_AES_128
 // error : inserted by coan: "#define BUILD_TLS_RSA_WITH_AES_128_CBC_SHA" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/internal.h(322)
@@ -165,16 +164,13 @@
 // error : inserted by coan: "#define BUILD_TLS_RSA_WITH_AES_256_CBC_SHA" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/internal.h(325)
                 #endif
             #endif
-        #endif
         #if defined(WOLFSSL_STATIC_RSA)
-            #if defined(HAVE_AES_CBC)
                 #ifdef WOLFSSL_AES_128
 // error : inserted by coan: "#define BUILD_TLS_RSA_WITH_AES_128_CBC_SHA256" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/internal.h(332)
                 #endif
                 #ifdef WOLFSSL_AES_256
 // error : inserted by coan: "#define BUILD_TLS_RSA_WITH_AES_256_CBC_SHA256" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/internal.h(335)
                 #endif
-            #endif
                 #ifdef WOLFSSL_AES_128
 // error : inserted by coan: "#define BUILD_TLS_RSA_WITH_AES_128_GCM_SHA256" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/internal.h(340)
                 #endif
@@ -189,24 +185,21 @@
 
 
 
-            #if defined(WOLFSSL_AES_128) && defined(HAVE_AES_CBC)
+            #if defined(WOLFSSL_AES_128)
 // error : inserted by coan: "#define BUILD_TLS_DHE_RSA_WITH_AES_128_CBC_SHA" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/internal.h(455)
             #endif
-            #if defined(WOLFSSL_AES_256) && defined(HAVE_AES_CBC)
+            #if defined(WOLFSSL_AES_256)
 // error : inserted by coan: "#define BUILD_TLS_DHE_RSA_WITH_AES_256_CBC_SHA" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/internal.h(458)
             #endif
-        #if defined(HAVE_AES_CBC)
             #ifdef WOLFSSL_AES_128
 // error : inserted by coan: "#define BUILD_TLS_DHE_RSA_WITH_AES_128_CBC_SHA256" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/internal.h(466)
             #endif
             #ifdef WOLFSSL_AES_256
 // error : inserted by coan: "#define BUILD_TLS_DHE_RSA_WITH_AES_256_CBC_SHA256" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/internal.h(469)
             #endif
-        #endif
 
 
 
-            #if defined(HAVE_AES_CBC)
                     #ifdef WOLFSSL_AES_128
                     #endif
                     #ifdef WOLFSSL_AES_256
@@ -236,8 +229,7 @@
 // error : inserted by coan: "#define BUILD_TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/internal.h(543)
                     #endif
                 #endif
-            #endif /* NO_SHA */
-            #if defined(WOLFSSL_AES_128) &&  defined(HAVE_AES_CBC)
+            #if defined(WOLFSSL_AES_128)
 // error : inserted by coan: "#define BUILD_TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/internal.h(550)
                     #if defined(WOLFSSL_STATIC_DH)
 // error : inserted by coan: "#define BUILD_TLS_ECDH_RSA_WITH_AES_128_CBC_SHA256" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/internal.h(552)
@@ -248,7 +240,7 @@
                 #endif
             #endif
 
-            #if defined(WOLFSSL_AES_256) &&  defined(HAVE_AES_CBC)
+            #if defined(WOLFSSL_AES_256)
 // error : inserted by coan: "#define BUILD_TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/internal.h(568)
                     #if defined(WOLFSSL_STATIC_DH)
 // error : inserted by coan: "#define BUILD_TLS_ECDH_RSA_WITH_AES_256_CBC_SHA384" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/internal.h(570)
@@ -324,11 +316,6 @@
 
     #define DES_BLOCK_SIZE 8
 
-#if !defined(HAVE_AES_DECRYPT)
-    #define AES_BLOCK_SIZE 16
-// error : inserted by coan: "#undef BUILD_AES" contradicts -D symbol at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/internal.h(895)
-#else
-#endif
 
 
     #define CHACHA20_BLOCK_SIZE 16

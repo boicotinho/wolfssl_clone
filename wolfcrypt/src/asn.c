@@ -3563,7 +3563,6 @@ static word32 SetBitString16Bit(word16 val, byte* output)
 /* curveType */
     /* See "ecc_sets" table in ecc.c */
 
-#ifdef HAVE_AES_CBC
 /* blkType */
     #ifdef WOLFSSL_AES_128
     static const byte blkAes128CbcOid[] = {96, 134, 72, 1, 101, 3, 4, 1, 2};
@@ -3574,7 +3573,6 @@ static word32 SetBitString16Bit(word16 val, byte* output)
     #ifdef WOLFSSL_AES_256
     static const byte blkAes256CbcOid[] = {96, 134, 72, 1, 101, 3, 4, 1, 42};
     #endif
-#endif /* HAVE_AES_CBC */
     #ifdef WOLFSSL_AES_128
     static const byte blkAes128GcmOid[] = {96, 134, 72, 1, 101, 3, 4, 1, 6};
     #endif
@@ -3907,7 +3905,6 @@ const byte* OidFromId(word32 id, word32 type, word32* oidSz)
 
         case oidBlkType:
             switch (id) {
-    #ifdef HAVE_AES_CBC
         #ifdef WOLFSSL_AES_128
                 case AES128CBCb:
                     oid = blkAes128CbcOid;
@@ -3926,7 +3923,6 @@ const byte* OidFromId(word32 id, word32 type, word32* oidSz)
                     *oidSz = sizeof(blkAes256CbcOid);
                     break;
         #endif
-    #endif /* HAVE_AES_CBC */
         #ifdef WOLFSSL_AES_128
                 case AES128GCMb:
                     oid = blkAes128GcmOid;
@@ -5739,7 +5735,7 @@ static int GetAlgoV2(int encAlgId, const byte** oid, int *len, int* id,
     int ret = 0;
 
     switch (encAlgId) {
-#if defined(WOLFSSL_AES_256) && defined(HAVE_AES_CBC)
+#if defined(WOLFSSL_AES_256)
     case AES256CBCb:
         *len = sizeof(blkAes256CbcOid);
         *oid = blkAes256CbcOid;
@@ -16162,13 +16158,13 @@ static wcchar kProcTypeHeader = "Proc-Type";
 static wcchar kDecInfoHeader = "DEK-Info";
 
 #ifdef WOLFSSL_PEM_TO_DER
-#if defined(HAVE_AES_CBC) && defined(WOLFSSL_AES_128)
+#if defined(WOLFSSL_AES_128)
     static wcchar kEncTypeAesCbc128 = "AES-128-CBC";
 #endif
-#if defined(HAVE_AES_CBC) && defined(WOLFSSL_AES_192)
+#if defined(WOLFSSL_AES_192)
     static wcchar kEncTypeAesCbc192 = "AES-192-CBC";
 #endif
-#if defined(HAVE_AES_CBC) && defined(WOLFSSL_AES_256)
+#if defined(WOLFSSL_AES_256)
     static wcchar kEncTypeAesCbc256 = "AES-256-CBC";
 #endif
 
@@ -16180,7 +16176,7 @@ int wc_EncryptedInfoGet(EncryptedInfo* info, const char* cipherInfo)
         return BAD_FUNC_ARG;
 
     /* determine cipher information */
-#if defined(HAVE_AES_CBC) && defined(WOLFSSL_AES_128)
+#if defined(WOLFSSL_AES_128)
     if (XSTRCMP(cipherInfo, kEncTypeAesCbc128) == 0) {
         info->cipherType = WC_CIPHER_AES_CBC;
         info->keySz = AES_128_KEY_SIZE;
@@ -16188,7 +16184,7 @@ int wc_EncryptedInfoGet(EncryptedInfo* info, const char* cipherInfo)
     }
     else
 #endif
-#if defined(HAVE_AES_CBC) && defined(WOLFSSL_AES_192)
+#if defined(WOLFSSL_AES_192)
     if (XSTRCMP(cipherInfo, kEncTypeAesCbc192) == 0) {
         info->cipherType = WC_CIPHER_AES_CBC;
         info->keySz = AES_192_KEY_SIZE;
@@ -16196,7 +16192,7 @@ int wc_EncryptedInfoGet(EncryptedInfo* info, const char* cipherInfo)
     }
     else
 #endif
-#if defined(HAVE_AES_CBC) && defined(WOLFSSL_AES_256)
+#if defined(WOLFSSL_AES_256)
     if (XSTRCMP(cipherInfo, kEncTypeAesCbc256) == 0) {
         info->cipherType = WC_CIPHER_AES_CBC;
         info->keySz = AES_256_KEY_SIZE;
@@ -16459,7 +16455,7 @@ int PemToDer(const unsigned char* buff, long longSz, int type,
     word32      algId = 0;
     word32      idx;
 #if defined(WOLFSSL_ENCRYPTED_KEYS)
-    #if (  defined(HAVE_AES_CBC) &&  defined(HAVE_AES_DECRYPT)) &&  !defined(NO_WOLFSSL_SKIP_TRAILING_PAD)
+    #if !defined(NO_WOLFSSL_SKIP_TRAILING_PAD)
         int     padVal = 0;
     #endif
 #endif
@@ -16652,7 +16648,6 @@ int PemToDer(const unsigned char* buff, long longSz, int type,
                         (byte*)password, passwordSz, WC_MD5);
 
 #ifndef NO_WOLFSSL_SKIP_TRAILING_PAD
-                #if defined(HAVE_AES_CBC) &&  defined(HAVE_AES_DECRYPT)
                     if (info->cipherType == WC_CIPHER_AES_CBC) {
                         if (der->length > AES_BLOCK_SIZE) {
                             padVal = der->buffer[der->length-1];
@@ -16661,7 +16656,6 @@ int PemToDer(const unsigned char* buff, long longSz, int type,
                             }
                         }
                     }
-                #endif
 #endif /* !NO_WOLFSSL_SKIP_TRAILING_PAD */
                 }
             }

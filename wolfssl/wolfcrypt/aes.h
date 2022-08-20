@@ -47,9 +47,6 @@ block cipher mechanism that uses n-bit binary string parameter key with 128-bits
     #include <wolfssl/wolfcrypt/port/st/stm32.h>
 #endif
 
-#ifdef WOLFSSL_IMXRT_DCP
-    #include "fsl_dcp.h"
-#endif
 
 #ifdef WOLFSSL_XILINX_CRYPT
 #include "xsecure_aes.h"
@@ -65,9 +62,6 @@ block cipher mechanism that uses n-bit binary string parameter key with 128-bits
 #include <wolfssl/wolfcrypt/port/kcapi/wc_kcapi.h>
 #endif
 
-#if defined(WOLFSSL_DEVCRYPTO_AES) || defined(WOLFSSL_DEVCRYPTO_CBC)
-#include <wolfssl/wolfcrypt/port/devcrypto/wc_devcrypto.h>
-#endif
 
 
 
@@ -120,9 +114,6 @@ enum {
     CCM_NONCE_MAX_SZ = 13,
     CTR_SZ   = 4,
     AES_IV_FIXED_SZ = 4,
-#ifdef WOLFSSL_AES_CFB
-    AES_CFB_MODE = 1,
-#endif
 #ifdef WOLFSSL_AES_OFB
     AES_OFB_MODE = 2,
 #endif
@@ -164,8 +155,7 @@ struct Aes {
     word32 y0;
 #endif
     byte use_aesni;
-#if defined(WOLFSSL_AES_COUNTER) || defined(WOLFSSL_AES_CFB) || \
-    defined(WOLFSSL_AES_OFB) || defined(WOLFSSL_AES_XTS)
+#if  defined(WOLFSSL_AES_OFB) || defined(WOLFSSL_AES_XTS)
     word32  left;            /* unused bytes left from last call */
 #endif
 #ifdef WOLFSSL_XILINX_CRYPT
@@ -188,15 +178,11 @@ struct Aes {
     struct kcapi_handle* handle;
     int                  init;
 #endif
-#if (defined(WOLFSSL_DEVCRYPTO) &&  (defined(WOLFSSL_DEVCRYPTO_AES) || defined(WOLFSSL_DEVCRYPTO_CBC))) ||  defined(WOLFSSL_KCAPI_AES)
+#if defined(WOLFSSL_KCAPI_AES)
     word32 devKey[AES_MAX_KEY_SIZE/WOLFSSL_BIT_SIZE/sizeof(word32)]; /* raw key */
 #ifdef HAVE_CAVIUM_OCTEON_SYNC
     int    keySet;
 #endif
-#endif
-#if defined(WOLFSSL_DEVCRYPTO) && \
-    (defined(WOLFSSL_DEVCRYPTO_AES) || defined(WOLFSSL_DEVCRYPTO_CBC))
-    WC_CRYPTODEV ctx;
 #endif
 #if defined(WOLFSSL_RENESAS_TSIP_TLS) && \
     defined(WOLFSSL_RENESAS_TSIP_TLS_AES_CRYPT)
@@ -204,9 +190,6 @@ struct Aes {
 #endif
 #if defined(WOLFSSL_RENESAS_SCEPROTECT)
     SCE_AES_CTX ctx;
-#endif
-#if defined(WOLFSSL_IMXRT_DCP)
-    dcp_handle_t handle;
 #endif
 #if defined(WOLFSSL_HAVE_PSA) && !defined(WOLFSSL_PSA_NO_AES)
     psa_key_id_t key_id;
@@ -262,37 +245,17 @@ WOLFSSL_API int  wc_AesSetKey(Aes* aes, const byte* key, word32 len,
                               const byte* iv, int dir);
 WOLFSSL_API int  wc_AesSetIV(Aes* aes, const byte* iv);
 
-#ifdef HAVE_AES_CBC
 WOLFSSL_API int  wc_AesCbcEncrypt(Aes* aes, byte* out,
                                   const byte* in, word32 sz);
 WOLFSSL_API int  wc_AesCbcDecrypt(Aes* aes, byte* out,
                                   const byte* in, word32 sz);
-#endif
 
-#ifdef WOLFSSL_AES_CFB
-WOLFSSL_API int wc_AesCfbEncrypt(Aes* aes, byte* out,
-                                    const byte* in, word32 sz);
-WOLFSSL_API int wc_AesCfb1Encrypt(Aes* aes, byte* out,
-                                    const byte* in, word32 sz);
-WOLFSSL_API int wc_AesCfb8Encrypt(Aes* aes, byte* out,
-                                    const byte* in, word32 sz);
-#ifdef HAVE_AES_DECRYPT
-WOLFSSL_API int wc_AesCfbDecrypt(Aes* aes, byte* out,
-                                    const byte* in, word32 sz);
-WOLFSSL_API int wc_AesCfb1Decrypt(Aes* aes, byte* out,
-                                    const byte* in, word32 sz);
-WOLFSSL_API int wc_AesCfb8Decrypt(Aes* aes, byte* out,
-                                    const byte* in, word32 sz);
-#endif /* HAVE_AES_DECRYPT */
-#endif /* WOLFSSL_AES_CFB */
 
 #ifdef WOLFSSL_AES_OFB
 WOLFSSL_API int wc_AesOfbEncrypt(Aes* aes, byte* out,
                                     const byte* in, word32 sz);
-#ifdef HAVE_AES_DECRYPT
 WOLFSSL_API int wc_AesOfbDecrypt(Aes* aes, byte* out,
                                     const byte* in, word32 sz);
-#endif /* HAVE_AES_DECRYPT */
 #endif /* WOLFSSL_AES_OFB */
 
 #ifdef HAVE_AES_ECB
@@ -303,10 +266,6 @@ WOLFSSL_API int wc_AesEcbDecrypt(Aes* aes, byte* out,
 #endif
 
 /* AES-CTR */
-#ifdef WOLFSSL_AES_COUNTER
- WOLFSSL_API int wc_AesCtrEncrypt(Aes* aes, byte* out,
-                                   const byte* in, word32 sz);
-#endif
 /* AES-DIRECT */
 #if defined(WOLFSSL_AES_DIRECT)
 #if defined(BUILDING_WOLFSSL)

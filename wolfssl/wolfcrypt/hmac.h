@@ -39,7 +39,7 @@
 /* avoid redefinition of structs */
 
 
-#if defined(WOLFSSL_DEVCRYPTO_AES) || defined(WOLFSSL_DEVCRYPTO_HMAC)
+#if defined(WOLFSSL_DEVCRYPTO_HMAC)
     #include <wolfssl/wolfcrypt/port/devcrypto/wc_devcrypto.h>
 #endif
 
@@ -91,9 +91,6 @@ struct Hmac {
     byte    innerHashKeyed;       /* keyed flag */
 #ifdef WOLFSSL_KCAPI_HMAC
     struct kcapi_handle* handle;
-#endif
-#if defined(WOLFSSL_DEVCRYPTO) && defined(WOLFSSL_DEVCRYPTO_HMAC)
-    WC_CRYPTODEV ctx;
 #endif
 };
 

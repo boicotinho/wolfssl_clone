@@ -36,9 +36,6 @@
     #include "fsl_ltc.h"
 #endif
 
-#ifdef WOLFSSL_IMXRT_DCP
-    #include "fsl_dcp.h"
-#endif
 
 #ifdef __cplusplus
     extern "C" {
@@ -99,9 +96,6 @@ struct wc_Sha {
         ltc_hash_ctx_t ctx;
 #elif defined(STM32_HASH)
         STM32_HASH_Context stmCtx;
-#elif defined(WOLFSSL_IMXRT_DCP)
-        dcp_handle_t handle;
-        dcp_hash_ctx_t ctx;
 #elif defined(WOLFSSL_HAVE_PSA) && !defined(WOLFSSL_PSA_NO_HASH)
         psa_hash_operation_t psa_ctx;
 #else

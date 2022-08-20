@@ -37,9 +37,6 @@
     #include "fsl_ltc.h"
 #endif
 
-#ifdef WOLFSSL_IMXRT_DCP
-    #include "fsl_dcp.h"
-#endif
 
 #if defined(WOLFSSL_PSOC6_CRYPTO)
 #include "cy_crypto_core_sha.h"
@@ -59,9 +56,6 @@
 #endif
 #ifdef STM32_HASH
     #include <wolfssl/wolfcrypt/port/st/stm32.h>
-#endif
-#if defined(WOLFSSL_DEVCRYPTO) && defined(WOLFSSL_DEVCRYPTO_HASH)
-    #include <wolfssl/wolfcrypt/port/devcrypto/wc_devcrypto.h>
 #endif
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT)
     #include "wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h"
@@ -123,9 +117,6 @@ struct wc_Sha256 {
     ltc_hash_ctx_t ctx;
 #elif defined(STM32_HASH_SHA2)
     STM32_HASH_Context stmCtx;
-#elif defined(WOLFSSL_IMXRT_DCP)
-    dcp_handle_t handle;
-    dcp_hash_ctx_t ctx;
 #elif defined(WOLFSSL_PSOC6_CRYPTO)
     cy_stc_crypto_sha_state_t hash_state;
     cy_en_crypto_sha_mode_t sha_mode;

@@ -620,21 +620,15 @@ static int wc_PKCS7_GetOIDBlockSize(int oid)
 
     switch (oid) {
     #ifdef WOLFSSL_AES_128
-        #ifdef HAVE_AES_CBC
         case AES128CBCb:
-        #endif
         case AES128GCMb:
     #endif
     #ifdef WOLFSSL_AES_192
-        #ifdef HAVE_AES_CBC
         case AES192CBCb:
-        #endif
         case AES192GCMb:
     #endif
     #ifdef WOLFSSL_AES_256
-        #ifdef HAVE_AES_CBC
         case AES256CBCb:
-        #endif
         case AES256GCMb:
     #endif
             blockSz = AES_BLOCK_SIZE;
@@ -656,27 +650,21 @@ static int wc_PKCS7_GetOIDKeySize(int oid)
 
     switch (oid) {
     #ifdef WOLFSSL_AES_128
-        #ifdef HAVE_AES_CBC
         case AES128CBCb:
-        #endif
         case AES128GCMb:
         case AES128_WRAP:
             blockKeySz = 16;
             break;
     #endif
     #ifdef WOLFSSL_AES_192
-        #ifdef HAVE_AES_CBC
         case AES192CBCb:
-        #endif
         case AES192GCMb:
         case AES192_WRAP:
             blockKeySz = 24;
             break;
     #endif
     #ifdef WOLFSSL_AES_256
-        #ifdef HAVE_AES_CBC
         case AES256CBCb:
-        #endif
         case AES256GCMb:
         case AES256_WRAP:
             blockKeySz = 32;
@@ -5889,7 +5877,6 @@ static int wc_PKCS7_EncryptContent(int encryptOID, byte* key, int keySz,
         return BAD_FUNC_ARG;
 
     switch (encryptOID) {
-    #ifdef HAVE_AES_CBC
     #ifdef WOLFSSL_AES_128
         case AES128CBCb:
     #endif
@@ -5920,7 +5907,6 @@ static int wc_PKCS7_EncryptContent(int encryptOID, byte* key, int keySz,
                 wc_AesFree(aes);
             }
             break;
-    #endif /* HAVE_AES_CBC */
         #ifdef WOLFSSL_AES_128
         case AES128GCMb:
         #endif
@@ -5976,7 +5962,6 @@ static int wc_PKCS7_DecryptContent(PKCS7* pkcs7, int encryptOID, byte* key,
         return BAD_FUNC_ARG;
 
     switch (encryptOID) {
-    #ifdef HAVE_AES_CBC
     #ifdef WOLFSSL_AES_128
         case AES128CBCb:
     #endif
@@ -6006,7 +5991,6 @@ static int wc_PKCS7_DecryptContent(PKCS7* pkcs7, int encryptOID, byte* key,
                 wc_AesFree(aes);
             }
             break;
-    #endif /* HAVE_AES_CBC */
         #ifdef WOLFSSL_AES_128
         case AES128GCMb:
         #endif

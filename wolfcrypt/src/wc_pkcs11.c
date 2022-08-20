@@ -51,8 +51,8 @@
 #if defined(NO_PKCS11_AESGCM)
 // error : inserted by coan: "#undef HAVE_AESGCM" contradicts -D symbol at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfcrypt/src/wc_pkcs11.c(58)
 #endif
-#if defined(NO_PKCS11_AESCBC) && defined(HAVE_AES_CBC)
-    #undef HAVE_AES_CBC
+#if defined(NO_PKCS11_AESCBC)
+// error : inserted by coan: "#undef HAVE_AES_CBC" contradicts -D symbol at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfcrypt/src/wc_pkcs11.c(55)
 #endif
 #if defined(NO_PKCS11_HMAC)
 // error : inserted by coan: "#define NO_HMAC" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfcrypt/src/wc_pkcs11.c(64)
@@ -1196,7 +1196,6 @@ int wc_Pkcs11StoreKey(Pkcs11Token* token, int type, int clear, void* key)
                     ForceZero(aes->devKey, aes->keylen);
                 break;
             }
-    #if defined(HAVE_AES_CBC)
             case PKCS11_KEY_TYPE_AES_CBC: {
                 Aes* aes = (Aes*)key;
 
@@ -1213,7 +1212,6 @@ int wc_Pkcs11StoreKey(Pkcs11Token* token, int type, int clear, void* key)
                     ForceZero(aes->devKey, aes->keylen);
                 break;
             }
-    #endif
             case PKCS11_KEY_TYPE_HMAC: {
                 Hmac* hmac = (Hmac*)key;
                 int mechType;
@@ -3130,7 +3128,6 @@ static int Pkcs11AesGcmDecrypt(Pkcs11Session* session, wc_CryptoInfo* info)
     return ret;
 }
 
-#if defined(HAVE_AES_CBC)
 /**
  * Performs the AES-CBC encryption operation.
  *
@@ -3282,7 +3279,6 @@ static int Pkcs11AesCbcDecrypt(Pkcs11Session* session, wc_CryptoInfo* info)
 
     return ret;
 }
-#endif
 
 /**
  * Updates or calculates the HMAC of the data.
@@ -3556,7 +3552,6 @@ int wc_Pkcs11_CryptoDevCb(int devId, wc_CryptoInfo* info, void* ctx)
                         }
                     }
                     break;
-        #ifdef HAVE_AES_CBC
                 case WC_CIPHER_AES_CBC:
                     if (info->cipher.enc) {
                         ret = Pkcs11OpenSession(token, &session, readWrite);
@@ -3573,7 +3568,6 @@ int wc_Pkcs11_CryptoDevCb(int devId, wc_CryptoInfo* info, void* ctx)
                         }
                     }
                     break;
-        #endif
                 }
         }
         else if (info->algo_type == WC_ALGO_TYPE_HMAC) {

@@ -104,7 +104,7 @@ where 0 <= L < 2^64.
 #endif
 
 
-#if !defined(WOLFSSL_PIC32MZ_HASH) && !defined(STM32_HASH_SHA2) && (!defined(WOLFSSL_IMX6_CAAM) || defined(NO_IMX6_CAAM_HASH) ) && !defined(WOLFSSL_AFALG_HASH) && !defined(WOLFSSL_DEVCRYPTO_HASH) && (!defined(WOLFSSL_ESP32WROOM32_CRYPT) || defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)) && (!defined(WOLFSSL_RENESAS_TSIP_CRYPT) || defined(NO_WOLFSSL_RENESAS_TSIP_HASH)) && !defined(WOLFSSL_PSOC6_CRYPTO) && !defined(WOLFSSL_IMXRT_DCP) && !defined(WOLFSSL_KCAPI_HASH) && !defined(WOLFSSL_SE050_HASH) && (!defined(WOLFSSL_RENESAS_SCEPROTECT) || defined(NO_WOLFSSL_RENESAS_SCEPROTECT_HASH)) && (!defined(WOLFSSL_HAVE_PSA) || defined(WOLFSSL_PSA_NO_HASH))
+#if !defined(WOLFSSL_PIC32MZ_HASH) && !defined(STM32_HASH_SHA2) && (!defined(WOLFSSL_IMX6_CAAM) || defined(NO_IMX6_CAAM_HASH) ) && !defined(WOLFSSL_AFALG_HASH) && !defined(WOLFSSL_DEVCRYPTO_HASH) && (!defined(WOLFSSL_ESP32WROOM32_CRYPT) || defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)) && (!defined(WOLFSSL_RENESAS_TSIP_CRYPT) || defined(NO_WOLFSSL_RENESAS_TSIP_HASH)) && !defined(WOLFSSL_PSOC6_CRYPTO) && !defined(WOLFSSL_KCAPI_HASH) && !defined(WOLFSSL_SE050_HASH) && (!defined(WOLFSSL_RENESAS_SCEPROTECT) || defined(NO_WOLFSSL_RENESAS_SCEPROTECT_HASH)) && (!defined(WOLFSSL_HAVE_PSA) || defined(WOLFSSL_PSA_NO_HASH))
 
 
 
@@ -1054,9 +1054,6 @@ void wc_Sha256Free(wc_Sha256* sha256)
 #if defined(WOLFSSL_KCAPI_HASH)
     KcapiHashFree(&sha256->kcapi);
 #endif
-#ifdef WOLFSSL_IMXRT_DCP
-    DCPSha256Free(sha256);
-#endif
 }
 
 #endif /* !defined(WOLFSSL_HAVE_PSA) || defined(WOLFSSL_PSA_NO_HASH) */
@@ -1173,8 +1170,6 @@ int wc_Sha224_Grow(wc_Sha224* sha224, const byte* in, int inSz)
 
 #elif defined(WOLFSSL_PSOC6_CRYPTO)
     /* implemented in wolfcrypt/src/port/cypress/psoc6_crypto.c */
-#elif defined(WOLFSSL_IMXRT_DCP)
-    /* implemented in wolfcrypt/src/port/nxp/dcp_port.c */
 #elif defined(WOLFSSL_KCAPI_HASH)
     /* implemented in wolfcrypt/src/port/kcapi/kcapi_hash.c */
 

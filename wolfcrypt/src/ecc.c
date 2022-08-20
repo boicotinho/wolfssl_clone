@@ -5492,13 +5492,6 @@ int wc_ecc_export_ex(ecc_key* key, byte* qx, word32* qxLen,
             (key->type != ECC_PRIVATEKEY && key->type != ECC_PRIVATEKEY_ONLY))
             return BAD_FUNC_ARG;
 
-    #if defined(WOLFSSL_SECO_CAAM)
-        if (key->blackKey > 0 && key->devId == WOLFSSL_SECO_DEVID) {
-            /* Hardware cannot export private portion */
-            WOLFSSL_MSG("Can not export private key from HSM");
-            return NOT_COMPILED_IN;
-        }
-    #endif
         {
             err = wc_export_int(&key->k, d, dLen, keySz, encType);
             if (err != MP_OKAY)
@@ -6110,21 +6103,11 @@ static void ecc_ctx_init(ecEncCtx* ctx, int flags, WC_RNG* rng)
     if (ctx) {
         XMEMSET(ctx, 0, sizeof(ecEncCtx));
 
-    #if defined(HAVE_AES_CBC)
         #ifdef WOLFSSL_AES_128
             ctx->encAlgo  = ecAES_128_CBC;
         #else
             ctx->encAlgo  = ecAES_256_CBC;
         #endif
-    #elif defined(WOLFSSL_AES_COUNTER)
-        #ifdef WOLFSSL_AES_256
-            ctx->encAlgo  = ecAES_256_CTR;
-        #else
-            ctx->encAlgo  = ecAES_128_CTR;
-        #endif
-    #else
-        #error "No valid encryption algorithm for ECIES configured."
-    #endif
         ctx->kdfAlgo  = ecHKDF_SHA256;
         ctx->macAlgo  = ecHMAC_SHA256;
         ctx->protocol = (byte)flags;
@@ -6193,7 +6176,6 @@ static int ecc_get_key_sizes(ecEncCtx* ctx, int* encKeySz, int* ivSz,
 {
     if (ctx) {
         switch (ctx->encAlgo) {
-        #if defined(HAVE_AES_CBC)
             case ecAES_128_CBC:
                 *encKeySz = KEY_SIZE_128;
                 *ivSz     = IV_SIZE_128;
@@ -6204,19 +6186,6 @@ static int ecc_get_key_sizes(ecEncCtx* ctx, int* encKeySz, int* ivSz,
                 *ivSz     = IV_SIZE_128;
                 *blockSz  = AES_BLOCK_SIZE;
                 break;
-        #endif
-        #if defined(WOLFSSL_AES_COUNTER)
-            case ecAES_128_CTR:
-                *encKeySz = KEY_SIZE_128;
-                *ivSz     = IV_SIZE_128;
-                *blockSz  = 1;
-                break;
-            case ecAES_256_CTR:
-                *encKeySz = KEY_SIZE_256;
-                *ivSz     = IV_SIZE_128;
-                *blockSz  = 1;
-                break;
-        #endif
             default:
                 return BAD_FUNC_ARG;
         }
@@ -6392,7 +6361,6 @@ int wc_ecc_encrypt_ex(ecc_key* privKey, ecc_key* pubKey, const byte* msg,
             case ecAES_128_CBC:
             case ecAES_256_CBC:
             {
-        #if defined(HAVE_AES_CBC)
                 Aes aes[1];
                 ret = wc_AesInit(aes, NULL, INVALID_DEVID);
                 if (ret == 0) {
@@ -6403,28 +6371,12 @@ int wc_ecc_encrypt_ex(ecc_key* privKey, ecc_key* pubKey, const byte* msg,
                     }
                     wc_AesFree(aes);
                 }
-        #else
-                ret = NOT_COMPILED_IN;
-        #endif
                 break;
             }
             case ecAES_128_CTR:
             case ecAES_256_CTR:
             {
-        #if defined(WOLFSSL_AES_COUNTER)
-                Aes aes[1];
-                ret = wc_AesInit(aes, NULL, INVALID_DEVID);
-                if (ret == 0) {
-                    ret = wc_AesSetKey(aes, encKey, encKeySz, encIv,
-                                                                AES_ENCRYPTION);
-                    if (ret == 0) {
-                        ret = wc_AesCtrEncrypt(aes, out, msg, msgSz);
-                    }
-                    wc_AesFree(aes);
-                }
-        #else
                 ret = NOT_COMPILED_IN;
-        #endif
                 break;
             }
             default:
@@ -6681,7 +6633,6 @@ int wc_ecc_decrypt(ecc_key* privKey, ecc_key* pubKey, const byte* msg,
 
     if (ret == 0) {
         switch (ctx->encAlgo) {
-        #if defined(HAVE_AES_CBC)
             case ecAES_128_CBC:
             case ecAES_256_CBC:
             {
@@ -6697,24 +6648,6 @@ int wc_ecc_decrypt(ecc_key* privKey, ecc_key* pubKey, const byte* msg,
                 }
                 break;
             }
-        #endif
-        #if defined(WOLFSSL_AES_COUNTER)
-            case ecAES_128_CTR:
-            case ecAES_256_CTR:
-            {
-                Aes aes[1];
-                ret = wc_AesInit(aes, NULL, INVALID_DEVID);
-                if (ret == 0) {
-                    ret = wc_AesSetKey(aes, encKey, encKeySz, encIv,
-                                                                AES_ENCRYPTION);
-                    if (ret == 0) {
-                        ret = wc_AesCtrEncrypt(aes, out, msg, msgSz-digestSz);
-                    }
-                    wc_AesFree(aes);
-                }
-                break;
-            }
-        #endif
             default:
                 ret = BAD_FUNC_ARG;
                 break;
