@@ -1978,7 +1978,7 @@ ProtocolVersion MakeSSLv3(void)
 #endif
 
 #elif defined(TIME_OVERRIDES)
-#if !defined(NO_ASN) && !defined(NO_ASN_TIME)
+#if !defined(NO_ASN_TIME)
     /* use same asn time overrides unless user wants tick override above */
 
     word32 LowResTimer(void)
@@ -2155,7 +2155,7 @@ ProtocolVersion MakeSSLv3(void)
 
     word32 LowResTimer(void)
     {
-    #if !defined(NO_ASN) && !defined(NO_ASN_TIME)
+    #if !defined(NO_ASN_TIME)
         return (word32)wc_Time(0);
     #else
         return (word32)XTIME(0);

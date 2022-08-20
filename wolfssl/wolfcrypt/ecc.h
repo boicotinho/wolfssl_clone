@@ -172,9 +172,6 @@ typedef enum ecc_curve_id {
     ECC_SAKKE_1,
 #endif
 
-#ifdef WOLFSSL_CUSTOM_CURVES
-    ECC_CURVE_CUSTOM,
-#endif
     ECC_CURVE_MAX
 } ecc_curve_id;
 
@@ -274,9 +271,6 @@ struct ecc_key {
     word32 flags;
     const ecc_set_type* dp;     /* domain parameters, either points to NIST
                                    curves (idx >= 0) or user supplied */
-#ifdef WOLFSSL_CUSTOM_CURVES
-    int deallocSet;
-#endif
     void* heap;         /* heap hint */
     ecc_point pubkey;   /* public key */
     mp_int    k;        /* private key */
@@ -407,23 +401,17 @@ int wc_ecc_sign_set_k(const byte* k, word32 klen, ecc_key* key);
 #endif
 #endif /* HAVE_ECC_SIGN */
 
-#ifdef HAVE_ECC_VERIFY
 WOLFSSL_API
 int wc_ecc_verify_hash(const byte* sig, word32 siglen, const byte* hash,
                     word32 hashlen, int* res, ecc_key* key);
 WOLFSSL_API
 int wc_ecc_verify_hash_ex(mp_int *r, mp_int *s, const byte* hash,
                           word32 hashlen, int* res, ecc_key* key);
-#endif /* HAVE_ECC_VERIFY */
 
 WOLFSSL_API
 int wc_ecc_init(ecc_key* key);
 WOLFSSL_ABI WOLFSSL_API
 int wc_ecc_init_ex(ecc_key* key, void* heap, int devId);
-#ifdef WOLFSSL_CUSTOM_CURVES
-WOLFSSL_LOCAL
-void wc_ecc_free_curve(const ecc_set_type* curve, void* heap);
-#endif
 WOLFSSL_ABI WOLFSSL_API
 int wc_ecc_free(ecc_key* key);
 WOLFSSL_API
@@ -504,7 +492,6 @@ int wc_ecc_export_x963_ex(ecc_key* key, byte* out, word32* outLen,
                           int compressed);
     /* extended functionality with compressed option */
 
-#ifdef HAVE_ECC_KEY_IMPORT
 WOLFSSL_ABI WOLFSSL_API
 int wc_ecc_import_x963(const byte* in, word32 inLen, ecc_key* key);
 WOLFSSL_API
@@ -533,7 +520,6 @@ int wc_ecc_import_raw_ex(ecc_key* key, const char* qx, const char* qy,
 WOLFSSL_API
 int wc_ecc_import_unsigned(ecc_key* key, const byte* qx, const byte* qy,
                    const byte* d, int curve_id);
-#endif /* HAVE_ECC_KEY_IMPORT */
 
 WOLFSSL_API
 int wc_ecc_export_ex(ecc_key* key, byte* qx, word32* qxLen,
@@ -559,7 +545,6 @@ int wc_ecc_export_point_der_compressed(const int curve_idx, ecc_point* point,
                                        byte* out, word32* outLen);
 
 
-#ifdef HAVE_ECC_KEY_IMPORT
 WOLFSSL_API
 int wc_ecc_import_point_der_ex(const byte* in, word32 inLen,
                                const int curve_idx, ecc_point* point,
@@ -567,7 +552,6 @@ int wc_ecc_import_point_der_ex(const byte* in, word32 inLen,
 WOLFSSL_API
 int wc_ecc_import_point_der(const byte* in, word32 inLen, const int curve_idx,
                             ecc_point* point);
-#endif /* HAVE_ECC_KEY_IMPORT */
 
 /* size helper */
 WOLFSSL_API
@@ -580,10 +564,6 @@ int wc_ecc_sig_size(const ecc_key* key);
 WOLFSSL_API
 int wc_ecc_get_oid(word32 oidSum, const byte** oid, word32* oidSz);
 
-#ifdef WOLFSSL_CUSTOM_CURVES
-    WOLFSSL_API
-    int wc_ecc_set_custom_curve(ecc_key* key, const ecc_set_type* dp);
-#endif
 
 #ifdef HAVE_ECC_ENCRYPT
 /* ecc encrypt */

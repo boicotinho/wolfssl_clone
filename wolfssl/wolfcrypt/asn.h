@@ -36,7 +36,6 @@ that can be serialized and deserialized in a cross-platform way.
 
 #include <wolfssl/wolfcrypt/types.h>
 
-#ifndef NO_ASN
 
 
 #if !defined(NO_ASN_TIME) && defined(NO_TIME_H)
@@ -1828,10 +1827,8 @@ typedef struct RevokedCert RevokedCert;
     } /* extern "C" */
 #endif
 
-#endif /* !NO_ASN */
 
 
-#if !defined(NO_ASN) || !defined(NO_PWDBASED)
 
 #ifndef PKCS_MAX_KEY_SIZE
     #define PKCS_MAX_KEY_SIZE    64  /* MAX PKCS Key length */
@@ -1874,6 +1871,5 @@ enum PKCSTypes {
     PKCS1v1             =   1,     /* Multi-prime version */
 };
 
-#endif /* !NO_ASN || !NO_PWDBASED */
 
 #endif /* WOLF_CRYPT_ASN_H */

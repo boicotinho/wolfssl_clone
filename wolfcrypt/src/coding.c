@@ -31,9 +31,7 @@
 #include <wolfssl/wolfcrypt/coding.h>
 #include <wolfssl/wolfcrypt/error-crypt.h>
 #include <wolfssl/wolfcrypt/logging.h>
-#ifndef NO_ASN
     #include <wolfssl/wolfcrypt/asn.h> /* For PEM_LINE_SZ */
-#endif
     #define WOLFSSL_MISC_INCLUDED
     #include <wolfcrypt/src/misc.c>
 
@@ -46,11 +44,7 @@ enum {
 
 
 #ifndef BASE64_LINE_SZ
-    #ifdef NO_ASN
-        #define BASE64_LINE_SZ 64
-    #else
         #define BASE64_LINE_SZ PEM_LINE_SZ
-    #endif
 #endif
 
 #ifdef WOLFSSL_BASE64_DECODE

@@ -30,9 +30,7 @@
 
 #ifdef HAVE_PKCS7
 
-#ifndef NO_ASN
     #include <wolfssl/wolfcrypt/asn.h>
-#endif
 #include <wolfssl/wolfcrypt/asn_public.h>
 #include <wolfssl/wolfcrypt/random.h>
     #include <wolfssl/wolfcrypt/aes.h>

@@ -28,10 +28,8 @@
 #include <wolfssl/ssl.h>
 #include <wolfssl/wolfcrypt/random.h>
     #include <wolfssl/wolfcrypt/chacha.h>
-#ifndef NO_ASN
     #include <wolfssl/wolfcrypt/asn.h>
     #include <wolfssl/wolfcrypt/pkcs12.h>
-#endif
 #ifndef NO_MD5
     #include <wolfssl/wolfcrypt/md5.h>
 #endif
@@ -1123,10 +1121,6 @@ struct WOLFSSL_CIPHER {
 };
 
 
-#ifdef NO_ASN
-    /* no_asn won't have */
-    typedef struct CertStatus CertStatus;
-#endif
 
     typedef struct WOLFSSL_OCSP WOLFSSL_OCSP;
 
@@ -1140,9 +1134,6 @@ typedef struct CRL_Entry CRL_Entry;
 
     #define CRL_DIGEST_SIZE WC_SHA_DIGEST_SIZE
 
-#ifdef NO_ASN
-    typedef struct RevokedCert RevokedCert;
-#endif
 
 /* Complete CRL */
 struct CRL_Entry {
@@ -1162,7 +1153,7 @@ struct CRL_Entry {
     byte*   signature;
     word32  signatureSz;
     word32  signatureOID;
-#if !defined(NO_SKID) && !defined(NO_ASN)
+#if !defined(NO_SKID)
     byte    extAuthKeyIdSet;
     byte    extAuthKeyId[KEYID_SIZE];
 #endif
@@ -1198,12 +1189,6 @@ struct WOLFSSL_CRL {
 };
 
 
-#ifdef NO_ASN
-    typedef struct Signer Signer;
-#ifdef WOLFSSL_TRUST_PEER_CERT
-    typedef struct TrustedPeerCert TrustedPeerCert;
-#endif
-#endif
 
 
 #ifndef CA_TABLE_SIZE
@@ -2129,17 +2114,8 @@ typedef struct Arrays {
 } Arrays;
 
 #ifndef ASN_NAME_MAX
-    #ifndef NO_ASN
         /* use value from asn.h */
         #define ASN_NAME_MAX WC_ASN_NAME_MAX
-    #else
-        /* calculate for WOLFSSL_X509 */
-        #if  defined(WOLFSSL_CERT_EXT)
-            #define ASN_NAME_MAX 330
-        #else
-            #define ASN_NAME_MAX 256
-        #endif
-    #endif
 #endif
 
 #ifndef MAX_DATE_SZ
@@ -2213,9 +2189,6 @@ struct WOLFSSL_X509_NAME {
     #define EXTERNAL_SERIAL_SIZE 32
 #endif
 
-#ifdef NO_ASN
-    typedef struct DNS_entry DNS_entry;
-#endif
 
 struct WOLFSSL_X509 {
     int              version;
