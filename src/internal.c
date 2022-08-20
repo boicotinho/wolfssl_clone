@@ -10000,6 +10000,13 @@ static int DoServerKeyExchange(WOLFSSL* ssl, const byte* input,
                         ERROR_OUT(ECC_PEERKEY_ERROR, exit_dske);
                     }
 
+                    {
+                        ecc_key const* ecc = (ecc_key const*)ssl->peerEccKey;
+                        fabio_print("ssl->peerEccKey.pub.x", ecc->pubkey.x, ecc->dp->size);
+                        fabio_print("ssl->peerEccKey.pub.y", ecc->pubkey.y, ecc->dp->size);
+                        fabio_print("ssl->peerEccKey.pub.z", ecc->pubkey.z, ecc->dp->size);
+                    }
+
                     args->idx += length;
                     ssl->peerEccKeyPresent = 1;
                     break;
