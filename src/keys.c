@@ -354,66 +354,6 @@ static int SetKeys(Ciphers* enc, Ciphers* dec, Keys* keys, CipherSpecs* specs,
 
 
 
-#if !defined(NO_CHAPOL_AEAD)
-    /* Check that the max implicit iv size is sufficient */
-    #if (AEAD_MAX_IMP_SZ < 12) /* CHACHA20_IMP_IV_SZ */
-        #error AEAD_MAX_IMP_SZ is too small for ChaCha20
-    #endif
-    #if (MAX_WRITE_IV_SZ < 12) /* CHACHA20_IMP_IV_SZ */
-        #error MAX_WRITE_IV_SZ is too small for ChaCha20
-    #endif
-
-    if (specs->bulk_cipher_algorithm == wolfssl_chacha) {
-        int chachaRet;
-        if (enc && enc->chacha == NULL)
-            enc->chacha =
-                    (ChaCha*)XMALLOC(sizeof(ChaCha), heap, DYNAMIC_TYPE_CIPHER);
-        if (enc && enc->chacha == NULL)
-            return MEMORY_E;
-        if (dec && dec->chacha == NULL)
-            dec->chacha =
-                    (ChaCha*)XMALLOC(sizeof(ChaCha), heap, DYNAMIC_TYPE_CIPHER);
-        if (dec && dec->chacha == NULL)
-            return MEMORY_E;
-        if (side == WOLFSSL_CLIENT_END) {
-            if (enc) {
-                chachaRet = wc_Chacha_SetKey(enc->chacha, keys->client_write_key,
-                                          specs->key_size);
-                XMEMCPY(keys->aead_enc_imp_IV, keys->client_write_IV,
-                        CHACHA20_IMP_IV_SZ);
-                if (chachaRet != 0) return chachaRet;
-            }
-            if (dec) {
-                chachaRet = wc_Chacha_SetKey(dec->chacha, keys->server_write_key,
-                                          specs->key_size);
-                XMEMCPY(keys->aead_dec_imp_IV, keys->server_write_IV,
-                        CHACHA20_IMP_IV_SZ);
-                if (chachaRet != 0) return chachaRet;
-            }
-        }
-        else {
-            if (enc) {
-                chachaRet = wc_Chacha_SetKey(enc->chacha, keys->server_write_key,
-                                          specs->key_size);
-                XMEMCPY(keys->aead_enc_imp_IV, keys->server_write_IV,
-                        CHACHA20_IMP_IV_SZ);
-                if (chachaRet != 0) return chachaRet;
-            }
-            if (dec) {
-                chachaRet = wc_Chacha_SetKey(dec->chacha, keys->client_write_key,
-                                          specs->key_size);
-                XMEMCPY(keys->aead_dec_imp_IV, keys->client_write_IV,
-                        CHACHA20_IMP_IV_SZ);
-                if (chachaRet != 0) return chachaRet;
-            }
-        }
-
-        if (enc)
-            enc->setup = 1;
-        if (dec)
-            dec->setup = 1;
-    }
-#endif /* HAVE_CHACHA && HAVE_POLY1305 */
 
 
     /* check that buffer sizes are sufficient */

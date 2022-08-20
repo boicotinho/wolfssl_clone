@@ -321,7 +321,6 @@
 
 
     /* No ChaCha Poly cipher suites available with build */
-    #define NO_CHAPOL_AEAD
 
     #define DES_BLOCK_SIZE 8
 
