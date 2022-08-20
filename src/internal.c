@@ -10712,8 +10712,21 @@ int SendClientKeyExchange(WOLFSSL* ssl)
                     peerKey = (ssl->specs.static_ecdh) ?
                               ssl->peerEccDsaKey : ssl->peerEccKey;
 
-                    fabio_print("PMS priv_key=64??", ssl->hsKey, 64);
-                    //fabio_print("PMS  pub_key", ssl->peerEccKey, 32);
+                    // Fabio
+                    {
+                        ecc_key const* srv_dh_kpub = (ecc_key const*)peerKey;
+                        fabio_print("ssl->peerEccKey.pub.x", srv_dh_kpub->pubkey.x, srv_dh_kpub->dp->size);
+                        fabio_print("ssl->peerEccKey.pub.y", srv_dh_kpub->pubkey.y, srv_dh_kpub->dp->size);
+                        fabio_print("ssl->peerEccKey.pub.z", srv_dh_kpub->pubkey.z, srv_dh_kpub->dp->size);
+
+                        //fabio_print("PMS  pub_key", ssl->peerEccKey, 32);
+                        ecc_key const* kpair = ssl->hsKey;
+                        fabio_print("hsKey->pub.x ", kpair->pubkey.x, kpair->dp->size);
+                        fabio_print("hsKey->pub.y ", kpair->pubkey.y, kpair->dp->size);
+                        fabio_print("hsKey->pub.z ", kpair->pubkey.z, kpair->dp->size);
+                        fabio_print("hsKey->prv.dp", kpair->k.dp,     kpair->dp->size);
+                    }
+
 
                     ret = EccSharedSecret(ssl,
                         (ecc_key*)ssl->hsKey, peerKey,
@@ -10722,6 +10735,11 @@ int SendClientKeyExchange(WOLFSSL* ssl)
                         &ssl->arrays->preMasterSz,
                         WOLFSSL_CLIENT_END
                     );
+
+                    fabio_print("PRE-MASTER SECRET",
+                        ssl->arrays->preMasterSecret,
+                        ssl->arrays->preMasterSz);
+
                     if (!ssl->specs.static_ecdh
                      && !ssl->options.keepResources) {
                         FreeKey(ssl, DYNAMIC_TYPE_ECC,
@@ -10975,7 +10993,7 @@ int wolfSSL_GetMaxFragSize(WOLFSSL* ssl, int maxFragment)
 
 void fabio_print(char const* msg, void const* buf, word32 len)
 {
-    char const* cbuf = (char const*)buf;
+    unsigned char const* cbuf = (unsigned char const*)buf;
     fprintf(stderr, "@@@@@@ %s: ", msg);
     if(!buf)
         fprintf(stderr, "<NULL>");
