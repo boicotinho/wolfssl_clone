@@ -33,18 +33,13 @@ or Authenticated Encryption with Additional Data (AEAD) algorithm.
 
 #include <wolfssl/wolfcrypt/settings.h>
 
-#if defined(HAVE_CHACHA) && defined(HAVE_POLY1305)
 
 #include <wolfssl/wolfcrypt/chacha20_poly1305.h>
 #include <wolfssl/wolfcrypt/error-crypt.h>
 #include <wolfssl/wolfcrypt/logging.h>
 
-#ifdef NO_INLINE
-#include <wolfssl/wolfcrypt/misc.h>
-#else
 #define WOLFSSL_MISC_INCLUDED
 #include <wolfcrypt/src/misc.c>
-#endif
 
 #define CHACHA20_POLY1305_AEAD_INITIAL_COUNTER  0
 int wc_ChaCha20Poly1305_Encrypt(
@@ -359,14 +354,7 @@ static WC_INLINE int wc_XChaCha20Poly1305_crypt_oneshot(
     const byte *src_i;
     byte *dst_i;
     size_t src_len_rem;
-#if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
-    ChaChaPoly_Aead *aead = (ChaChaPoly_Aead *)XMALLOC(sizeof *aead, NULL, DYNAMIC_TYPE_TMP_BUFFER);
-
-    if (aead == NULL)
-        return MEMORY_E;
-#else
     ChaChaPoly_Aead aead_buf, *aead = &aead_buf;
-#endif
 
     if ((dst == NULL) || (src == NULL)) {
         ret = BAD_FUNC_ARG;
@@ -437,9 +425,6 @@ static WC_INLINE int wc_XChaCha20Poly1305_crypt_oneshot(
 
     ForceZero(aead, sizeof *aead);
 
-#if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_NO_MALLOC)
-    XFREE(aead, NULL, DYNAMIC_TYPE_TMP_BUFFER);
-#endif
 
     return ret;
 }
@@ -466,4 +451,3 @@ int wc_XChaCha20Poly1305_Decrypt(
 
 #endif /* HAVE_XCHACHA */
 
-#endif /* HAVE_CHACHA && HAVE_POLY1305 */

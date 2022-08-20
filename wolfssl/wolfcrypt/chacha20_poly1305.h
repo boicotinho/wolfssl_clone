@@ -38,7 +38,6 @@ or Authenticated Encryption with Additional Data (AEAD) algorithm.
 #include <wolfssl/wolfcrypt/chacha.h>
 #include <wolfssl/wolfcrypt/poly1305.h>
 
-#if defined(HAVE_CHACHA) && defined(HAVE_POLY1305)
 
 #ifdef __cplusplus
     extern "C" {
@@ -153,5 +152,4 @@ WOLFSSL_API int wc_XChaCha20Poly1305_Decrypt(
     } /* extern "C" */
 #endif
 
-#endif /* HAVE_CHACHA && HAVE_POLY1305 */
 #endif /* WOLF_CRYPT_CHACHA20_POLY1305_H */

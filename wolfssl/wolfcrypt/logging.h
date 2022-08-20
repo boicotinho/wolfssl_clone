@@ -100,18 +100,15 @@ WOLFSSL_API int  wolfSSL_Debugging_ON(void);
 /* turn logging off */
 WOLFSSL_API void wolfSSL_Debugging_OFF(void);
 
-#ifdef HAVE_WC_INTROSPECTION
     WOLFSSL_API const char *wolfSSL_configure_args(void);
     WOLFSSL_API const char *wolfSSL_global_cflags(void);
-#endif
 
 
-#if (defined(OPENSSL_EXTRA) && !defined(_WIN32) && \
-        !defined(NO_ERROR_QUEUE)) || defined(DEBUG_WOLFSSL_VERBOSE)
+#if defined(DEBUG_WOLFSSL_VERBOSE)
 #define WOLFSSL_HAVE_ERROR_QUEUE
 #endif
 
-#if defined(OPENSSL_EXTRA) || defined(DEBUG_WOLFSSL_VERBOSE)
+#if defined(DEBUG_WOLFSSL_VERBOSE)
     WOLFSSL_LOCAL int wc_LoggingInit(void);
     WOLFSSL_LOCAL int wc_LoggingCleanup(void);
     WOLFSSL_LOCAL int wc_AddErrorNode(int error, int line, char* buf,
@@ -145,7 +142,7 @@ WOLFSSL_API void wolfSSL_Debugging_OFF(void);
     #define WOLFSSL_TIME(n)
 #endif
 
-#if defined(DEBUG_WOLFSSL) && !defined(WOLFSSL_DEBUG_ERRORS_ONLY)
+#if !defined(WOLFSSL_DEBUG_ERRORS_ONLY)
     #if defined(_WIN32)
         #if defined(INTIME_RTOS)
             #define __func__ NULL
@@ -183,8 +180,6 @@ WOLFSSL_API void wolfSSL_Debugging_OFF(void);
 
 #endif /* DEBUG_WOLFSSL && !WOLFSSL_DEBUG_ERRORS_ONLY */
 
-#if defined(DEBUG_WOLFSSL) || defined(OPENSSL_ALL) || defined(WOLFSSL_NGINX) ||\
-    defined(WOLFSSL_HAPROXY) || defined(OPENSSL_EXTRA)
 
     #ifdef WOLFSSL_HAVE_ERROR_QUEUE
         WOLFSSL_API void WOLFSSL_ERROR_LINE(int err, const char* func, unsigned int line,
@@ -196,10 +191,6 @@ WOLFSSL_API void wolfSSL_Debugging_OFF(void);
     #endif
     WOLFSSL_API void WOLFSSL_ERROR_MSG(const char* msg);
 
-#else
-    #define WOLFSSL_ERROR(e)
-    #define WOLFSSL_ERROR_MSG(m)
-#endif
 
 #ifdef HAVE_STACK_SIZE_VERBOSE
     extern WOLFSSL_API THREAD_LS_T unsigned char *StackSizeCheck_myStack;

@@ -242,12 +242,8 @@
 #define WOLFSSL_MAKE_FIPS_VERSION(major, minor) (((major) * 256) + (minor))
 #if !defined(HAVE_FIPS)
     #define WOLFSSL_FIPS_VERSION_CODE WOLFSSL_MAKE_FIPS_VERSION(0,0)
-#elif !defined(HAVE_FIPS_VERSION)
-    #define WOLFSSL_FIPS_VERSION_CODE WOLFSSL_MAKE_FIPS_VERSION(1,0)
-#elif !defined(HAVE_FIPS_VERSION_MINOR)
-    #define WOLFSSL_FIPS_VERSION_CODE WOLFSSL_MAKE_FIPS_VERSION(HAVE_FIPS_VERSION,0)
 #else
-    #define WOLFSSL_FIPS_VERSION_CODE WOLFSSL_MAKE_FIPS_VERSION(HAVE_FIPS_VERSION,HAVE_FIPS_VERSION_MINOR)
+    #define WOLFSSL_FIPS_VERSION_CODE WOLFSSL_MAKE_FIPS_VERSION(1,0)
 #endif
 
 #define FIPS_VERSION_LT(major,minor) (WOLFSSL_FIPS_VERSION_CODE < WOLFSSL_MAKE_FIPS_VERSION(major,minor))
@@ -270,8 +266,7 @@
 #endif
 
 
-#if defined(_WIN32) && !defined(_M_X64) && \
-    defined(HAVE_AESGCM) && defined(WOLFSSL_AESNI)
+#if defined(_WIN32) && !defined(_M_X64)
 
 /* The _M_X64 macro is what's used in the headers for MSC to tell if it
  * has the 64-bit versions of the 128-bit integers available. If one is
@@ -314,8 +309,7 @@
         #if defined(ESP32_USE_RSA_PRIMITIVE) && \
             !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI)
             #define WOLFSSL_ESP32WROOM32_CRYPT_RSA_PRI
-            #define USE_FAST_MATH
-            #define WOLFSSL_SMALL_STACK
+// error : inserted by coan: "#define WOLFSSL_SMALL_STACK" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(318)
         #endif
    #endif
 #endif
@@ -345,7 +339,7 @@
 
     #define WOLFSSL_RENESAS_SCEPROTECT_ECC
     #if defined(WOLFSSL_RENESAS_SCEPROTECT_ECC)
-        #define HAVE_PK_CALLBACKS
+// error : inserted by coan: "#define HAVE_PK_CALLBACKS" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(348)
         /* #define DEBUG_PK_CB */
     #endif
 #endif
@@ -356,24 +350,23 @@
 
 #if defined(WOLFSSL_LWIP_NATIVE) || \
     defined(HAVE_LWIP_NATIVE) /* using LwIP native TCP socket */
-    #undef WOLFSSL_USER_IO
-    #define WOLFSSL_USER_IO
+// error : inserted by coan: "#define WOLFSSL_USER_IO" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(360)
 
     #if defined(HAVE_LWIP_NATIVE)
     #define WOLFSSL_LWIP
     #define NO_WRITEV
-    #define SINGLE_THREADED
+// error : inserted by coan: "#define SINGLE_THREADED" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(365)
     #define NO_FILESYSTEM
     #endif
 #endif
 
 #if defined(WOLFSSL_CONTIKI)
     #include <contiki.h>
-    #define WOLFSSL_UIP
+// error : inserted by coan: "#define WOLFSSL_UIP" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(372)
     #define NO_WOLFSSL_MEMORY
     #define NO_WRITEV
-    #define SINGLE_THREADED
-    #define WOLFSSL_USER_IO
+// error : inserted by coan: "#define SINGLE_THREADED" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(375)
+// error : inserted by coan: "#define WOLFSSL_USER_IO" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(376)
     #define NO_FILESYSTEM
     #ifndef CUSTOM_RAND_GENERATE
         #define CUSTOM_RAND_TYPE uint16_t
@@ -387,28 +380,27 @@
 
 #if defined(WOLFSSL_IAR_ARM) || defined(WOLFSSL_ROWLEY_ARM)
     #define NO_MAIN_DRIVER
-    #define SINGLE_THREADED
+// error : inserted by coan: "#define SINGLE_THREADED" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(390)
     #if !defined(USE_CERT_BUFFERS_2048) && !defined(USE_CERT_BUFFERS_4096)
         #define USE_CERT_BUFFERS_1024
     #endif
     #define BENCH_EMBEDDED
     #define NO_FILESYSTEM
     #define NO_WRITEV
-    #define WOLFSSL_USER_IO
+// error : inserted by coan: "#define WOLFSSL_USER_IO" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(397)
     #define BENCH_EMBEDDED
 #endif
 
 #ifdef MICROCHIP_PIC32
     /* #define WOLFSSL_MICROCHIP_PIC32MZ */
     #define SIZEOF_LONG_LONG 8
-    #define SINGLE_THREADED
+// error : inserted by coan: "#define SINGLE_THREADED" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(404)
     #ifndef MICROCHIP_TCPIP_BSD_API
-        #define WOLFSSL_USER_IO
+// error : inserted by coan: "#define WOLFSSL_USER_IO" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(406)
     #endif
     #define NO_WRITEV
     #define NO_DEV_RANDOM
     #define NO_FILESYSTEM
-    #define USE_FAST_MATH
     #define TFM_TIMING_RESISTANT
     #define NO_BIG_INT
 #endif
@@ -454,47 +446,39 @@
 #endif
 
 #ifdef MBED
-    #define WOLFSSL_USER_IO
+// error : inserted by coan: "#define WOLFSSL_USER_IO" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(457)
     #define NO_FILESYSTEM
-    #define NO_CERTS
+// error : inserted by coan: "#define NO_CERTS" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(459)
     #if !defined(USE_CERT_BUFFERS_2048) && !defined(USE_CERT_BUFFERS_4096)
         #define USE_CERT_BUFFERS_1024
     #endif
     #define NO_WRITEV
     #define NO_DEV_RANDOM
     #define NO_SHA512
-    #define NO_DH
+// error : inserted by coan: "#define NO_DH" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(466)
     /* Allows use of DH with fixed points if uncommented and NO_DH is removed */
     /* WOLFSSL_DH_CONST */
-    #define NO_DSA
-    #define HAVE_ECC
-    #define NO_SESSION_CACHE
     #define WOLFSSL_CMSIS_RTOS
 #endif
 
 
 #ifdef WOLFSSL_EROAD
-    #define FREESCALE_MQX
+// error : inserted by coan: "#define FREESCALE_MQX" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(477)
     #define FREESCALE_MMCAU
-    #define SINGLE_THREADED
+// error : inserted by coan: "#define SINGLE_THREADED" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(479)
     #define NO_STDIO_FILESYSTEM
     #define WOLFSSL_LEANPSK
-    #define HAVE_NULL_CIPHER
-    #define NO_OLD_TLS
+// error : inserted by coan: "#define HAVE_NULL_CIPHER" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(482)
+// error : inserted by coan: "#define NO_OLD_TLS" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(483)
     #define NO_ASN
     #define NO_BIG_INT
-    #define NO_RSA
-    #define NO_DSA
-    #define NO_DH
+// error : inserted by coan: "#define NO_RSA" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(486)
+// error : inserted by coan: "#define NO_DH" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(488)
     /* Allows use of DH with fixed points if uncommented and NO_DH is removed */
     /* WOLFSSL_DH_CONST */
-    #define NO_CERTS
+// error : inserted by coan: "#define NO_CERTS" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(491)
     #define NO_PWDBASED
-    #define NO_DES3
-    #define NO_MD4
-    #define NO_RC4
     #define NO_MD5
-    #define NO_SESSION_CACHE
     #define NO_MAIN_DRIVER
 #endif
 
@@ -513,20 +497,19 @@
 
 #ifdef WOLFSSL_PICOTCP_DEMO
     #define WOLFSSL_STM32
-    #define USE_FAST_MATH
     #define TFM_TIMING_RESISTANT
     #define XMALLOC(s, h, type)  PICO_ZALLOC((s))
     #define XFREE(p, h, type)    PICO_FREE((p))
-    #define SINGLE_THREADED
+// error : inserted by coan: "#define SINGLE_THREADED" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(520)
     #define NO_WRITEV
-    #define WOLFSSL_USER_IO
+// error : inserted by coan: "#define WOLFSSL_USER_IO" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(522)
     #define NO_DEV_RANDOM
     #define NO_FILESYSTEM
 #endif
 
 #ifdef FREERTOS_WINSIM
     #define FREERTOS
-    #define USE_WINDOWS_API
+// error : inserted by coan: "#define USE_WINDOWS_API" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(529)
 #endif
 
 
@@ -539,7 +522,6 @@
     /* #define WOLFSSL_PTHREADS */
     #define WOLFSSL_HAVE_MIN
     #define WOLFSSL_HAVE_MAX
-    #define USE_FAST_MATH
     #define TFM_TIMING_RESISTANT
     #define NO_MAIN_DRIVER
     #define NO_DEV_RANDOM
@@ -551,7 +533,7 @@
 #ifdef WOLFSSL_ARDUINO
     #define NO_WRITEV
     #define NO_WOLFSSL_DIR
-    #define SINGLE_THREADED
+// error : inserted by coan: "#define SINGLE_THREADED" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(554)
     #define NO_DEV_RANDOM
     #ifndef INTEL_GALILEO /* Galileo has time.h compatibility */
         #define TIME_OVERRIDES
@@ -564,10 +546,8 @@
             #error "https://www.wolfssl.com/docs/porting-guide/"
         #endif
     #endif
-    #define WOLFSSL_USER_IO
-    #define HAVE_ECC
-    #define NO_DH
-    #define NO_SESSION_CACHE
+// error : inserted by coan: "#define WOLFSSL_USER_IO" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(567)
+// error : inserted by coan: "#define NO_DH" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(569)
 #endif
 
 
@@ -575,14 +555,12 @@
     /* uTasker configuration - used for fnRandom() */
     #include "config.h"
 
-    #define SINGLE_THREADED
+// error : inserted by coan: "#define SINGLE_THREADED" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(578)
     #define NO_WOLFSSL_DIR
     #define WOLFSSL_HAVE_MIN
     #define NO_WRITEV
 
-    #define HAVE_ECC
     #define ALT_ECC_SIZE
-    #define USE_FAST_MATH
     #define TFM_TIMING_RESISTANT
     #define ECC_TIMING_RESISTANT
 
@@ -592,7 +570,7 @@
 
     /* uTasker port uses RAW sockets, use I/O callbacks
      * See wolfSSL uTasker example for sample callbacks */
-    #define WOLFSSL_USER_IO
+// error : inserted by coan: "#define WOLFSSL_USER_IO" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(595)
 
     /* uTasker filesystem not ported  */
     #define NO_FILESYSTEM
@@ -622,8 +600,7 @@
     #define XSTRNCMP(s1,s2,n)      strncmp((s1),(s2),(n))
     #define XSTRNCAT(s1,s2,n)      strncat((s1),(s2),(n))
     #define XSTRNCASECMP(s1,s2,n)  _strnicmp((s1),(s2),(n))
-    #if defined(WOLFSSL_CERT_EXT) || defined(OPENSSL_EXTRA) \
-            || defined(HAVE_ALPN)
+    #if defined(WOLFSSL_CERT_EXT) || defined(HAVE_ALPN)
         #define XSTRTOK            strtok_r
     #endif
 #endif
@@ -632,8 +609,7 @@
     #define NO_FILESYSTEM           /* Not ported at this time */
     #define USE_CERT_BUFFERS_2048   /* use when NO_FILESYSTEM */
     #define NO_MAIN_DRIVER
-    #define NO_RC4
-    #define SINGLE_THREADED         /* Not ported at this time */
+// error : inserted by coan: "#define SINGLE_THREADED" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(636)
 #endif
 
 #ifdef WOLFSSL_RIOT_OS
@@ -641,8 +617,8 @@
     #define TFM_NO_ASM
     #define NO_FILESYSTEM
     #define USE_CERT_BUFFERS_2048
-    #if defined(WOLFSSL_GNRC) && !defined(WOLFSSL_DTLS)
-        #define WOLFSSL_DTLS
+    #if defined(WOLFSSL_GNRC)
+// error : inserted by coan: "#define WOLFSSL_DTLS" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(645)
     #endif
 #endif
 
@@ -684,19 +660,15 @@
         #define NO_FILESYSTEM
         #define NO_MAIN_DRIVER
         #define NO_WRITEV
-        #define SINGLE_THREADED
-        #define USE_FAST_MATH
+// error : inserted by coan: "#define SINGLE_THREADED" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(687)
         #define TFM_TIMING_RESISTANT
         #define WOLFSSL_NRF51
-        #define WOLFSSL_USER_IO
-        #define NO_SESSION_CACHE
+// error : inserted by coan: "#define WOLFSSL_USER_IO" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(691)
 #endif
 
 /* Micrium will use Visual Studio for compilation but not the Win32 API */
-#if defined(_WIN32) && !defined(MICRIUM) && !defined(FREERTOS) && \
-    !defined(FREERTOS_TCP) && !defined(EBSNET) && !defined(WOLFSSL_EROAD) && \
-    !defined(WOLFSSL_UTASKER) && !defined(INTIME_RTOS)
-    #define USE_WINDOWS_API
+#if defined(_WIN32) && !defined(MICRIUM) && !defined(FREERTOS) &&  !defined(FREERTOS_TCP) && !defined(WOLFSSL_EROAD) &&  !defined(WOLFSSL_UTASKER) && !defined(INTIME_RTOS)
+// error : inserted by coan: "#define USE_WINDOWS_API" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(699)
 #endif
 
 #if defined(WOLFSSL_uITRON4)
@@ -771,22 +743,11 @@ extern void uITRON4_free(void *p) ;
 #ifdef FREERTOS
     #include "FreeRTOS.h"
 
-    #if !defined(XMALLOC_USER) && !defined(NO_WOLFSSL_MEMORY) && \
-        !defined(WOLFSSL_STATIC_MEMORY)
+    #if !defined(XMALLOC_USER) && !defined(NO_WOLFSSL_MEMORY)
         #define XMALLOC(s, h, type)  pvPortMalloc((s))
         #define XFREE(p, h, type)    vPortFree((p))
         /* FreeRTOS pvPortRealloc() implementation can be found here:
             https://github.com/wolfSSL/wolfssl-freertos/pull/3/files */
-        #if !defined(USE_FAST_MATH) || defined(HAVE_ED25519) || \
-            defined(HAVE_ED448)
-            #if defined(WOLFSSL_ESPIDF)
-                /*In IDF, realloc(p, n) is equivalent to
-                heap_caps_realloc(p, s, MALLOC_CAP_8BIT) */
-                #define XREALLOC(p, n, h, t) realloc((p), (n))
-            #else
-                #define XREALLOC(p, n, h, t) pvPortRealloc((p), (n))
-            #endif
-        #endif
     #endif
 
     #ifndef NO_WRITEV
@@ -798,22 +759,14 @@ extern void uITRON4_free(void *p) ;
         #endif
     #endif
     #ifndef HAVE_DH
-        #ifndef NO_DH
-            #define NO_DH
-        #endif
-    #endif
-    #ifndef NO_DSA
-        #define NO_DSA
+// error : inserted by coan: "#define NO_DH" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(802)
     #endif
 
-    #ifndef SINGLE_THREADED
         #include "semphr.h"
-    #endif
 #endif
 
 #ifdef FREERTOS_TCP
-    #if !defined(NO_WOLFSSL_MEMORY) && !defined(XMALLOC_USER) && \
-        !defined(WOLFSSL_STATIC_MEMORY)
+    #if !defined(NO_WOLFSSL_MEMORY) && !defined(XMALLOC_USER)
         #define XMALLOC(s, h, type)  pvPortMalloc((s))
         #define XFREE(p, h, type)    vPortFree((p))
     #endif
@@ -822,7 +775,6 @@ extern void uITRON4_free(void *p) ;
 
     #define NO_WOLFSSL_DIR
     #define NO_WRITEV
-    #define USE_FAST_MATH
     #define TFM_TIMING_RESISTANT
     #define NO_MAIN_DRIVER
 #endif
@@ -841,14 +793,6 @@ extern void uITRON4_free(void *p) ;
     /* Use SP_MATH by default, unless
      * specified in user_settings.
      */
-    #ifndef USE_FAST_MATH
-        #define USE_SP_MATH
-        #define SP_MATH_ALL
-        #define WOLFSSL_HAVE_SP_ECC
-        #define SP_WORD_SIZE 32
-        #define WOLFSSL_HAVE_SP_RSA
-        #define WOLFSSL_SP_4096
-    #endif
     #define TFM_TIMING_RESISTANT
     #define ECC_TIMING_RESISTANT
     #define WC_RSA_BLINDING
@@ -857,15 +801,11 @@ extern void uITRON4_free(void *p) ;
     #define NO_SIG_WRAPPER
     #define NO_MAIN_DRIVER
     #define USE_CERT_BUFFERS_2048
-    #define NO_ERROR_STRINGS
+// error : inserted by coan: "#define NO_ERROR_STRINGS" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(860)
     /* Uncomment this setting if your toolchain does not offer time.h header */
     /* #define USER_TIME */
-    #define HAVE_ECC
     #define HAVE_ALPN
     #define USE_WOLF_STRTOK /* use with HAVE_ALPN */
-    #define HAVE_TLS_EXTENSIONS
-    #define HAVE_AESGCM
-    #define HAVE_SUPPORTED_CURVES
     #ifdef __IAR_SYSTEMS_ICC__
         #pragma diag_suppress=Pa089
     #elif !defined(__GNUC__)
@@ -875,73 +815,20 @@ extern void uITRON4_free(void *p) ;
     #include <ti/sysbios/hal/Seconds.h>
 #endif
 
-#ifdef EBSNET
-    #include "rtip.h"
-
-    /* #define DEBUG_WOLFSSL */
-    #define NO_WOLFSSL_DIR  /* tbd */
-
-    #if (POLLOS)
-        #define SINGLE_THREADED
-    #endif
-
-    #if (RTPLATFORM)
-        #if (!RTP_LITTLE_ENDIAN)
-            #define BIG_ENDIAN_ORDER
-        #endif
-    #else
-        #if (!KS_LITTLE_ENDIAN)
-            #define BIG_ENDIAN_ORDER
-        #endif
-    #endif
-
-    #if (WINMSP3)
-        #undef SIZEOF_LONG
-        #define SIZEOF_LONG_LONG 8
-    #else
-        #if !defined(SIZEOF_LONG) && !defined(SIZEOF_LONG_LONG)
-            #error settings.h - please implement SIZEOF_LONG and SIZEOF_LONG_LONG
-        #endif
-    #endif
-
-    #define XMALLOC(s, h, type) ((void *)rtp_malloc((s), SSL_PRO_MALLOC))
-    #define XFREE(p, h, type) (rtp_free(p))
-    #define XREALLOC(p, n, h, t) (rtp_realloc((p), (n)))
-
-    #if (WINMSP3)
-        #define XSTRNCASECMP(s1,s2,n)  _strnicmp((s1),(s2),(n))
-    #else
-        #ifndef XSTRNCASECMP
-            #error settings.h - please implement XSTRNCASECMP - needed for HAVE_ECC
-        #endif
-    #endif
-
-    #define WOLFSSL_HAVE_MAX
-    #define WOLFSSL_HAVE_MIN
-
-    #define USE_FAST_MATH
-    #define TFM_TIMING_RESISTANT
-    #define WC_RSA_BLINDING
-    #define ECC_TIMING_RESISTANT
-
-    #define HAVE_ECC
-
-#endif /* EBSNET */
 
 #ifdef WOLFSSL_GAME_BUILD
     #define SIZEOF_LONG_LONG 8
 #endif
 
 #ifdef WOLFSSL_LSR
-    #define HAVE_WEBSERVER
+// error : inserted by coan: "#define HAVE_WEBSERVER" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(936)
     #define SIZEOF_LONG_LONG 8
     #define WOLFSSL_LOW_MEMORY
     #define NO_WRITEV
     #define NO_SHA512
-    #define NO_DH
+// error : inserted by coan: "#define NO_DH" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(941)
     /* Allows use of DH with fixed points if uncommented and NO_DH is removed */
     /* WOLFSSL_DH_CONST */
-    #define NO_DSA
     #define NO_DEV_RANDOM
     #define NO_WOLFSSL_DIR
     #ifndef NO_FILESYSTEM
@@ -959,31 +846,23 @@ extern void uITRON4_free(void *p) ;
 #endif
 
 #ifdef WOLFSSL_SAFERTOS
-    #ifndef SINGLE_THREADED
         #include "SafeRTOS/semphr.h"
-    #endif
     #ifndef WOLFSSL_NO_MALLOC
         #include "SafeRTOS/heap.h"
     #endif
-    #if !defined(XMALLOC_USER) && !defined(NO_WOLFSSL_MEMORY) && \
-        !defined(WOLFSSL_STATIC_MEMORY)
+    #if !defined(XMALLOC_USER) && !defined(NO_WOLFSSL_MEMORY)
         #define XMALLOC(s, h, type)  pvPortMalloc((s))
         #define XFREE(p, h, type)    vPortFree((p))
 
         /* FreeRTOS pvPortRealloc() implementation can be found here:
             https://github.com/wolfSSL/wolfssl-freertos/pull/3/files */
-        #if !defined(USE_FAST_MATH) || defined(HAVE_ED25519) || \
-            defined(HAVE_ED448)
-            #define XREALLOC(p, n, h, t) pvPortRealloc((p), (n))
-        #endif
     #endif
 #endif
 
 #ifdef WOLFSSL_LOW_MEMORY
     #undef  RSA_LOW_MEM
     #define RSA_LOW_MEM
-    #undef  WOLFSSL_SMALL_STACK
-    #define WOLFSSL_SMALL_STACK
+// error : inserted by coan: "#define WOLFSSL_SMALL_STACK" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(986)
     #undef  TFM_TIMING_RESISTANT
     #define TFM_TIMING_RESISTANT
 #endif
@@ -1003,72 +882,15 @@ extern void uITRON4_free(void *p) ;
 
 #ifdef FREESCALE_MQX_5_0
     /* use normal Freescale MQX port, but with minor changes for 5.0 */
-    #define FREESCALE_MQX
+// error : inserted by coan: "#define FREESCALE_MQX" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(1006)
 #endif
 
 #ifdef FREESCALE_MQX_4_0
     /* use normal Freescale MQX port, but with minor changes for 4.0 */
-    #define FREESCALE_MQX
+// error : inserted by coan: "#define FREESCALE_MQX" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(1011)
 #endif
 
-#ifdef FREESCALE_MQX
-    #define FREESCALE_COMMON
-    #include "mqx.h"
-    #ifndef NO_FILESYSTEM
-        #include "mfs.h"
-        #if (defined(MQX_USE_IO_OLD) && MQX_USE_IO_OLD) || \
-            defined(FREESCALE_MQX_5_0)
-            #include "fio.h"
-            #define NO_STDIO_FILESYSTEM
-        #else
-            #include "nio.h"
-        #endif
-    #endif
-    #ifndef SINGLE_THREADED
-        #include "mutex.h"
-    #endif
 
-    #if !defined(XMALLOC_OVERRIDE) && !defined(XMALLOC_USER)
-        #define XMALLOC_OVERRIDE
-        #define XMALLOC(s, h, t)    (void *)_mem_alloc_system((s))
-        #define XFREE(p, h, t)      {void* xp = (p); if ((xp)) _mem_free((xp));}
-        /* Note: MQX has no realloc, using fastmath above */
-    #endif
-    #ifdef USE_FAST_MATH
-        /* Undef first to avoid re-definition if user_settings.h defines */
-        #undef TFM_TIMING_RESISTANT
-        #define TFM_TIMING_RESISTANT
-        #undef ECC_TIMING_RESISTANT
-        #define ECC_TIMING_RESISTANT
-        #undef WC_RSA_BLINDING
-        #define WC_RSA_BLINDING
-    #endif
-#endif
-
-#ifdef FREESCALE_KSDK_MQX
-    #define FREESCALE_COMMON
-    #include <mqx.h>
-    #ifndef NO_FILESYSTEM
-        #if (defined(MQX_USE_IO_OLD) && MQX_USE_IO_OLD) || \
-            defined(FREESCALE_MQX_5_0)
-            #include <fio.h>
-        #else
-            #include <stdio.h>
-            #include <nio.h>
-        #endif
-    #endif
-    #ifndef SINGLE_THREADED
-        #include <mutex.h>
-    #endif
-
-    #define XMALLOC(s, h, t)    (void *)_mem_alloc_system((s))
-    #define XFREE(p, h, t)      {void* xp = (p); if ((xp)) _mem_free((xp));}
-    #define XREALLOC(p, n, h, t) _mem_realloc((p), (n)) /* since MQX 4.1.2 */
-
-    #define MQX_FILE_PTR FILE *
-    #define IO_SEEK_SET  SEEK_SET
-    #define IO_SEEK_END  SEEK_END
-#endif /* FREESCALE_KSDK_MQX */
 
 #if defined(FREESCALE_FREE_RTOS) || defined(FREESCALE_KSDK_FREERTOS)
     #define NO_FILESYSTEM
@@ -1097,8 +919,8 @@ extern void uITRON4_free(void *p) ;
 
 #ifdef FREESCALE_KSDK_BM
     #define FREESCALE_COMMON
-    #define WOLFSSL_USER_IO
-    #define SINGLE_THREADED
+// error : inserted by coan: "#define WOLFSSL_USER_IO" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(1100)
+// error : inserted by coan: "#define SINGLE_THREADED" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(1101)
     #define NO_FILESYSTEM
     #ifndef TIME_OVERRIDES
         #define USER_TICKS
@@ -1115,12 +937,8 @@ extern void uITRON4_free(void *p) ;
     #define NO_DEV_RANDOM
     #undef  NO_WOLFSSL_DIR
     #define NO_WOLFSSL_DIR
-    #undef  NO_RC4
-    #define NO_RC4
 
     /* enable features */
-    #undef  USE_FAST_MATH
-    #define USE_FAST_MATH
 
     #define USE_CERT_BUFFERS_2048
     #define BENCH_EMBEDDED
@@ -1128,24 +946,18 @@ extern void uITRON4_free(void *p) ;
     #define TFM_TIMING_RESISTANT
     #define ECC_TIMING_RESISTANT
 
-    #undef  HAVE_ECC
+// error : inserted by coan: "#undef HAVE_ECC" contradicts -D symbol at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(1131)
     #ifndef WOLFCRYPT_FIPS_RAND
-    #define HAVE_ECC
     #endif
-    #ifndef NO_AES
-        #undef  HAVE_AESCCM
-        #define HAVE_AESCCM
-        #undef  HAVE_AESGCM
-        #define HAVE_AESGCM
+// error : inserted by coan: "#define HAVE_AESCCM" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(1137)
         #undef  WOLFSSL_AES_COUNTER
         #define WOLFSSL_AES_COUNTER
         #undef  WOLFSSL_AES_DIRECT
         #define WOLFSSL_AES_DIRECT
-    #endif
 
     #ifdef FREESCALE_KSDK_1_3
         #include "fsl_device_registers.h"
-    #elif !defined(FREESCALE_MQX)
+    #else
         /* Classic MQX does not have fsl_common.h */
         #include "fsl_common.h"
     #endif
@@ -1234,11 +1046,7 @@ extern void uITRON4_free(void *p) ;
             /* the LTC PKHA hardware limit is 2048 bits (256 bytes) for integer arithmetic.
                the LTC_MAX_INT_BYTES defines the size of local variables that hold big integers. */
             /* size is multiplication of 2 big ints */
-            #if !defined(NO_RSA) || !defined(NO_DH)
                 #define LTC_MAX_INT_BYTES   (256*2)
-            #else
-                #define LTC_MAX_INT_BYTES   (48*2)
-            #endif
 
             /* This FREESCALE_LTC_TFM_RSA_4096_ENABLE macro can be defined.
              * In such a case both software and hardware algorithm
@@ -1252,7 +1060,6 @@ extern void uITRON4_free(void *p) ;
             /* #define FREESCALE_LTC_TFM_RSA_4096_ENABLE */
 
             /* ECC-384, ECC-256, ECC-224 and ECC-192 have been enabled with LTC PKHA acceleration */
-            #ifdef HAVE_ECC
                 #undef  ECC_TIMING_RESISTANT
                 #define ECC_TIMING_RESISTANT
 
@@ -1264,14 +1071,10 @@ extern void uITRON4_free(void *p) ;
                 #endif
 
                 /* Enable curves up to 384 bits */
-                #if !defined(ECC_USER_CURVES) && !defined(HAVE_ALL_CURVES)
+                #if !defined(ECC_USER_CURVES)
                     #define ECC_USER_CURVES
-                    #define HAVE_ECC192
-                    #define HAVE_ECC224
-                    #undef  NO_ECC256
-                    #define HAVE_ECC384
+// error : inserted by coan: "#define HAVE_ECC192" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(1269)
                 #endif
-            #endif
         #endif
     #endif
 #endif /* FREESCALE_USE_LTC */
@@ -1284,10 +1087,7 @@ extern void uITRON4_free(void *p) ;
     #undef  SP_INT_BITS
     #define SP_INT_BITS (4096)
 
-    #undef  NO_DH
-    #define NO_DH
-    #undef  NO_DSA
-    #define NO_DSA
+// error : inserted by coan: "#define NO_DH" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(1288)
 #endif /* FREESCALE_LTC_TFM_RSA_4096_ENABLE */
 
 /* if LTC has AES engine but doesn't have GCM, use software with LTC AES ECB mode */
@@ -1320,7 +1120,6 @@ extern void uITRON4_free(void *p) ;
 
         #if defined(WOLFSSL_STM32L4) || defined(WOLFSSL_STM32L5) || \
             defined(WOLFSSL_STM32WB)
-            #define NO_AES_192 /* hardware does not support 192-bit */
         #endif
     #endif
     #ifndef NO_STM32_HASH
@@ -1431,21 +1230,15 @@ extern void uITRON4_free(void *p) ;
         #define NO_WRITEV
     #endif
 
-    #define USE_FAST_MATH
     #define TFM_TIMING_RESISTANT
     #define ECC_TIMING_RESISTANT
     #define WC_RSA_BLINDING
 
-    #define HAVE_ECC
     #define TFM_ECC192
     #define TFM_ECC224
-    #define TFM_ECC256
     #define TFM_ECC384
     #define TFM_ECC521
 
-    #define HAVE_TLS_EXTENSIONS
-    #define HAVE_SUPPORTED_CURVES
-    #define HAVE_EXTENDED_MASTER
 
     #if (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
         #define BIG_ENDIAN_ORDER
@@ -1471,24 +1264,16 @@ extern void uITRON4_free(void *p) ;
     #include  <stdio.h>
     #include <string.h>
 
-    #define USE_FAST_MATH
     #define TFM_TIMING_RESISTANT
     #define ECC_TIMING_RESISTANT
     #define WC_RSA_BLINDING
-    #define HAVE_HASHDRBG
 
-    #define HAVE_ECC
     #define ALT_ECC_SIZE
     #define TFM_ECC192
     #define TFM_ECC224
-    #define TFM_ECC256
     #define TFM_ECC384
     #define TFM_ECC521
 
-    #define NO_RC4
-    #define HAVE_TLS_EXTENSIONS
-    #define HAVE_SUPPORTED_CURVES
-    #define HAVE_EXTENDED_MASTER
 
     #define NO_WOLFSSL_DIR
     #define NO_WRITEV
@@ -1545,7 +1330,7 @@ extern void uITRON4_free(void *p) ;
     #define XMEMMOVE XMEMCPY
 
     #if (OS_CFG_MUTEX_EN == DEF_DISABLED)
-        #define SINGLE_THREADED
+// error : inserted by coan: "#define SINGLE_THREADED" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(1548)
     #endif
 
     #if (CPU_CFG_ENDIAN_TYPE == CPU_ENDIAN_TYPE_BIG)
@@ -1556,7 +1341,7 @@ extern void uITRON4_free(void *p) ;
     #endif
 #endif /* MICRIUM */
 
-#if defined(sun) || defined(__sun)
+#if defined(sun)
 # if defined(__SVR4) || defined(__svr4__)
     /* Solaris */
     #ifndef WOLFSSL_SOLARIS
@@ -1586,27 +1371,14 @@ extern void uITRON4_free(void *p) ;
     #ifndef WOLFSSL_SEP
         #define WOLFSSL_SEP
     #endif
-    #ifndef OPENSSL_EXTRA
-        #define OPENSSL_EXTRA
-    #endif
-    #ifndef SESSION_CERTS
-        #define SESSION_CERTS
-    #endif
-    #ifndef HAVE_AESCCM
-        #define HAVE_AESCCM
-    #endif
-    #ifndef ATOMIC_USER
-        #define ATOMIC_USER
-    #endif
+// error : inserted by coan: "#define OPENSSL_EXTRA" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(1590)
+// error : inserted by coan: "#define SESSION_CERTS" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(1593)
+// error : inserted by coan: "#define HAVE_AESCCM" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(1596)
+// error : inserted by coan: "#define ATOMIC_USER" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(1599)
     #ifndef WOLFSSL_DER_LOAD
         #define WOLFSSL_DER_LOAD
     #endif
-    #ifndef KEEP_PEER_CERT
-        #define KEEP_PEER_CERT
-    #endif
-    #ifndef HAVE_ECC
-        #define HAVE_ECC
-    #endif
+// error : inserted by coan: "#define KEEP_PEER_CERT" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(1605)
     #ifndef SESSION_INDEX
         #define SESSION_INDEX
     #endif
@@ -1616,14 +1388,12 @@ extern void uITRON4_free(void *p) ;
 #if defined(WOLFSSL_XILINX)
     #define NO_WOLFSSL_DIR
     #define NO_DEV_RANDOM
-    #define HAVE_AESGCM
 #endif
 
 #if defined(WOLFSSL_XILINX_CRYPT) || defined(WOLFSSL_AFALG_XILINX)
     #if defined(WOLFSSL_ARMASM)
         #error can not use both ARMv8 instructions and XILINX hardened crypto
     #endif
-    #if defined(WOLFSSL_SHA3)
         /* only SHA3-384 is supported */
         #undef WOLFSSL_NOSHA3_224
         #undef WOLFSSL_NOSHA3_256
@@ -1631,7 +1401,6 @@ extern void uITRON4_free(void *p) ;
         #define WOLFSSL_NOSHA3_224
         #define WOLFSSL_NOSHA3_256
         #define WOLFSSL_NOSHA3_512
-    #endif
     #ifdef WOLFSSL_AFALG_XILINX_AES
         #undef  WOLFSSL_AES_DIRECT
         #define WOLFSSL_AES_DIRECT
@@ -1644,11 +1413,6 @@ extern void uITRON4_free(void *p) ;
 #ifdef WOLFSSL_KCAPI_ECC
     #undef  ECC_USER_CURVES
     #define ECC_USER_CURVES
-    #undef  NO_ECC256
-    #undef  HAVE_ECC384
-    #define HAVE_ECC384
-    #undef  HAVE_ECC521
-    #define HAVE_ECC521
 #endif
 
 #if defined(WOLFSSL_APACHE_MYNEWT)
@@ -1670,15 +1434,13 @@ extern void uITRON4_free(void *p) ;
         #define LITTLE_ENDIAN_ORDER
     #endif
     #define NO_WRITEV
-    #define WOLFSSL_USER_IO
-    #define SINGLE_THREADED
+// error : inserted by coan: "#define WOLFSSL_USER_IO" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(1673)
+// error : inserted by coan: "#define SINGLE_THREADED" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(1674)
     #define NO_DEV_RANDOM
-    #define NO_DH
+// error : inserted by coan: "#define NO_DH" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(1676)
     #define NO_WOLFSSL_DIR
-    #define NO_ERROR_STRINGS
-    #define HAVE_ECC
-    #define NO_SESSION_CACHE
-    #define NO_ERROR_STRINGS
+// error : inserted by coan: "#define NO_ERROR_STRINGS" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(1678)
+// error : inserted by coan: "#define NO_ERROR_STRINGS" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(1681)
     #define XMALLOC_USER
     #define XMALLOC(sz, heap, type)     os_malloc(sz)
     #define XREALLOC(p, sz, heap, type) os_realloc(p, sz)
@@ -1723,7 +1485,6 @@ extern void uITRON4_free(void *p) ;
     #undef  WOLFSSL_IMX6_CAAM_BLOB
     #define WOLFSSL_IMX6_CAAM_BLOB
 
-#if defined(HAVE_AESGCM) || defined(WOLFSSL_AES_XTS)
     /* large performance gain with HAVE_AES_ECB defined */
     #undef HAVE_AES_ECB
     #define HAVE_AES_ECB
@@ -1732,10 +1493,9 @@ extern void uITRON4_free(void *p) ;
     #undef WOLFSSL_AES_DIRECT
     #define WOLFSSL_AES_DIRECT
 #endif
-#endif
 
 /* If DCP is used without SINGLE_THREADED, enforce WOLFSSL_CRYPT_HW_MUTEX */
-#if defined(WOLFSSL_IMXRT_DCP) && !defined(SINGLE_THREADED)
+#if defined(WOLFSSL_IMXRT_DCP)
     #undef WOLFSSL_CRYPT_HW_MUTEX
     #define WOLFSSL_CRYPT_HW_MUTEX 1
 #endif
@@ -1747,10 +1507,6 @@ extern void uITRON4_free(void *p) ;
 #endif
 
 
-#if defined(OPENSSL_EXTRA) && !defined(NO_CERTS)
-    #undef  KEEP_PEER_CERT
-    #define KEEP_PEER_CERT
-#endif
 
 
 /* stream ciphers except arc4 need 32bit alignment, intel ok without */
@@ -1764,46 +1520,23 @@ extern void uITRON4_free(void *p) ;
 
 /* write dup cannot be used with secure renegotiation because write dup
  * make write side write only and read side read only */
-#if defined(HAVE_WRITE_DUP) && defined(HAVE_SECURE_RENEGOTIATION)
-    #error "WRITE DUP and SECURE RENEGOTIATION cannot both be on"
-#endif
 
 #ifdef WOLFSSL_SGX
-    #ifdef _MSC_VER
-        #define NO_RC4
-        #ifndef HAVE_FIPS
-            #define WOLFCRYPT_ONLY
-            #define NO_DES3
-            #define NO_SHA
-            #define NO_MD5
-        #else
-            #define TFM_TIMING_RESISTANT
-            #define NO_WOLFSSL_DIR
-            #define NO_WRITEV
-            #define NO_MAIN_DRIVER
-            #define WOLFSSL_LOG_PRINTF
-            #define WOLFSSL_DH_CONST
-        #endif
-    #else
-        #define HAVE_ECC
         #define NO_WRITEV
         #define NO_MAIN_DRIVER
         #define USER_TICKS
         #define WOLFSSL_LOG_PRINTF
         #define WOLFSSL_DH_CONST
-    #endif /* _MSC_VER */
-    #if !defined(HAVE_FIPS) && !defined(NO_RSA)
+    #if !defined(HAVE_FIPS)
         #define WC_RSA_BLINDING
     #endif
 
     #define NO_FILESYSTEM
     #define ECC_TIMING_RESISTANT
     #define TFM_TIMING_RESISTANT
-    #define SINGLE_THREADED
+// error : inserted by coan: "#define SINGLE_THREADED" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(1802)
     #define NO_ASN_TIME /* can not use headers such as windows.h */
-    #define HAVE_AESGCM
     #define USE_CERT_BUFFERS_2048
-    #define USE_FAST_MATH
 #endif /* WOLFSSL_SGX */
 
 /* FreeScale MMCAU hardware crypto has 4 byte alignment.
@@ -1820,29 +1553,12 @@ extern void uITRON4_free(void *p) ;
 /* if using hardware crypto and have alignment requirements, specify the
    requirement here.  The record header of SSL/TLS will prevent easy alignment.
    This hint tries to help as much as possible.  */
-#ifndef WOLFSSL_GENERAL_ALIGNMENT
-    #ifdef WOLFSSL_AESNI
-        #define WOLFSSL_GENERAL_ALIGNMENT 16
-    #elif defined(XSTREAM_ALIGN)
-        #define WOLFSSL_GENERAL_ALIGNMENT  4
-    #elif defined(FREESCALE_MMCAU) || defined(FREESCALE_MMCAU_CLASSIC)
-        #define WOLFSSL_GENERAL_ALIGNMENT  WOLFSSL_MMCAU_ALIGNMENT
-    #else
-        #define WOLFSSL_GENERAL_ALIGNMENT  0
-    #endif
-#endif
 
-#if defined(WOLFSSL_GENERAL_ALIGNMENT) && (WOLFSSL_GENERAL_ALIGNMENT > 0)
-    #if defined(_MSC_VER)
-        #define XGEN_ALIGN __declspec(align(WOLFSSL_GENERAL_ALIGNMENT))
-    #elif defined(__GNUC__)
+    #if defined(__GNUC__)
         #define XGEN_ALIGN __attribute__((aligned(WOLFSSL_GENERAL_ALIGNMENT)))
     #else
         #define XGEN_ALIGN
     #endif
-#else
-    #define XGEN_ALIGN
-#endif
 
 
 #ifdef __INTEL_COMPILER
@@ -1852,8 +1568,8 @@ extern void uITRON4_free(void *p) ;
 /* user can specify what curves they want with ECC_USER_CURVES otherwise
  * all curves are on by default for now */
 #ifndef ECC_USER_CURVES
-    #if !defined(WOLFSSL_SP_MATH) && !defined(HAVE_ALL_CURVES)
-        #define HAVE_ALL_CURVES
+    #if !defined(WOLFSSL_SP_MATH)
+// error : inserted by coan: "#define HAVE_ALL_CURVES" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(1856)
     #endif
 #endif
 
@@ -1873,11 +1589,8 @@ extern void uITRON4_free(void *p) ;
 #endif
 
 /* ECC Configs */
-#ifdef HAVE_ECC
     /* By default enable Sign, Verify, DHE, Key Import and Key Export unless explicitly disabled */
-    #if !defined(NO_ECC_SIGN) && \
-            (!defined(ECC_TIMING_RESISTANT) || \
-            (defined(ECC_TIMING_RESISTANT) && !defined(WC_NO_RNG)))
+    #if !defined(NO_ECC_SIGN) &&   !defined(WC_NO_RNG)
         #undef HAVE_ECC_SIGN
         #define HAVE_ECC_SIGN
     #endif
@@ -1890,8 +1603,6 @@ extern void uITRON4_free(void *p) ;
         #define HAVE_ECC_CHECK_KEY
     #endif
     #if !defined(NO_ECC_DHE) && !defined(WC_NO_RNG)
-        #undef HAVE_ECC_DHE
-        #define HAVE_ECC_DHE
     #endif
     #ifndef NO_ECC_KEY_IMPORT
         #undef HAVE_ECC_KEY_IMPORT
@@ -1901,94 +1612,16 @@ extern void uITRON4_free(void *p) ;
         #undef HAVE_ECC_KEY_EXPORT
         #define HAVE_ECC_KEY_EXPORT
     #endif
-#endif /* HAVE_ECC */
 
 /* Curve25519 Configs */
-#ifdef HAVE_CURVE25519
-    /* By default enable shared secret, key export and import */
-    #ifndef NO_CURVE25519_SHARED_SECRET
-        #undef HAVE_CURVE25519_SHARED_SECRET
-        #define HAVE_CURVE25519_SHARED_SECRET
-    #endif
-    #ifndef NO_CURVE25519_KEY_EXPORT
-        #undef HAVE_CURVE25519_KEY_EXPORT
-        #define HAVE_CURVE25519_KEY_EXPORT
-    #endif
-    #ifndef NO_CURVE25519_KEY_IMPORT
-        #undef HAVE_CURVE25519_KEY_IMPORT
-        #define HAVE_CURVE25519_KEY_IMPORT
-    #endif
-#endif /* HAVE_CURVE25519 */
 
 /* Ed25519 Configs */
-#ifdef HAVE_ED25519
-    /* By default enable sign, verify, key export and import */
-    #ifndef NO_ED25519_SIGN
-        #undef HAVE_ED25519_SIGN
-        #define HAVE_ED25519_SIGN
-    #endif
-    #ifndef NO_ED25519_VERIFY
-        #undef HAVE_ED25519_VERIFY
-        #define HAVE_ED25519_VERIFY
-        #ifdef WOLFSSL_ED25519_STREAMING_VERIFY
-            #undef WOLFSSL_ED25519_PERSISTENT_SHA
-            #define WOLFSSL_ED25519_PERSISTENT_SHA
-        #endif
-    #endif
-    #ifndef NO_ED25519_KEY_EXPORT
-        #undef HAVE_ED25519_KEY_EXPORT
-        #define HAVE_ED25519_KEY_EXPORT
-    #endif
-    #ifndef NO_ED25519_KEY_IMPORT
-        #undef HAVE_ED25519_KEY_IMPORT
-        #define HAVE_ED25519_KEY_IMPORT
-    #endif
-#endif /* HAVE_ED25519 */
 
 /* Curve448 Configs */
-#ifdef HAVE_CURVE448
-    /* By default enable shared secret, key export and import */
-    #ifndef NO_CURVE448_SHARED_SECRET
-        #undef HAVE_CURVE448_SHARED_SECRET
-        #define HAVE_CURVE448_SHARED_SECRET
-    #endif
-    #ifndef NO_CURVE448_KEY_EXPORT
-        #undef HAVE_CURVE448_KEY_EXPORT
-        #define HAVE_CURVE448_KEY_EXPORT
-    #endif
-    #ifndef NO_CURVE448_KEY_IMPORT
-        #undef HAVE_CURVE448_KEY_IMPORT
-        #define HAVE_CURVE448_KEY_IMPORT
-    #endif
-#endif /* HAVE_CURVE448 */
 
 /* Ed448 Configs */
-#ifdef HAVE_ED448
-    /* By default enable sign, verify, key export and import */
-    #ifndef NO_ED448_SIGN
-        #undef HAVE_ED448_SIGN
-        #define HAVE_ED448_SIGN
-    #endif
-    #ifndef NO_ED448_VERIFY
-        #undef HAVE_ED448_VERIFY
-        #define HAVE_ED448_VERIFY
-        #ifdef WOLFSSL_ED448_STREAMING_VERIFY
-            #undef WOLFSSL_ED448_PERSISTENT_SHA
-            #define WOLFSSL_ED448_PERSISTENT_SHA
-        #endif
-    #endif
-    #ifndef NO_ED448_KEY_EXPORT
-        #undef HAVE_ED448_KEY_EXPORT
-        #define HAVE_ED448_KEY_EXPORT
-    #endif
-    #ifndef NO_ED448_KEY_IMPORT
-        #undef HAVE_ED448_KEY_IMPORT
-        #define HAVE_ED448_KEY_IMPORT
-    #endif
-#endif /* HAVE_ED448 */
 
 /* AES Config */
-#ifndef NO_AES
     /* By default enable all AES key sizes, decryption and CBC */
     #ifndef AES_MAX_KEY_SIZE
         #undef  AES_MAX_KEY_SIZE
@@ -1998,14 +1631,6 @@ extern void uITRON4_free(void *p) ;
     #ifndef NO_AES_128
         #undef  WOLFSSL_AES_128
         #define WOLFSSL_AES_128
-    #endif
-    #if !defined(NO_AES_192) && AES_MAX_KEY_SIZE >= 192
-        #undef  WOLFSSL_AES_192
-        #define WOLFSSL_AES_192
-    #endif
-    #if !defined(NO_AES_256) && AES_MAX_KEY_SIZE >= 256
-        #undef  WOLFSSL_AES_256
-        #define WOLFSSL_AES_256
     #endif
     #if !defined(WOLFSSL_AES_128) && !defined(WOLFSSL_AES_256) && \
         defined(HAVE_ECC_ENCRYPT)
@@ -2022,38 +1647,23 @@ extern void uITRON4_free(void *p) ;
     #endif
     #ifdef WOLFSSL_AES_XTS
         /* AES-XTS makes calls to AES direct functions */
-        #ifndef WOLFSSL_AES_DIRECT
-        #define WOLFSSL_AES_DIRECT
-        #endif
     #endif
     #ifdef WOLFSSL_AES_CFB
         /* AES-CFB makes calls to AES direct functions */
-        #ifndef WOLFSSL_AES_DIRECT
-        #define WOLFSSL_AES_DIRECT
-        #endif
     #endif
+
+#if  !defined(HAVE_AES_CBC)
+// error : inserted by coan: "#define WOLFSSL_AEAD_ONLY" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(2040)
 #endif
 
-#if (defined(WOLFSSL_TLS13) && defined(WOLFSSL_NO_TLS12)) || \
-    (!defined(HAVE_AES_CBC) && defined(NO_DES3) && defined(NO_RC4) && \
-     !defined(HAVE_CAMELLIA) & !defined(HAVE_NULL_CIPHER))
-    #define WOLFSSL_AEAD_ONLY
-#endif
-
-#if !defined(HAVE_PUBLIC_FFDHE) && !defined(NO_DH) && \
-    !defined(WOLFSSL_NO_PUBLIC_FFDHE) && \
-    (defined(HAVE_SELFTEST) || FIPS_VERSION_LE(2,0))
+#if !defined(HAVE_PUBLIC_FFDHE) &&  !defined(WOLFSSL_NO_PUBLIC_FFDHE) &&  (defined(HAVE_SELFTEST) || FIPS_VERSION_LE(2,0))
     /* This should only be enabled for FIPS v2 or older. It enables use of the
      * older wc_Dh_ffdhe####_Get() API's */
     #define HAVE_PUBLIC_FFDHE
 #endif
 
-#if !defined(NO_DH) && !defined(HAVE_FFDHE)
-    #if defined(HAVE_FFDHE_2048) || defined(HAVE_FFDHE_3072) || \
-            defined(HAVE_FFDHE_4096) || defined(HAVE_FFDHE_6144) || \
-            defined(HAVE_FFDHE_8192)
+#if !defined(HAVE_FFDHE)
         #define HAVE_FFDHE
-    #endif
 #endif
 #if defined(HAVE_FFDHE_8192)
     #define MIN_FFDHE_FP_MAX_BITS 16384
@@ -2063,45 +1673,29 @@ extern void uITRON4_free(void *p) ;
     #define MIN_FFDHE_FP_MAX_BITS 8192
 #elif defined(HAVE_FFDHE_3072)
     #define MIN_FFDHE_FP_MAX_BITS 6144
-#elif defined(HAVE_FFDHE_2048)
-    #define MIN_FFDHE_FP_MAX_BITS 4096
 #else
-    #define MIN_FFDHE_FP_MAX_BITS 0
+    #define MIN_FFDHE_FP_MAX_BITS 4096
 #endif
-#if defined(HAVE_FFDHE) && defined(FP_MAX_BITS)
+#if defined(FP_MAX_BITS)
     #if MIN_FFDHE_FP_MAX_BITS > FP_MAX_BITS
         #error "FFDHE parameters are too large for FP_MAX_BIT as set"
     #endif
 #endif
-#if defined(HAVE_FFDHE) && defined(SP_INT_BITS)
+#if defined(SP_INT_BITS)
     #if MIN_FFDHE_FP_MAX_BITS > SP_INT_BITS * 2
         #error "FFDHE parameters are too large for SP_INT_BIT as set"
     #endif
 #endif
 
 /* if desktop type system and fastmath increase default max bits */
-#if defined(WOLFSSL_X86_64_BUILD) || defined(WOLFSSL_AARCH64_BUILD)
-    #if defined(USE_FAST_MATH) && !defined(FP_MAX_BITS)
-        #if MIN_FFDHE_FP_MAX_BITS <= 8192
+    #if !defined(FP_MAX_BITS)
             #define FP_MAX_BITS 8192
-        #else
-            #define FP_MAX_BITS MIN_FFDHE_FP_MAX_BITS
-        #endif
     #endif
     #if defined(WOLFSSL_SP_MATH_ALL) && !defined(SP_INT_BITS)
-        #if MIN_FFDHE_FP_MAX_BITS <= 8192
             #define SP_INT_BITS 4096
-        #else
-            #define PS_INT_BITS MIN_FFDHE_FP_MAX_BITS / 2
-        #endif
     #endif
-#endif
 
 /* If using the max strength build, ensure OLD TLS is disabled. */
-#ifdef WOLFSSL_MAX_STRENGTH
-    #undef NO_OLD_TLS
-    #define NO_OLD_TLS
-#endif
 
 
 /* Default AES minimum auth tag sz, allow user to override */
@@ -2114,23 +1708,6 @@ extern void uITRON4_free(void *p) ;
  * static RSA cipher suites
  * session stats and peak stats
  */
-#ifdef WOLFSSL_SNIFFER
-    #ifndef WOLFSSL_STATIC_RSA
-        #define WOLFSSL_STATIC_RSA
-    #endif
-    #ifndef WOLFSSL_STATIC_DH
-        #define WOLFSSL_STATIC_DH
-    #endif
-    /* Allow option to be disabled. */
-    #ifndef WOLFSSL_NO_SESSION_STATS
-        #ifndef WOLFSSL_SESSION_STATS
-            #define WOLFSSL_SESSION_STATS
-        #endif
-        #ifndef WOLFSSL_PEAK_SESSIONS
-            #define WOLFSSL_PEAK_SESSIONS
-        #endif
-    #endif
-#endif
 
 /* Decode Public Key extras on by default, user can turn off with
  * WOLFSSL_NO_DECODE_EXTRA */
@@ -2145,75 +1722,29 @@ extern void uITRON4_free(void *p) ;
 
 /* C Sharp wrapper defines */
 #ifdef HAVE_CSHARP
-    #ifndef WOLFSSL_DTLS
-        #define WOLFSSL_DTLS
-    #endif
-    #undef NO_PSK
-    #undef NO_SHA256
-    #undef NO_DH
+// error : inserted by coan: "#define WOLFSSL_DTLS" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(2149)
+// error : inserted by coan: "#undef NO_PSK" contradicts -D symbol at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(2151)
 #endif
 
 /* Asynchronous Crypto */
-#ifdef WOLFSSL_ASYNC_CRYPT
-    /* Make sure wolf events are enabled */
-    #undef HAVE_WOLF_EVENT
-    #define HAVE_WOLF_EVENT
-
-    #ifdef WOLFSSL_ASYNC_CRYPT_TEST
-        #define WC_ASYNC_DEV_SIZE 168
-    #else
-        #define WC_ASYNC_DEV_SIZE 336
-    #endif
-
-    #if !defined(HAVE_CAVIUM) && !defined(HAVE_INTEL_QA) && \
-        !defined(WOLFSSL_ASYNC_CRYPT_TEST)
-        #error No async hardware defined with WOLFSSL_ASYNC_CRYPT!
-    #endif
-
-    /* Enable ECC_CACHE_CURVE for ASYNC */
-    #if !defined(ECC_CACHE_CURVE)
-        #define ECC_CACHE_CURVE
-    #endif
-#endif /* WOLFSSL_ASYNC_CRYPT */
 #ifndef WC_ASYNC_DEV_SIZE
     #define WC_ASYNC_DEV_SIZE 0
 #endif
 
 /* leantls checks */
 #ifdef WOLFSSL_LEANTLS
-    #ifndef HAVE_ECC
-        #error leantls build needs ECC
-    #endif
 #endif /* WOLFSSL_LEANTLS*/
 
 /* restriction with static memory */
-#ifdef WOLFSSL_STATIC_MEMORY
-    #if defined(HAVE_IO_POOL) || defined(XMALLOC_USER) || defined(NO_WOLFSSL_MEMORY)
-         #error static memory cannot be used with HAVE_IO_POOL, XMALLOC_USER or NO_WOLFSSL_MEMORY
-    #endif
-    #if !defined(WOLFSSL_SP_NO_MALLOC) && \
-        !defined(USE_FAST_MATH) && !defined(NO_BIG_INT)
-         #error The static memory option is only supported for fast math or SP with no malloc
-    #endif
-    #ifdef WOLFSSL_SMALL_STACK
-        #error static memory does not support small stack please undefine
-    #endif
-#endif /* WOLFSSL_STATIC_MEMORY */
 
 #ifdef HAVE_AES_KEYWRAP
-    #ifndef WOLFSSL_AES_DIRECT
-        #error AES key wrap requires AES direct please define WOLFSSL_AES_DIRECT
-    #endif
 #endif
 
 #ifdef HAVE_PKCS7
-    #if defined(NO_AES) && defined(NO_DES3)
-        #error PKCS7 needs either AES or 3DES enabled, please enable one
-    #endif
     #ifndef HAVE_AES_KEYWRAP
         #error PKCS7 requires AES key wrap please define HAVE_AES_KEYWRAP
     #endif
-    #if defined(HAVE_ECC) && !defined(HAVE_X963_KDF)
+    #if !defined(HAVE_X963_KDF)
         #error PKCS7 requires X963 KDF please define HAVE_X963_KDF
     #endif
 #endif
@@ -2240,8 +1771,7 @@ extern void uITRON4_free(void *p) ;
 #endif
 
 
-#if !defined(WOLFCRYPT_ONLY) && !defined(NO_OLD_TLS) && \
-        (defined(NO_SHA) || defined(NO_MD5))
+#if !defined(WOLFCRYPT_ONLY) &&  defined(NO_MD5)
     #error old TLS requires MD5 and SHA
 #endif
 
@@ -2251,95 +1781,28 @@ extern void uITRON4_free(void *p) ;
 #endif
 
 
-#ifdef WOLFSSL_LINUXKM
-    #ifdef HAVE_CONFIG_H
-        #include <config.h>
-        #undef HAVE_CONFIG_H
-    #endif
-    #ifndef NO_DEV_RANDOM
-        #define NO_DEV_RANDOM
-    #endif
-    #ifndef NO_WRITEV
-        #define NO_WRITEV
-    #endif
-    #ifndef NO_FILESYSTEM
-        #define NO_FILESYSTEM
-    #endif
-    #ifndef NO_STDIO_FILESYSTEM
-        #define NO_STDIO_FILESYSTEM
-    #endif
-    #ifndef WOLFSSL_NO_SOCK
-        #define WOLFSSL_NO_SOCK
-    #endif
-    #ifndef WOLFSSL_DH_CONST
-        #define WOLFSSL_DH_CONST
-    #endif
-    #ifndef WOLFSSL_USER_IO
-        #define WOLFSSL_USER_IO
-    #endif
-    #ifndef USE_WOLF_STRTOK
-        #define USE_WOLF_STRTOK
-    #endif
-    #ifndef WOLFSSL_SP_DIV_WORD_HALF
-        #define WOLFSSL_SP_DIV_WORD_HALF
-    #endif
-    #ifndef WOLFSSL_OLD_PRIME_CHECK
-        #define WOLFSSL_OLD_PRIME_CHECK
-    #endif
-    #ifndef WOLFSSL_TEST_SUBROUTINE
-        #define WOLFSSL_TEST_SUBROUTINE static
-    #endif
-    #undef HAVE_STRINGS_H
-    #undef HAVE_ERRNO_H
-    #undef HAVE_THREAD_LS
-    #undef WOLFSSL_HAVE_MIN
-    #undef WOLFSSL_HAVE_MAX
-    #define SIZEOF_LONG         8
-    #define SIZEOF_LONG_LONG    8
-    #define CHAR_BIT            8
-    #ifndef WOLFSSL_SP_DIV_64
-        #define WOLFSSL_SP_DIV_64
-    #endif
-    #ifndef WOLFSSL_SP_DIV_WORD_HALF
-        #define WOLFSSL_SP_DIV_WORD_HALF
-    #endif
-#endif
 
 
 /* Place any other flags or defines here */
 
-#if defined(WOLFSSL_MYSQL_COMPATIBLE) && defined(_WIN32) \
-                                      && defined(HAVE_GMTIME_R)
-    #undef HAVE_GMTIME_R /* don't trust macro with windows */
-#endif /* WOLFSSL_MYSQL_COMPATIBLE */
 
-#if defined(OPENSSL_ALL) || defined(WOLFSSL_NGINX) || defined(WOLFSSL_HAPROXY) \
- || defined(HAVE_LIGHTY)
+#if defined(WOLFSSL_NGINX) || defined(WOLFSSL_HAPROXY)  || defined(HAVE_LIGHTY)
     #define OPENSSL_NO_ENGINE
-    #ifndef OPENSSL_EXTRA
-        #define OPENSSL_EXTRA
-    #endif
+// error : inserted by coan: "#define OPENSSL_EXTRA" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(2320)
     /* Session Tickets will be enabled when --enable-opensslall is used.
      * Time is required for ticket expiration checking */
-    #if !defined(HAVE_SESSION_TICKET) && !defined(NO_ASN_TIME)
-        #define HAVE_SESSION_TICKET
+    #if !defined(NO_ASN_TIME)
+// error : inserted by coan: "#define HAVE_SESSION_TICKET" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(2325)
     #endif
     /* OCSP will be enabled in configure.ac when --enable-opensslall is used,
      * but do not force all users to have it enabled. */
-    #ifndef HAVE_OCSP
         /*#define HAVE_OCSP*/
-    #endif
     #ifndef KEEP_OUR_CERT
         #define KEEP_OUR_CERT
     #endif
-    #ifndef HAVE_SNI
-        #define HAVE_SNI
-    #endif
 #endif
 
-#ifdef HAVE_SNI
     #define SSL_CTRL_SET_TLSEXT_HOSTNAME 55
-#endif
 
 /* both CURVE and ED small math should be enabled */
 #ifdef CURVED25519_SMALL
@@ -2359,19 +1822,6 @@ extern void uITRON4_free(void *p) ;
 #endif
 
 /* warning for not using harden build options (default with ./configure) */
-#ifndef WC_NO_HARDEN
-    #if (defined(USE_FAST_MATH) && !defined(TFM_TIMING_RESISTANT)) || \
-        (defined(HAVE_ECC) && !defined(ECC_TIMING_RESISTANT)) || \
-        (!defined(NO_RSA) && !defined(WC_RSA_BLINDING) && !defined(HAVE_FIPS) && \
-            !defined(WC_NO_RNG))
-
-        #ifndef _MSC_VER
-            #warning "For timing resistance / side-channel attack prevention consider using harden options"
-        #else
-            #pragma message("Warning: For timing resistance / side-channel attack prevention consider using harden options")
-        #endif
-    #endif
-#endif
 
 #ifdef OPENSSL_COEXIST
     /* make sure old names are disabled */
@@ -2383,7 +1833,7 @@ extern void uITRON4_free(void *p) ;
     #endif
 #endif
 
-#if defined(NO_OLD_WC_NAMES) || defined(OPENSSL_EXTRA)
+#if defined(NO_OLD_WC_NAMES)
     /* added to have compatibility with SHA256() */
     #if !defined(NO_OLD_SHA_NAMES) && (!defined(HAVE_FIPS) || \
             FIPS_VERSION_GT(2,0))
@@ -2397,24 +1847,15 @@ extern void uITRON4_free(void *p) ;
 
 /* switch for compatibility layer functionality. Has subparts i.e. BIO/X509
  * When opensslextra is enabled all subparts should be turned on. */
-#ifdef OPENSSL_EXTRA
-    #undef  OPENSSL_EXTRA_X509_SMALL
-    #define OPENSSL_EXTRA_X509_SMALL
-#endif /* OPENSSL_EXTRA */
 
 /* support for converting DER to PEM */
-#if (defined(WOLFSSL_KEY_GEN) && !defined(WOLFSSL_NO_DER_TO_PEM)) || \
-    defined(WOLFSSL_CERT_GEN) || defined(OPENSSL_EXTRA)
+#if (defined(WOLFSSL_KEY_GEN) && !defined(WOLFSSL_NO_DER_TO_PEM)) ||  defined(WOLFSSL_CERT_GEN)
     #undef  WOLFSSL_DER_TO_PEM
     #define WOLFSSL_DER_TO_PEM
 #endif
 
 /* keep backwards compatibility enabling encrypted private key */
 #ifndef WOLFSSL_ENCRYPTED_KEYS
-    #if defined(OPENSSL_EXTRA) || defined(OPENSSL_EXTRA_X509_SMALL) || \
-        defined(HAVE_WEBSERVER)
-        #define WOLFSSL_ENCRYPTED_KEYS
-    #endif
 #endif
 
 /* support for disabling PEM to DER */
@@ -2424,10 +1865,8 @@ extern void uITRON4_free(void *p) ;
 #endif
 
 /* Parts of the openssl compatibility layer require peer certs */
-#if defined(OPENSSL_ALL) || defined(WOLFSSL_NGINX) || defined(WOLFSSL_HAPROXY) \
- || defined(HAVE_LIGHTY)
-    #undef  KEEP_PEER_CERT
-    #define KEEP_PEER_CERT
+#if defined(WOLFSSL_NGINX) || defined(WOLFSSL_HAPROXY)  || defined(HAVE_LIGHTY)
+// error : inserted by coan: "#define KEEP_PEER_CERT" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(2430)
 #endif
 
 /*
@@ -2435,7 +1874,7 @@ extern void uITRON4_free(void *p) ;
  * "tls-unique" channel binding. See comment in internal.h around clientFinished
  * and serverFinished for more information.
  */
-#if defined(OPENSSL_ALL) || defined(WOLFSSL_HAPROXY) || defined(WOLFSSL_WPAS)
+#if defined(WOLFSSL_HAPROXY) || defined(WOLFSSL_WPAS)
     #undef  WOLFSSL_HAVE_TLS_UNIQUE
     #define WOLFSSL_HAVE_TLS_UNIQUE
 #endif
@@ -2451,23 +1890,12 @@ extern void uITRON4_free(void *p) ;
     #undef HAVE_XCHACHA
 #endif
 
-#if !defined(WOLFSSL_SHA384) && !defined(WOLFSSL_SHA512) && defined(NO_AES) && \
-                                                          !defined(WOLFSSL_SHA3)
-    #undef  WOLFSSL_NO_WORD64_OPS
-    #define WOLFSSL_NO_WORD64_OPS
-#endif
 
-#if !defined(WOLFCRYPT_ONLY) && \
-    (!defined(WOLFSSL_NO_TLS12) || defined(HAVE_KEYING_MATERIAL))
+#if !defined(WOLFCRYPT_ONLY)
     #undef  WOLFSSL_HAVE_PRF
     #define WOLFSSL_HAVE_PRF
 #endif
 
-#if defined(NO_AES) && defined(NO_DES3) && !defined(HAVE_CAMELLIA) && \
-       !defined(WOLFSSL_HAVE_PRF) && defined(NO_PWDBASED)
-    #undef  WOLFSSL_NO_XOR_OPS
-    #define WOLFSSL_NO_XOR_OPS
-#endif
 
 #if defined(NO_ASN) && defined(WOLFCRYPT_ONLY)
     #undef  WOLFSSL_NO_INT_ENCODE
@@ -2482,28 +1910,13 @@ extern void uITRON4_free(void *p) ;
     #define WOLFSSL_NO_CT_OPS
 #endif
 
-#if defined(WOLFCRYPT_ONLY) && defined(NO_AES) && !defined(HAVE_CURVE25519) && \
-        !defined(HAVE_CURVE448) && defined(WC_NO_RNG) && defined(WC_NO_RSA_OAEP)
-    #undef  WOLFSSL_NO_CONST_CMP
-    #define WOLFSSL_NO_CONST_CMP
-#endif
 
-#if defined(WOLFCRYPT_ONLY) && defined(NO_AES) && !defined(WOLFSSL_SHA384) && \
-    !defined(WOLFSSL_SHA512) && defined(WC_NO_RNG) && \
-    (defined(WOLFSSL_SP_MATH) || defined(WOLFSSL_SP_MATH_ALL)) && \
-    defined(WOLFSSL_RSA_PUBLIC_ONLY)
-    #undef  WOLFSSL_NO_FORCE_ZERO
-    #define WOLFSSL_NO_FORCE_ZERO
-#endif
 
 /* Detect old cryptodev name */
-#if defined(WOLF_CRYPTO_DEV) && !defined(WOLF_CRYPTO_CB)
-    #define WOLF_CRYPTO_CB
+#if defined(WOLF_CRYPTO_DEV)
+// error : inserted by coan: "#define WOLF_CRYPTO_CB" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(2501)
 #endif
 
-#if defined(WOLFSSL_TLS13) && defined(WOLFSSL_NO_SIGALG)
-    #error TLS 1.3 requires the Signature Algorithms extension to be enabled
-#endif
 
 #ifndef NO_WOLFSSL_BASE64_DECODE
     #define WOLFSSL_BASE64_DECODE
@@ -2519,7 +1932,6 @@ extern void uITRON4_free(void *p) ;
 #endif
 
 #ifdef NO_WOLFSSL_SMALL_STACK
-    #undef WOLFSSL_SMALL_STACK
 #endif
 
 #ifdef WOLFSSL_SMALL_STACK_STATIC
@@ -2530,9 +1942,6 @@ extern void uITRON4_free(void *p) ;
 #endif
 
 /* The client session cache requires time for timeout */
-#if defined(NO_ASN_TIME) && !defined(NO_SESSION_CACHE)
-    #define NO_SESSION_CACHE
-#endif
 
 /* Use static ECC structs for Position Independant Code (PIC) */
 #if defined(__IAR_SYSTEMS_ICC__) && defined(__ROPI__)
@@ -2543,8 +1952,6 @@ extern void uITRON4_free(void *p) ;
 
 /* FIPS v1 does not support TLS v1.3 (requires RSA PSS and HKDF) */
 #if FIPS_VERSION_EQ(1,0)
-    #undef WC_RSA_PSS
-    #undef WOLFSSL_TLS13
 #endif
 
 /* For FIPSv2 make sure the ECDSA encoding allows extra bytes
@@ -2556,16 +1963,13 @@ extern void uITRON4_free(void *p) ;
 #endif
 
 /* Do not allow using small stack with no malloc */
-#if defined(WOLFSSL_NO_MALLOC) && \
-    (defined(WOLFSSL_SMALL_STACK) || defined(WOLFSSL_SMALL_STACK_CACHE))
+#if defined(WOLFSSL_NO_MALLOC) &&  defined(WOLFSSL_SMALL_STACK_CACHE)
     #error Small stack cannot be used with no malloc (WOLFSSL_NO_MALLOC)
 #endif
 
 /* Enable DH Extra for QT, openssl all, openssh and static ephemeral */
 /* Allows export/import of DH key and params as DER */
-#if !defined(NO_DH) && !defined(WOLFSSL_DH_EXTRA) && \
-    (defined(WOLFSSL_QT) || defined(OPENSSL_ALL) || defined(WOLFSSL_OPENSSH) || \
-     defined(WOLFSSL_STATIC_EPHEMERAL))
+#if !defined(WOLFSSL_DH_EXTRA) &&  defined(WOLFSSL_OPENSSH)
     #define WOLFSSL_DH_EXTRA
 #endif
 
@@ -2582,83 +1986,43 @@ extern void uITRON4_free(void *p) ;
 /* Enable HAVE_ONE_TIME_AUTH by default for use with TLS cipher suites
  * when poly1305 is enabled
  */
-#if defined(HAVE_POLY1305) && !defined(HAVE_ONE_TIME_AUTH)
-    #define HAVE_ONE_TIME_AUTH
-#endif
 
 /* Check for insecure build combination:
  * secure renegotiation   [enabled]
  * extended master secret [disabled]
  * session resumption     [enabled]
  */
-#if defined(HAVE_SECURE_RENEGOTIATION) && !defined(HAVE_EXTENDED_MASTER) && \
-    (defined(HAVE_SESSION_TICKET) || !defined(NO_SESSION_CACHE))
-    /* secure renegotiation requires extended master secret with resumption */
-    #ifndef _MSC_VER
-        #warning Extended master secret must be enabled with secure renegotiation and session resumption
-    #else
-        #pragma message("Warning: Extended master secret must be enabled with secure renegotiation and session resumption")
-    #endif
-
-    /* Note: "--enable-renegotiation-indication" ("HAVE_RENEGOTIATION_INDICATION")
-     * only sends the secure renegotiation extension, but is not actually supported.
-     * This was added because some TLS peers required it even if not used, so we call
-     * this "(FAKE Secure Renegotiation)"
-     */
-#endif
 
 /* if secure renegotiation is enabled, make sure server info is enabled */
-#if !defined(HAVE_RENEGOTIATION_INDICATION) &&                               \
-  !defined(HAVE_SERVER_RENEGOTIATION_INFO) &&   \
-  defined(HAVE_SECURE_RENEGOTIATION) &&         \
-  !defined(NO_WOLFSSL_SERVER)
-    #define HAVE_SERVER_RENEGOTIATION_INFO
-#endif
 
 /* Crypto callbacks should enable hash flag support */
-#if defined(WOLF_CRYPTO_CB) && !defined(WOLFSSL_HASH_FLAGS)
-    /* FIPS v1 and v2 do not support hash flags, so do not allow it with
-     * crypto callbacks */
-    #if !defined(HAVE_FIPS) || (defined(HAVE_FIPS) && \
-            defined(HAVE_FIPS_VERSION) && HAVE_FIPS_VERSION >= 3)
-        #define WOLFSSL_HASH_FLAGS
-    #endif
-#endif
 
 /* Enable Post-Quantum Cryptography if we have liboqs from the OpenQuantumSafe
  * group */
 #ifdef HAVE_LIBOQS
-#define HAVE_PQC
+// error : inserted by coan: "#define HAVE_PQC" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(2631)
 #define HAVE_FALCON
 #define HAVE_KYBER
 #endif
 
 #ifdef HAVE_PQM4
-#define HAVE_PQC
+// error : inserted by coan: "#define HAVE_PQC" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(2637)
 #define HAVE_KYBER
 #endif
 
-#if defined(HAVE_PQC) && !defined(HAVE_LIBOQS) && !defined(HAVE_PQM4)
-#error Please do not define HAVE_PQC yourself.
-#endif
 
-#if defined(HAVE_PQC) && defined(HAVE_LIBOQS) && defined(HAVE_PQM4)
-#error Please do not define both HAVE_LIBOQS and HAVE_PQM4.
-#endif
 
 /* SRTP requires DTLS */
-#if defined(WOLFSSL_SRTP) && !defined(WOLFSSL_DTLS)
+#if defined(WOLFSSL_SRTP)
     #error The SRTP extension requires DTLS
 #endif
 
 /* Are we using an external private key store like:
  *     PKCS11 / HSM / crypto callback / PK callback */
-#if !defined(WOLF_PRIVATE_KEY_ID) && \
-    (defined(HAVE_PKCS11) || defined(HAVE_PK_CALLBACKS) || \
-     defined(WOLF_CRYPTO_CB) || defined(WOLFSSL_KCAPI))
+#if  defined(HAVE_PKCS11) || defined(WOLFSSL_KCAPI)
      /* Enables support for using wolfSSL_CTX_use_PrivateKey_Id and
       *   wolfSSL_CTX_use_PrivateKey_Label */
-    #define WOLF_PRIVATE_KEY_ID
+// error : inserted by coan: "#define WOLF_PRIVATE_KEY_ID" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(2661)
 #endif
 
 
@@ -2677,8 +2041,6 @@ extern void uITRON4_free(void *p) ;
 /* RC4: Per RFC7465 Feb 2015, the cipher suite has been deprecated due to a
  * number of exploits capable of decrypting portions of encrypted messages. */
 #ifndef WOLFSSL_ALLOW_RC4
-    #undef  NO_RC4
-    #define NO_RC4
 #endif
 
 

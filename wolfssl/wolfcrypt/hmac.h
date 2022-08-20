@@ -28,32 +28,22 @@
 
 #include <wolfssl/wolfcrypt/hash.h>
 
-#ifndef NO_HMAC
 
-#if defined(HAVE_FIPS) && \
-        (!defined(HAVE_FIPS_VERSION) || (HAVE_FIPS_VERSION < 2))
+#if defined(HAVE_FIPS)
 /* for fips @wc_fips */
     #include <cyassl/ctaocrypt/hmac.h>
     #define WC_HMAC_BLOCK_SIZE HMAC_BLOCK_SIZE
 #endif
 
 
-#if defined(HAVE_FIPS) && \
-        defined(HAVE_FIPS_VERSION) && (HAVE_FIPS_VERSION >= 2)
-    #include <wolfssl/wolfcrypt/fips.h>
-#endif
 
 #ifdef __cplusplus
     extern "C" {
 #endif
 
 /* avoid redefinition of structs */
-#if !defined(HAVE_FIPS) || \
-    (defined(HAVE_FIPS_VERSION) && (HAVE_FIPS_VERSION >= 2))
+#if !defined(HAVE_FIPS)
 
-#ifdef WOLFSSL_ASYNC_CRYPT
-    #include <wolfssl/wolfcrypt/async.h>
-#endif
 
 #if defined(WOLFSSL_DEVCRYPTO_AES) || defined(WOLFSSL_DEVCRYPTO_HMAC)
     #include <wolfssl/wolfcrypt/port/devcrypto/wc_devcrypto.h>
@@ -76,47 +66,11 @@ enum {
 #ifdef NO_MD5
     WC_MD5     = WC_HASH_TYPE_MD5,
 #endif
-#ifdef NO_SHA
-    WC_SHA     = WC_HASH_TYPE_SHA,
-#endif
-#ifdef NO_SHA256
-    WC_SHA256  = WC_HASH_TYPE_SHA256,
-#endif
-#ifndef WOLFSSL_SHA512
-    WC_SHA512  = WC_HASH_TYPE_SHA512,
-    #ifndef WOLFSSL_NOSHA512_224
-    WC_SHA512_224  = WC_HASH_TYPE_SHA512_224,
-    #endif
-    #ifndef WOLFSSL_NOSHA512_256
-    WC_SHA512_256  = WC_HASH_TYPE_SHA512_256,
-    #endif
-#endif
-#ifndef WOLFSSL_SHA384
-    WC_SHA384  = WC_HASH_TYPE_SHA384,
-#endif
-#ifndef WOLFSSL_SHA224
-    WC_SHA224  = WC_HASH_TYPE_SHA224,
-#endif
-#ifndef WOLFSSL_SHA3
-    WC_SHA3_224 = WC_HASH_TYPE_SHA3_224,
-    WC_SHA3_256 = WC_HASH_TYPE_SHA3_256,
-    WC_SHA3_384 = WC_HASH_TYPE_SHA3_384,
-    WC_SHA3_512 = WC_HASH_TYPE_SHA3_512,
-#endif
-#ifdef WOLF_PRIVATE_KEY_ID
-    HMAC_MAX_ID_LEN    = 32,
-    HMAC_MAX_LABEL_LEN = 32,
-#endif
 };
 
 /* Select the largest available hash for the buffer size. */
 #define WC_HMAC_BLOCK_SIZE WC_MAX_BLOCK_SIZE
 
-#if !defined(WOLFSSL_SHA3) && !defined(WOLFSSL_SHA512) && \
-    !defined(WOLFSSL_SHA384) && defined(NO_SHA256) && \
-    defined(WOLFSSL_SHA224) && defined(NO_SHA) && defined(NO_MD5)
-    #error "You have to have some kind of hash if you want to use HMAC."
-#endif
 
 
 /* hmac hash union */
@@ -124,24 +78,12 @@ typedef union {
 #ifndef NO_MD5
     wc_Md5 md5;
 #endif
-#ifndef NO_SHA
     wc_Sha sha;
-#endif
-#ifdef WOLFSSL_SHA224
     wc_Sha224 sha224;
-#endif
-#ifndef NO_SHA256
     wc_Sha256 sha256;
-#endif
-#ifdef WOLFSSL_SHA384
     wc_Sha384 sha384;
-#endif
-#ifdef WOLFSSL_SHA512
     wc_Sha512 sha512;
-#endif
-#ifdef WOLFSSL_SHA3
     wc_Sha3 sha3;
-#endif
 } wc_HmacHash;
 
 /* Hmac digest */
@@ -156,25 +98,8 @@ struct Hmac {
 #ifdef WOLFSSL_KCAPI_HMAC
     struct kcapi_handle* handle;
 #endif
-#ifdef WOLFSSL_ASYNC_CRYPT
-    WC_ASYNC_DEV asyncDev;
-#endif /* WOLFSSL_ASYNC_CRYPT */
 #if defined(WOLFSSL_DEVCRYPTO) && defined(WOLFSSL_DEVCRYPTO_HMAC)
     WC_CRYPTODEV ctx;
-#endif
-#ifdef WOLF_CRYPTO_CB
-    int     devId;
-    void*   devCtx;
-    const byte* keyRaw;
-#endif
-#ifdef WOLF_PRIVATE_KEY_ID
-    byte    id[HMAC_MAX_ID_LEN];
-    int     idLen;
-    char    label[HMAC_MAX_LABEL_LEN];
-    int     labelLen;
-#endif
-#if defined(WOLFSSL_ASYNC_CRYPT) || defined(WOLF_CRYPTO_CB)
-    word16  keyLen;          /* hmac key length (key in ipad) */
 #endif
 };
 
@@ -199,12 +124,6 @@ WOLFSSL_API int wc_HmacFinal_Software(Hmac* hmac, byte* out);
 WOLFSSL_API int wc_HmacSizeByType(int type);
 
 WOLFSSL_API int wc_HmacInit(Hmac* hmac, void* heap, int devId);
-#ifdef WOLF_PRIVATE_KEY_ID
-WOLFSSL_API int wc_HmacInit_Id(Hmac* hmac, byte* id, int len, void* heap,
-                               int devId);
-WOLFSSL_API int wc_HmacInit_Label(Hmac* hmac, const char* label, void* heap,
-                                  int devId);
-#endif
 WOLFSSL_API void wc_HmacFree(Hmac* hmac);
 
 WOLFSSL_API int wolfSSL_GetHmacMaxSize(void);
@@ -230,5 +149,4 @@ WOLFSSL_API int wc_HKDF(int type, const byte* inKey, word32 inKeySz,
     } /* extern "C" */
 #endif
 
-#endif /* NO_HMAC */
 #endif /* WOLF_CRYPT_HMAC_H */

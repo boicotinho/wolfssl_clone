@@ -33,12 +33,8 @@ This library provides the interface to the RC2 encryption algorithm (RFC 2268)
 
 #ifdef WC_RC2
 
-#ifdef NO_INLINE
-    #include <wolfssl/wolfcrypt/misc.h>
-#else
     #define WOLFSSL_MISC_INCLUDED
     #include <wolfcrypt/src/misc.c>
-#endif
 
 #include <wolfssl/wolfcrypt/rc2.h>
 #include <wolfssl/wolfcrypt/error-crypt.h>

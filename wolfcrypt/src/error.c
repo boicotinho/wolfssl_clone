@@ -28,12 +28,7 @@
 
 #include <wolfssl/wolfcrypt/error-crypt.h>
 
-#ifdef _MSC_VER
-    /* 4996 warning to use MS extensions e.g., strcpy_s instead of XSTRNCPY */
-    #pragma warning(disable: 4996)
-#endif
 
-#ifndef NO_ERROR_STRINGS
 const char* wc_GetErrorString(int error)
 {
     switch (error) {
@@ -252,11 +247,7 @@ const char* wc_GetErrorString(int error)
         return "Bad alignment error, no alloc help";
 
     case ASN_NO_SIGNER_E :
-#ifndef OPENSSL_EXTRA
         return "ASN no signer error to confirm failure";
-#else
-        return "certificate verify failed";
-#endif
 
     case ASN_CRL_CONFIRM_E :
         return "ASN CRL sig error, confirm failure";
@@ -578,5 +569,4 @@ void wc_ErrorString(int error, char* buffer)
     XSTRNCPY(buffer, wc_GetErrorString(error), WOLFSSL_MAX_ERROR_SZ);
     buffer[WOLFSSL_MAX_ERROR_SZ-1] = 0;
 }
-#endif /* !NO_ERROR_STRINGS */
 

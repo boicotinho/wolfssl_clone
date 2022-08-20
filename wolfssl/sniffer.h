@@ -27,9 +27,6 @@
 #include <wolfssl/wolfcrypt/settings.h>
 #include <wolfssl/wolfcrypt/asn_public.h>
 
-#ifdef HAVE_WOLF_EVENT
-    #include <wolfssl/wolfcrypt/wolfevent.h>
-#endif
 
 
 #ifdef _WIN32
@@ -205,19 +202,6 @@ WOLFSSL_API
 SSL_SNIFFER_API int ssl_ReadResetStatistics(SSLStats* stats);
 
 
-#if defined(WOLFSSL_STATIC_EPHEMERAL) && defined(WOLFSSL_TLS13)
-/* macro indicating support for key callback */
-#undef  WOLFSSL_SNIFFER_KEY_CALLBACK
-#define WOLFSSL_SNIFFER_KEY_CALLBACK
-
-typedef int (*SSLKeyCb)(void* vSniffer, int namedGroup,
-    const unsigned char* srvPub, unsigned int srvPubSz,
-    const unsigned char* cliPub, unsigned int cliPubSz,
-    DerBuffer* privKey, void* cbCtx, char* error);
-
-WOLFSSL_API
-SSL_SNIFFER_API int ssl_SetKeyCallback(SSLKeyCb cb, void* cbCtx);
-#endif
 
 
 #ifdef WOLFSSL_SNIFFER_WATCH
@@ -279,18 +263,6 @@ SSL_SNIFFER_API int ssl_DecodePacketWithChainSessionInfoStoreData(
 #endif
 
 
-#ifdef WOLFSSL_ASYNC_CRYPT
-
-WOLFSSL_API
-SSL_SNIFFER_API int ssl_DecodePacketAsync(void* packet, unsigned int packetSz,
-    int isChain, unsigned char** data, char* error, SSLInfo* sslInfo,
-    void* userCtx);
-
-WOLFSSL_API
-SSL_SNIFFER_API int ssl_PollSniffer(WOLF_EVENT** events, int maxEvents,
-    WOLF_EVENT_FLAG flags, int* eventCount);
-
-#endif /* WOLFSSL_ASYNC_CRYPT */
 
 
 

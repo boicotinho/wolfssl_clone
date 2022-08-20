@@ -31,31 +31,16 @@
 #endif
 
 /* Micrium uses NetSock I/O callbacks in wolfio.c */
-#if !defined(WOLFSSL_USER_IO)
     /* OCSP and CRL_IO require HTTP client */
-    #if defined(HAVE_OCSP) || defined(HAVE_CRL_IO)
-        #ifndef HAVE_HTTP_CLIENT
-            #define HAVE_HTTP_CLIENT
-        #endif
+    #if defined(HAVE_CRL_IO)
+// error : inserted by coan: "#define HAVE_HTTP_CLIENT" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfio.h(38)
     #endif
-#endif
 
-#if !defined(WOLFSSL_USER_IO)
     /* Micrium uses NetSock I/O callbacks in wolfio.c */
-    #if !defined(USE_WOLFSSL_IO) && !defined(MICRIUM) && \
-        !defined(WOLFSSL_CONTIKI) && !defined(WOLFSSL_NO_SOCK)
-        #define USE_WOLFSSL_IO
-    #endif
-#endif
 
 
-#if defined(USE_WOLFSSL_IO) || defined(HAVE_HTTP_CLIENT)
 
-#ifdef HAVE_LIBZ
-    #include "zlib.h"
-#endif
 
-#ifndef USE_WINDOWS_API
     #if defined(WOLFSSL_LWIP) && !defined(WOLFSSL_APACHE_MYNEWT)
         /* lwIP needs to be configured to use sockets API in this mode */
         /* LWIP_SOCKET 1 in lwip/opt.h or in build */
@@ -64,11 +49,6 @@
             #include <errno.h>
             #define LWIP_PROVIDE_ERRNO 1
         #endif
-    #elif defined(FREESCALE_MQX)
-        #include <posix.h>
-        #include <rtcs.h>
-    #elif defined(FREESCALE_KSDK_MQX)
-        #include <rtcs.h>
     #elif (defined(WOLFSSL_MDK_ARM) || defined(WOLFSSL_KEIL_TCP_NET))
         #include "rl_net.h"
         #include "errno.h"
@@ -94,8 +74,6 @@
     #elif defined(WOLFSSL_NUCLEUS_1_2)
         #include <externs.h>
         #include <errno.h>
-    #elif defined(WOLFSSL_LINUXKM)
-        /* the requisite linux/net.h is included in wc_port.h, with incompatible warnings masked out. */
     #elif defined(WOLFSSL_ATMEL)
         #include "socket/include/socket.h"
     #elif defined(INTIME_RTOS)
@@ -133,24 +111,15 @@
     #elif defined(HAVE_NETX)
         #include "nx_api.h"
         #include "errno.h"
-    #elif defined(FUSION_RTOS)
-        #include <sys/fcltypes.h>
-        #include <fclerrno.h>
-        #include <fclfcntl.h>
     #elif !defined(WOLFSSL_NO_SOCK)
         #include <sys/types.h>
         #include <errno.h>
-        #ifndef EBSNET
             #include <unistd.h>
-        #endif
         #include <fcntl.h>
         #define XFCNTL(fd, flag, block) fcntl((fd), (flag), (block))
 
         #if defined(HAVE_RTP_SYS)
             #include <socket.h>
-        #elif defined(EBSNET)
-            #include "rtipapi.h"  /* errno */
-            #include "socket.h"
         #elif defined(NETOS)
             #include <sockapi.h>
         #elif !defined(DEVKITPRO) && !defined(WOLFSSL_PICOTCP) \
@@ -174,25 +143,9 @@
         #include <errno.h>
     #endif
 
-#endif /* USE_WINDOWS_API */
 
-#ifdef __sun
-    #include <sys/filio.h>
-#endif
 
-#ifdef USE_WINDOWS_API
-    /* no epipe yet */
-    #ifndef WSAEPIPE
-        #define WSAEPIPE       -12345
-    #endif
-    #define SOCKET_EWOULDBLOCK WSAEWOULDBLOCK
-    #define SOCKET_EAGAIN      WSAETIMEDOUT
-    #define SOCKET_ECONNRESET  WSAECONNRESET
-    #define SOCKET_EINTR       WSAEINTR
-    #define SOCKET_EPIPE       WSAEPIPE
-    #define SOCKET_ECONNREFUSED WSAENOTCONN
-    #define SOCKET_ECONNABORTED WSAECONNABORTED
-#elif defined(__PPU)
+#if defined(__PPU)
     #define SOCKET_EWOULDBLOCK SYS_NET_EWOULDBLOCK
     #define SOCKET_EAGAIN      SYS_NET_EAGAIN
     #define SOCKET_ECONNRESET  SYS_NET_ECONNRESET
@@ -200,25 +153,6 @@
     #define SOCKET_EPIPE       SYS_NET_EPIPE
     #define SOCKET_ECONNREFUSED SYS_NET_ECONNREFUSED
     #define SOCKET_ECONNABORTED SYS_NET_ECONNABORTED
-#elif defined(FREESCALE_MQX) || defined(FREESCALE_KSDK_MQX)
-    #if MQX_USE_IO_OLD
-        /* RTCS old I/O doesn't have an EWOULDBLOCK */
-        #define SOCKET_EWOULDBLOCK  EAGAIN
-        #define SOCKET_EAGAIN       EAGAIN
-        #define SOCKET_ECONNRESET   RTCSERR_TCP_CONN_RESET
-        #define SOCKET_EINTR        EINTR
-        #define SOCKET_EPIPE        EPIPE
-        #define SOCKET_ECONNREFUSED RTCSERR_TCP_CONN_REFUSED
-        #define SOCKET_ECONNABORTED RTCSERR_TCP_CONN_ABORTED
-    #else
-        #define SOCKET_EWOULDBLOCK  NIO_EWOULDBLOCK
-        #define SOCKET_EAGAIN       NIO_EAGAIN
-        #define SOCKET_ECONNRESET   NIO_ECONNRESET
-        #define SOCKET_EINTR        NIO_EINTR
-        #define SOCKET_EPIPE        NIO_EPIPE
-        #define SOCKET_ECONNREFUSED NIO_ECONNREFUSED
-        #define SOCKET_ECONNABORTED NIO_ECONNABORTED
-    #endif
 #elif defined(WOLFSSL_MDK_ARM)|| defined(WOLFSSL_KEIL_TCP_NET)
         #define SOCKET_EWOULDBLOCK BSD_ERROR_WOULDBLOCK
         #define SOCKET_EAGAIN      BSD_ERROR_LOCKED
@@ -271,14 +205,6 @@
     #define SOCKET_EPIPE       NX_NOT_CONNECTED
     #define SOCKET_ECONNREFUSED NX_NOT_CONNECTED
     #define SOCKET_ECONNABORTED NX_NOT_CONNECTED
-#elif defined(FUSION_RTOS)
-    #define SOCKET_EWOULDBLOCK FCL_EWOULDBLOCK
-    #define SOCKET_EAGAIN      FCL_EAGAIN
-    #define SOCKET_ECONNRESET  FNS_ECONNRESET
-    #define SOCKET_EINTR       FCL_EINTR
-    #define SOCKET_EPIPE       FCL_EPIPE
-    #define SOCKET_ECONNREFUSED FCL_ECONNREFUSED
-    #define SOCKET_ECONNABORTED FNS_ECONNABORTED
 #elif defined(WOLFSSL_LWIP_NATIVE)
     #define SOCKET_EWOULDBLOCK ERR_WOULDBLOCK
     #define SOCKET_EAGAIN      ERR_WOULDBLOCK
@@ -317,19 +243,11 @@
 #elif defined(WOLFSSL_NUCLEUS_1_2)
     #define SEND_FUNCTION NU_Send
     #define RECV_FUNCTION NU_Recv
-#elif defined(FUSION_RTOS)
-    #define SEND_FUNCTION FNS_SEND
-    #define RECV_FUNCTION FNS_RECV
 #elif defined(WOLFSSL_ZEPHYR)
-    #ifndef WOLFSSL_MAX_SEND_SZ
-        #define WOLFSSL_MAX_SEND_SZ       256
-    #endif
+// error : inserted by coan: "#define WOLFSSL_MAX_SEND_SZ 256" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfio.h(325)
 
     #define SEND_FUNCTION send
     #define RECV_FUNCTION recv
-#elif defined(WOLFSSL_LINUXKM)
-    #define SEND_FUNCTION linuxkm_send
-    #define RECV_FUNCTION linuxkm_recv
 #elif defined(WOLFSSL_SGX)
     #define SEND_FUNCTION send
     #define RECV_FUNCTION recv
@@ -341,25 +259,14 @@
     #endif
 #endif
 
-#ifdef USE_WINDOWS_API
-    typedef unsigned int SOCKET_T;
-    #ifndef SOCKET_INVALID
-        #define SOCKET_INVALID INVALID_SOCKET
-    #endif
-#else
     typedef int SOCKET_T;
     #ifndef SOCKET_INVALID
         #define SOCKET_INVALID (-1)
     #endif
-#endif
 
 #ifndef WOLFSSL_NO_SOCK
     #ifndef XSOCKLENT
-        #ifdef USE_WINDOWS_API
-            #define XSOCKLENT int
-        #else
             #define XSOCKLENT socklen_t
-        #endif
     #endif
 
     /* Socket Addr Support */
@@ -394,27 +301,14 @@ WOLFSSL_API int wolfIO_TcpBind(SOCKET_T* sockfd, word16 port);
 WOLFSSL_API  int wolfIO_Send(SOCKET_T sd, char *buf, int sz, int wrFlags);
 WOLFSSL_API  int wolfIO_Recv(SOCKET_T sd, char *buf, int sz, int rdFlags);
 
-#endif /* USE_WOLFSSL_IO || HAVE_HTTP_CLIENT */
 
 #ifndef WOLFSSL_NO_SOCK
-#ifdef USE_WINDOWS_API
-    #ifndef CloseSocket
-        #define CloseSocket(s) closesocket(s)
-    #endif
-    #define StartTCP() { WSADATA wsd; WSAStartup(0x0002, &wsd); }
-#elif defined(WOLFSSL_MDK_ARM) || defined(WOLFSSL_KEIL_TCP_NET)
+#if defined(WOLFSSL_MDK_ARM) || defined(WOLFSSL_KEIL_TCP_NET)
     #ifndef CloseSocket
         extern int closesocket(int);
         #define CloseSocket(s) closesocket(s)
     #endif
     #define StartTCP()
-#elif defined(FUSION_RTOS)
-    #ifndef CloseSocket
-        #define CloseSocket(s) do {                     \
-                                    int err;            \
-                                    FNS_CLOSE(s, &err); \
-                                } while(0)
-    #endif
 #else
     #ifndef CloseSocket
         #define CloseSocket(s) close(s)
@@ -429,35 +323,11 @@ WOLFSSL_API  int wolfIO_Recv(SOCKET_T sd, char *buf, int sz, int rdFlags);
 
 WOLFSSL_API int BioSend(WOLFSSL* ssl, char *buf, int sz, void *ctx);
 WOLFSSL_API int BioReceive(WOLFSSL* ssl, char* buf, int sz, void* ctx);
-#if defined(USE_WOLFSSL_IO)
     /* default IO callbacks */
     WOLFSSL_API int EmbedReceive(WOLFSSL* ssl, char* buf, int sz, void* ctx);
     WOLFSSL_API int EmbedSend(WOLFSSL* ssl, char* buf, int sz, void* ctx);
 
-    #ifdef WOLFSSL_DTLS
-        WOLFSSL_API int EmbedReceiveFrom(WOLFSSL *ssl, char *buf, int sz,
-                                         void *ctx);
-        WOLFSSL_API int EmbedSendTo(WOLFSSL* ssl, char *buf, int sz, void *ctx);
-        WOLFSSL_API int EmbedGenerateCookie(WOLFSSL* ssl, byte *buf, int sz,
-                                            void *ctx);
-        #ifdef WOLFSSL_MULTICAST
-            WOLFSSL_API int EmbedReceiveFromMcast(WOLFSSL *ssl, char *buf,
-                                                  int sz, void *ctx);
-        #endif /* WOLFSSL_MULTICAST */
-    #endif /* WOLFSSL_DTLS */
-#endif /* USE_WOLFSSL_IO */
 
-#ifdef HAVE_OCSP
-    WOLFSSL_API int wolfIO_HttpBuildRequestOcsp(const char* domainName,
-        const char* path, int ocspReqSz, unsigned char* buf, int bufSize);
-    WOLFSSL_API int wolfIO_HttpProcessResponseOcsp(int sfd,
-        unsigned char** respBuf, unsigned char* httpBuf, int httpBufSz,
-        void* heap);
-
-    WOLFSSL_API int EmbedOcspLookup(void* ctx, const char* url, int urlSz,
-                        byte* ocspReqBuf, int ocspReqSz, byte** ocspRespBuf);
-    WOLFSSL_API void EmbedOcspRespFree(void* ctx, byte *resp);
-#endif
 
 #ifdef HAVE_CRL_IO
     WOLFSSL_API int wolfIO_HttpBuildRequestCrl(const char* url, int urlSz,
@@ -470,20 +340,6 @@ WOLFSSL_API int BioReceive(WOLFSSL* ssl, char* buf, int sz, void* ctx);
 #endif
 
 
-#if defined(HAVE_HTTP_CLIENT)
-    WOLFSSL_API  int wolfIO_DecodeUrl(const char* url, int urlSz, char* outName,
-        char* outPath, unsigned short* outPort);
-
-    WOLFSSL_API  int wolfIO_HttpBuildRequest(const char* reqType,
-        const char* domainName, const char* path, int pathLen, int reqSz,
-        const char* contentType, unsigned char* buf, int bufSize);
-    WOLFSSL_LOCAL int wolfIO_HttpBuildRequest_ex(const char* reqType,
-        const char* domainName, const char* path, int pathLen, int reqSz,
-        const char* contentType, const char *exHdrs, unsigned char* buf, int bufSize);
-    WOLFSSL_API  int wolfIO_HttpProcessResponse(int sfd, const char** appStrList,
-        unsigned char** respBuf, unsigned char* httpBuf, int httpBufSz,
-        int dynType, void* heap);
-#endif /* HAVE_HTTP_CLIENT */
 
 
 /* I/O callbacks */
@@ -531,38 +387,6 @@ WOLFSSL_API void wolfSSL_SetIOWriteFlags(WOLFSSL* ssl, int flags);
                                           struct mn_sockaddr_in* mnSockAddrIn);
 #endif /* defined(WOLFSSL_APACHE_MYNEWT) && !defined(WOLFSSL_LWIP) */
 
-#ifdef WOLFSSL_UIP
-
-    struct uip_wolfssl_ctx {
-        union socket_connector {
-            struct tcp_socket tcp;
-            struct udp_socket udp;
-        } conn;
-        WOLFSSL_CTX *ctx;
-        WOLFSSL *ssl;
-        byte *input_databuf;
-        byte *output_databuf;
-        byte *ssl_rx_databuf;
-        int ssl_rb_len;
-        int ssl_rb_off;
-        struct process *process;
-        tcp_socket_data_callback_t input_callback;
-        tcp_socket_event_callback_t event_callback;
-        int closing;
-        uip_ipaddr_t peer_addr;
-        word16 peer_port;
-    };
-
-    typedef struct uip_wolfssl_ctx uip_wolfssl_ctx;
-
-    WOLFSSL_LOCAL int uIPSend(WOLFSSL* ssl, char* buf, int sz, void* ctx);
-    WOLFSSL_LOCAL int uIPReceive(WOLFSSL* ssl, char* buf, int sz,
-                                     void* ctx);
-    WOLFSSL_LOCAL int uIPReceiveFrom(WOLFSSL* ssl, char* buf, int sz,
-                                         void* ctx);
-    WOLFSSL_LOCAL int uIPSendTo(WOLFSSL* ssl, char* buf, int sz, void* ctx);
-
-#endif
 
 #ifdef WOLFSSL_GNRC
     #include <sock_types.h>
@@ -691,48 +515,18 @@ WOLFSSL_API void wolfSSL_SetIOWriteFlags(WOLFSSL* ssl, int flags);
             int receive_buffer_size, void *arg);
 
 #endif
-#ifdef WOLFSSL_DTLS
-    typedef int (*CallbackGenCookie)(WOLFSSL* ssl, unsigned char* buf, int sz,
-                                     void* ctx);
-    WOLFSSL_API void  wolfSSL_CTX_SetGenCookie(WOLFSSL_CTX* ctx,
-                                               CallbackGenCookie cb);
-    WOLFSSL_API void  wolfSSL_SetCookieCtx(WOLFSSL* ssl, void *ctx);
-    WOLFSSL_API void* wolfSSL_GetCookieCtx(WOLFSSL* ssl);
-
-#endif
-#ifdef WOLFSSL_SESSION_EXPORT
-    typedef int (*CallbackGetPeer)(WOLFSSL* ssl, char* ip, int* ipSz,
-                                        unsigned short* port, int* fam);
-    typedef int (*CallbackSetPeer)(WOLFSSL* ssl, char* ip, int ipSz,
-                                          unsigned short port, int fam);
-
-    WOLFSSL_API void wolfSSL_CTX_SetIOGetPeer(WOLFSSL_CTX*, CallbackGetPeer);
-    WOLFSSL_API void wolfSSL_CTX_SetIOSetPeer(WOLFSSL_CTX*, CallbackSetPeer);
-    WOLFSSL_API int EmbedGetPeer(WOLFSSL* ssl, char* ip, int* ipSz,
-                                                unsigned short* port, int* fam);
-    WOLFSSL_API int EmbedSetPeer(WOLFSSL* ssl, char* ip, int ipSz,
-                                                  unsigned short port, int fam);
-#endif /* WOLFSSL_SESSION_EXPORT */
 
 
 
 #ifndef XINET_NTOP
     #define XINET_NTOP(a,b,c,d) inet_ntop((a),(b),(c),(d))
-    #ifdef USE_WINDOWS_API /* Windows-friendly definition */
-        #undef  XINET_NTOP
-        #define XINET_NTOP(a,b,c,d) InetNtop((a),(b),(c),(d))
-    #endif
 #endif
 #ifndef XINET_PTON
     #define XINET_PTON(a,b,c)   inet_pton((a),(b),(c))
-    #ifdef USE_WINDOWS_API /* Windows-friendly definition */
-        #undef  XINET_PTON
-        #define XINET_PTON(a,b,c)   InetPton((a),(PCWSTR)(b),(c))
-    #endif
 #endif
 
 #ifndef XHTONS
-    #if !defined(WOLFSSL_NO_SOCK) && (defined(USE_WOLFSSL_IO) || defined(HAVE_HTTP_CLIENT))
+    #if !defined(WOLFSSL_NO_SOCK)
         #define XHTONS(a) htons((a))
     #else
         /* we don't have sockets, so define our own htons and ntohs */
@@ -744,7 +538,7 @@ WOLFSSL_API void wolfSSL_SetIOWriteFlags(WOLFSSL* ssl, int flags);
     #endif
 #endif
 #ifndef XNTOHS
-    #if !defined(WOLFSSL_NO_SOCK) && (defined(USE_WOLFSSL_IO) || defined(HAVE_HTTP_CLIENT))
+    #if !defined(WOLFSSL_NO_SOCK)
         #define XNTOHS(a) ntohs((a))
     #else
         /* we don't have sockets, so define our own htons and ntohs */

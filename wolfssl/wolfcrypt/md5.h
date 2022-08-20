@@ -68,13 +68,10 @@ enum {
 #ifdef STM32_HASH
     #include <wolfssl/wolfcrypt/port/st/stm32.h>
 #endif
-#ifdef WOLFSSL_ASYNC_CRYPT
-    #include <wolfssl/wolfcrypt/async.h>
-#endif
 
 #ifdef WOLFSSL_TI_HASH
     #include "wolfssl/wolfcrypt/port/ti/ti-hash.h"
-#elif defined(WOLFSSL_IMX6_CAAM) && !defined(WOLFSSL_QNX_CAAM)
+#elif defined(WOLFSSL_IMX6_CAAM)
     #include "wolfssl/wolfcrypt/port/caam/wolfcaam_sha.h"
 #else
 
@@ -97,9 +94,6 @@ typedef struct wc_Md5 {
     hashUpdCache cache; /* cache for updates */
 #endif
 #endif /* STM32_HASH */
-#ifdef WOLFSSL_ASYNC_CRYPT
-    WC_ASYNC_DEV asyncDev;
-#endif /* WOLFSSL_ASYNC_CRYPT */
 #ifdef WOLFSSL_HASH_FLAGS
     word32 flags; /* enum wc_HashFlags in hash.h */
 #endif
@@ -112,9 +106,6 @@ WOLFSSL_API int wc_InitMd5_ex(wc_Md5* md5, void* heap, int devId);
 WOLFSSL_API int wc_Md5Update(wc_Md5* md5, const byte* data, word32 len);
 WOLFSSL_API int wc_Md5Final(wc_Md5* md5, byte* hash);
 WOLFSSL_API void wc_Md5Free(wc_Md5* md5);
-#ifdef OPENSSL_EXTRA
-WOLFSSL_API int wc_Md5Transform(wc_Md5* md5, const byte* data);
-#endif
 
 WOLFSSL_API int  wc_Md5GetHash(wc_Md5* md5, byte* hash);
 WOLFSSL_API int  wc_Md5Copy(wc_Md5* src, wc_Md5* dst);

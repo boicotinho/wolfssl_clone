@@ -34,12 +34,8 @@
 #ifndef NO_ASN
     #include <wolfssl/wolfcrypt/asn.h> /* For PEM_LINE_SZ */
 #endif
-#ifdef NO_INLINE
-    #include <wolfssl/wolfcrypt/misc.h>
-#else
     #define WOLFSSL_MISC_INCLUDED
     #include <wolfcrypt/src/misc.c>
-#endif
 
 enum {
     BAD         = 0xFF,  /* invalid encoding */
@@ -267,7 +263,6 @@ int Base64_Decode(const byte* in, word32 inLen, byte* out, word32* outLen)
 
 #endif /* WOLFSSL_BASE64_DECODE */
 
-#if defined(WOLFSSL_BASE64_ENCODE)
 
 static
 const byte base64Encode[] = { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
@@ -482,7 +477,6 @@ int Base64_Encode_NoNl(const byte* in, word32 inLen, byte* out, word32* outLen)
     return DoBase64_Encode(in, inLen, out, outLen, WC_NO_NL_ENC);
 }
 
-#endif /* WOLFSSL_BASE64_ENCODE */
 
 
 #ifdef WOLFSSL_BASE16

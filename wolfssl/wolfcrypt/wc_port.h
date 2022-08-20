@@ -44,46 +44,14 @@
 
 
 /* GENERIC INCLUDE SECTION */
-#if defined(FREESCALE_MQX) || defined(FREESCALE_KSDK_MQX)
-    #include <mqx.h>
-    #if (defined(MQX_USE_IO_OLD) && MQX_USE_IO_OLD) || \
-        defined(FREESCALE_MQX_5_0)
-        #include <fio.h>
-    #else
-        #include <nio.h>
-    #endif
-#endif
 
-#ifdef WOLFSSL_LINUXKM
-    #include "../../linuxkm/linuxkm_wc_port.h"
-#endif /* WOLFSSL_LINUXKM */
 
 /* THREADING/MUTEX SECTION */
-#ifdef USE_WINDOWS_API
-    #ifdef WOLFSSL_GAME_BUILD
-        #include "system/xtl.h"
-    #else
-        #ifndef WIN32_LEAN_AND_MEAN
-            #define WIN32_LEAN_AND_MEAN
-        #endif
-        #ifndef WOLFSSL_SGX
-            #if defined(_WIN32_WCE) || defined(WIN32_LEAN_AND_MEAN)
-                /* On WinCE winsock2.h must be included before windows.h */
-                #include <winsock2.h>
-            #endif
-            #include <windows.h>
-            #ifndef WOLFSSL_USER_IO
-                #include <ws2tcpip.h> /* required for InetPton */
-            #endif
-        #endif /* WOLFSSL_SGX */
-    #endif
-#elif defined(THREADX)
-    #ifndef SINGLE_THREADED
+#if defined(THREADX)
         #ifdef NEED_THREADX_TYPES
             #include <types.h>
         #endif
         #include <tx_api.h>
-    #endif
 #elif defined(WOLFSSL_DEOS)
     #include "mutexapi.h"
 #elif defined(MICRIUM)
@@ -91,10 +59,6 @@
 #elif defined(FREERTOS) || defined(FREERTOS_TCP) || defined(WOLFSSL_SAFERTOS)
     /* do nothing */
 #elif defined(RTTHREAD)
-    /* do nothing */
-#elif defined(EBSNET)
-    /* do nothing */
-#elif defined(FREESCALE_MQX) || defined(FREESCALE_KSDK_MQX)
     /* do nothing */
 #elif defined(FREESCALE_FREE_RTOS)
     #include "fsl_os_abstraction.h"
@@ -133,9 +97,7 @@
 #elif defined(WOLFSSL_APACHE_MYNEWT)
     /* do nothing */
 #elif defined(WOLFSSL_ZEPHYR)
-    #ifndef SINGLE_THREADED
         #include <kernel.h>
-    #endif
 #elif defined(WOLFSSL_TELIT_M2MB)
 
     /* Telit SDK uses C++ compile option (--cpp), which causes link issue
@@ -163,23 +125,12 @@
     #endif
 
 #else
-    #ifndef SINGLE_THREADED
         #ifndef WOLFSSL_USER_MUTEX
-            #ifdef WOLFSSL_LINUXKM
-                /* definitions are in linuxkm/linuxkm_wc_port.h */
-            #else
                 #define WOLFSSL_PTHREADS
                 #include <pthread.h>
-            #endif
         #endif
-    #endif
-    #if (defined(OPENSSL_EXTRA) || defined(GOAHEAD_WS)) && \
-        !defined(NO_FILESYSTEM)
-        #ifdef FUSION_RTOS
-            #include <fclunistd.h>
-        #else
+    #if defined(GOAHEAD_WS) &&  !defined(NO_FILESYSTEM)
             #include <unistd.h>      /* for close of BIO */
-        #endif
     #endif
 #endif
 
@@ -191,9 +142,6 @@
 #define wc_UnLockMutex UnLockMutex
 #endif /* HAVE_FIPS */
 
-#ifdef SINGLE_THREADED
-    typedef int wolfSSL_Mutex;
-#else /* MULTI_THREADED */
     /* FREERTOS comes first to enable use of FreeRTOS Windows simulator only */
     #if defined(FREERTOS)
         typedef xSemaphoreHandle wolfSSL_Mutex;
@@ -209,66 +157,9 @@
             signed char mutexBuffer[portQUEUE_OVERHEAD_BYTES];
             xSemaphoreHandle mutex;
         } wolfSSL_Mutex;
-    #elif defined(USE_WINDOWS_API)
-        typedef CRITICAL_SECTION wolfSSL_Mutex;
-    #elif defined(WOLFSSL_PTHREADS)
-        typedef pthread_mutex_t wolfSSL_Mutex;
-    #elif defined(WOLFSSL_KTHREADS)
-        typedef struct mutex wolfSSL_Mutex;
-    #elif defined(THREADX)
-        typedef TX_MUTEX wolfSSL_Mutex;
-    #elif defined(WOLFSSL_DEOS)
-        typedef mutex_handle_t wolfSSL_Mutex;
-    #elif defined(MICRIUM)
-        typedef OS_MUTEX wolfSSL_Mutex;
-    #elif defined(EBSNET)
-        typedef RTP_MUTEX wolfSSL_Mutex;
-    #elif defined(FREESCALE_MQX) || defined(FREESCALE_KSDK_MQX)
-        typedef MUTEX_STRUCT wolfSSL_Mutex;
-    #elif defined(FREESCALE_FREE_RTOS)
-        typedef mutex_t wolfSSL_Mutex;
-    #elif defined(WOLFSSL_VXWORKS)
-        typedef SEM_ID wolfSSL_Mutex;
-    #elif defined(WOLFSSL_uITRON4)
-        typedef struct wolfSSL_Mutex {
-            T_CSEM sem ;
-            ID     id ;
-        } wolfSSL_Mutex;
-    #elif defined(WOLFSSL_uTKERNEL2)
-        typedef struct wolfSSL_Mutex {
-            T_CSEM sem ;
-            ID     id ;
-        } wolfSSL_Mutex;
-    #elif defined(WOLFSSL_MDK_ARM)
-        #if defined(WOLFSSL_CMSIS_RTOS)
-            typedef osMutexId wolfSSL_Mutex;
-        #else
-            typedef OS_MUT wolfSSL_Mutex;
-        #endif
-    #elif defined(WOLFSSL_CMSIS_RTOS)
-        typedef osMutexId wolfSSL_Mutex;
-    #elif defined(WOLFSSL_CMSIS_RTOSv2)
-        typedef osMutexId_t wolfSSL_Mutex;
-    #elif defined(WOLFSSL_TIRTOS)
-        typedef ti_sysbios_knl_Semaphore_Handle wolfSSL_Mutex;
-    #elif defined(WOLFSSL_FROSTED)
-        typedef mutex_t * wolfSSL_Mutex;
-    #elif defined(INTIME_RTOS)
-        typedef RTHANDLE wolfSSL_Mutex;
-    #elif defined(WOLFSSL_NUCLEUS_1_2)
-        typedef NU_SEMAPHORE wolfSSL_Mutex;
-    #elif defined(WOLFSSL_ZEPHYR)
-        typedef struct k_mutex wolfSSL_Mutex;
-    #elif defined(WOLFSSL_TELIT_M2MB)
-        typedef M2MB_OS_MTX_HANDLE wolfSSL_Mutex;
-    #elif defined(WOLFSSL_USER_MUTEX)
-        /* typedef User_Mutex wolfSSL_Mutex; */
-    #elif defined(WOLFSSL_LINUXKM)
-        /* definitions are in linuxkm/linuxkm_wc_port.h */
     #else
-        #error Need a mutex type in multithreaded mode
-    #endif /* USE_WINDOWS_API */
-#endif /* SINGLE_THREADED */
+        typedef pthread_mutex_t wolfSSL_Mutex;
+    #endif
 
 /* Enable crypt HW mutex for Freescale MMCAU, PIC32MZ or STM32 */
 #if defined(FREESCALE_MMCAU) || defined(WOLFSSL_MICROCHIP_PIC32MZ) || \
@@ -303,13 +194,6 @@ WOLFSSL_API wolfSSL_Mutex* wc_InitAndAllocMutex(void);
 WOLFSSL_API int wc_FreeMutex(wolfSSL_Mutex* m);
 WOLFSSL_API int wc_LockMutex(wolfSSL_Mutex* m);
 WOLFSSL_API int wc_UnLockMutex(wolfSSL_Mutex* m);
-#if defined(OPENSSL_EXTRA) || defined(HAVE_WEBSERVER)
-/* dynamically set which mutex to use. unlock / lock is controlled by flag */
-typedef void (mutex_cb)(int flag, int type, const char* file, int line);
-
-WOLFSSL_API int wc_LockMutex_ex(int flag, int type, const char* file, int line);
-WOLFSSL_API int wc_SetMutexCb(mutex_cb* cb);
-#endif
 
 /* main crypto initialization function */
 WOLFSSL_API int wolfCrypt_Init(void);
@@ -325,26 +209,7 @@ WOLFSSL_API int wolfCrypt_Cleanup(void);
 /* filesystem abstraction layer, used by ssl.c */
 #ifndef NO_FILESYSTEM
 
-#if defined(EBSNET)
-    #include "vfapi.h"
-    #include "vfile.h"
-
-    int ebsnet_fseek(int a, long b, int c); /* Not prototyped in vfile.h per
-                                             * EBSnet feedback */
-
-    #define XFILE                    int
-    #define XFOPEN(NAME, MODE)       vf_open((const char *)NAME, VO_RDONLY, 0)
-    #define XFSEEK                   ebsnet_fseek
-    #define XFTELL                   vf_tell
-    #define XREWIND                  vf_rewind
-    #define XFREAD(BUF, SZ, AMT, FD) vf_read(FD, BUF, SZ*AMT)
-    #define XFWRITE(BUF, SZ, AMT, FD) vf_write(FD, BUF, SZ*AMT)
-    #define XFCLOSE                  vf_close
-    #define XSEEK_END                VSEEK_END
-    #define XBADFILE                 -1
-    #define XFGETS(b,s,f)            -2 /* Not ported yet */
-
-#elif defined(LSR_FS)
+#if defined(LSR_FS)
     #include <fs.h>
     #define XFILE                   struct fs_file*
     #define XFOPEN(NAME, MODE)      fs_open((char*)NAME)
@@ -357,19 +222,6 @@ WOLFSSL_API int wolfCrypt_Cleanup(void);
     #define XSEEK_END               0
     #define XBADFILE                NULL
     #define XFGETS(b,s,f)           -2 /* Not ported yet */
-
-#elif defined(FREESCALE_MQX) || defined(FREESCALE_KSDK_MQX)
-    #define XFILE                   MQX_FILE_PTR
-    #define XFOPEN                  fopen
-    #define XFSEEK                  fseek
-    #define XFTELL                  ftell
-    #define XREWIND(F)              fseek(F, 0, IO_SEEK_SET)
-    #define XFREAD                  fread
-    #define XFWRITE                 fwrite
-    #define XFCLOSE                 fclose
-    #define XSEEK_END               IO_SEEK_END
-    #define XBADFILE                NULL
-    #define XFGETS                  fgets
 
 #elif defined(WOLFSSL_DEOS)
     #define NO_FILESYSTEM
@@ -483,41 +335,6 @@ WOLFSSL_API int wolfCrypt_Cleanup(void);
     #define XFGETS     fgets
     #define XVSNPRINTF _vsnprintf
 
-#elif defined(FUSION_RTOS)
-    #include <fclstdio.h>
-    #include <fclunistd.h>
-    #include <fcldirent.h>
-    #include <sys/fclstat.h>
-    #include <fclstring.h>
-    #include <fcl_os.h>
-    #define XFILE     FCL_FILE*
-    #define XFOPEN    FCL_FOPEN
-    #define XFSEEK    FCL_FSEEK
-    #define XFTELL    FCL_FTELL
-    #define XREWIND   FCL_REWIND
-    #define XFREAD    FCL_FREAD
-    #define XFWRITE   FCL_FWRITE
-    #define XFCLOSE   FCL_FCLOSE
-    #define XSEEK_END SEEK_END
-    #define XBADFILE  NULL
-    #define XFGETS    FCL_FGETS
-    #define XFPUTS    FCL_FPUTS
-    #define XFPRINTF  FCL_FPRINTF
-    #define XVFPRINTF FCL_VFPRINTF
-    #define XVSNPRINTF  FCL_VSNPRINTF
-    #define XSNPRINTF  FCL_SNPRINTF
-    #define XSPRINTF  FCL_SPRINTF
-    #define DIR       FCL_DIR
-    #define stat      FCL_STAT
-    #define opendir   FCL_OPENDIR
-    #define closedir  FCL_CLOSEDIR
-    #define readdir   FCL_READDIR
-    #define dirent    fclDirent
-    #define strncasecmp FCL_STRNCASECMP
-
-    /* FUSION SPECIFIC ERROR CODE */
-    #define FUSION_IO_SEND_E FCL_EWOULDBLOCK
-
 #elif defined(WOLFSSL_USER_FILESYSTEM)
     /* To be defined in user_settings.h */
 #else
@@ -545,13 +362,7 @@ WOLFSSL_API int wolfCrypt_Cleanup(void);
 
     #if !defined(NO_WOLFSSL_DIR)\
         && !defined(WOLFSSL_NUCLEUS) && !defined(WOLFSSL_NUCLEUS_1_2)
-    #if defined(USE_WINDOWS_API)
-        #include <sys/stat.h>
-        #define XSTAT       _stat
-        #define XS_ISREG(s) (s & _S_IFREG)
-        #define SEPARATOR_CHAR ';'
-
-    #elif defined(INTIME_RTOS)
+    #if defined(INTIME_RTOS)
         #include <sys/stat.h>
         #define XSTAT _stat64
         #define XS_ISREG(s) S_ISREG(s)
@@ -599,11 +410,7 @@ WOLFSSL_API int wolfCrypt_Cleanup(void);
 #if !defined(NO_WOLFSSL_DIR) && !defined(WOLFSSL_NUCLEUS) && \
     !defined(WOLFSSL_NUCLEUS_1_2)
     typedef struct ReadDirCtx {
-    #ifdef USE_WINDOWS_API
-        WIN32_FIND_DATAA FindFileData;
-        HANDLE hFind;
-        XSTAT_TYPE s;
-    #elif defined(WOLFSSL_ZEPHYR)
+    #if defined(WOLFSSL_ZEPHYR)
         struct fs_dirent entry;
         struct fs_dir_t  dir;
         struct fs_dirent s;
@@ -659,14 +466,6 @@ WOLFSSL_API int wolfCrypt_Cleanup(void);
 
 /* MIN/MAX MACRO SECTION */
 /* Windows API defines its own min() macro. */
-#if defined(USE_WINDOWS_API)
-    #if defined(min) || defined(WOLFSSL_MYSQL_COMPATIBLE)
-        #define WOLFSSL_HAVE_MIN
-    #endif /* min */
-    #if defined(max) || defined(WOLFSSL_MYSQL_COMPATIBLE)
-        #define WOLFSSL_HAVE_MAX
-    #endif /* max */
-#endif /* USE_WINDOWS_API */
 
 #ifdef __QNXNTO__
     #define WOLFSSL_HAVE_MIN
@@ -731,15 +530,6 @@ WOLFSSL_API int wolfCrypt_Cleanup(void);
     extern time_t pic32_time(time_t* timer);
     #define XTIME(t1)       pic32_time((t1))
     #define XGMTIME(c, t)   gmtime((c))
-
-#elif defined(FREESCALE_MQX) || defined(FREESCALE_KSDK_MQX)
-    #ifdef FREESCALE_MQX_4_0
-        #include <time.h>
-        extern time_t mqx_time(time_t* timer);
-    #else
-        #define HAVE_GMTIME_R
-    #endif
-    #define XTIME(t1)       mqx_time((t1))
 
 #elif defined(FREESCALE_KSDK_BM) || defined(FREESCALE_FREE_RTOS) || defined(FREESCALE_KSDK_FREERTOS)
     #include <time.h>
@@ -819,10 +609,6 @@ WOLFSSL_API int wolfCrypt_Cleanup(void);
     typedef long time_t;
     extern time_t m2mb_xtime(time_t * timer);
     #define XTIME(tl)       m2mb_xtime((tl))
-    #ifdef WOLFSSL_TLS13
-        extern time_t m2mb_xtime_ms(time_t * timer);
-        #define XTIME_MS(tl)    m2mb_xtime_ms((tl))
-    #endif
     #ifndef NO_CRYPT_BENCHMARK
         extern double m2mb_xtime_bench(int reset);
         #define WOLFSSL_CURRTIME_REMAP m2mb_xtime_bench
@@ -831,10 +617,6 @@ WOLFSSL_API int wolfCrypt_Cleanup(void);
     #define WOLFSSL_GMTIME
     #define USE_WOLF_TM
 
-
-#elif defined(WOLFSSL_LINUXKM)
-
-    /* definitions are in linuxkm/linuxkm_wc_port.h */
 
 #elif defined(HAL_RTC_MODULE_ENABLED)
     #include <time.h>

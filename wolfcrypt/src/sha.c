@@ -26,29 +26,15 @@
 
 #include <wolfssl/wolfcrypt/settings.h>
 
-#if !defined(NO_SHA)
 
-#if defined(HAVE_FIPS) && defined(HAVE_FIPS_VERSION) && (HAVE_FIPS_VERSION >= 2)
-    /* set NO_WRAPPERS before headers, use direct internal f()s not wrappers */
-    #define FIPS_NO_WRAPPERS
-
-    #ifdef USE_WINDOWS_API
-        #pragma code_seg(".fipsA$j")
-        #pragma const_seg(".fipsB$j")
-    #endif
-#endif
 
 #include <wolfssl/wolfcrypt/sha.h>
 #include <wolfssl/wolfcrypt/error-crypt.h>
 #include <wolfssl/wolfcrypt/hash.h>
 
-#ifdef WOLF_CRYPTO_CB
-    #include <wolfssl/wolfcrypt/cryptocb.h>
-#endif
 
 /* fips wrapper calls, user can call direct */
-#if defined(HAVE_FIPS) && \
-    (!defined(HAVE_FIPS_VERSION) || (HAVE_FIPS_VERSION < 2))
+#if defined(HAVE_FIPS)
 
     int wc_InitSha(wc_Sha* sha)
     {
@@ -97,12 +83,8 @@
 #else
 
 #include <wolfssl/wolfcrypt/logging.h>
-#ifdef NO_INLINE
-    #include <wolfssl/wolfcrypt/misc.h>
-#else
     #define WOLFSSL_MISC_INCLUDED
     #include <wolfcrypt/src/misc.c>
-#endif
 
 
 /* Hardware Acceleration */
@@ -282,8 +264,7 @@
         return ret;
     }
 
-#elif defined(WOLFSSL_IMX6_CAAM) && !defined(NO_IMX6_CAAM_HASH) && \
-    !defined(WOLFSSL_QNX_CAAM)
+#elif defined(WOLFSSL_IMX6_CAAM) && !defined(NO_IMX6_CAAM_HASH)
     /* wolfcrypt/src/port/caam/caam_sha.c */
 
 #elif defined(WOLFSSL_ESP32WROOM32_CRYPT) && \
@@ -529,10 +510,6 @@ int wc_InitSha_ex(wc_Sha* sha, void* heap, int devId)
         return BAD_FUNC_ARG;
 
     sha->heap = heap;
-#ifdef WOLF_CRYPTO_CB
-    sha->devId = devId;
-    sha->devCtx = NULL;
-#endif
 
 #if defined(WOLFSSL_ESP32WROOM32_CRYPT) && \
     !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
@@ -543,12 +520,7 @@ int wc_InitSha_ex(wc_Sha* sha, void* heap, int devId)
     if (ret != 0)
         return ret;
 
-#if defined(WOLFSSL_ASYNC_CRYPT) && defined(WC_ASYNC_ENABLE_SHA)
-    ret = wolfAsync_DevCtxInit(&sha->asyncDev, WOLFSSL_ASYNC_MARKER_SHA,
-                                                            sha->heap, devId);
-#else
     (void)devId;
-#endif /* WOLFSSL_ASYNC_CRYPT */
 
     return ret;
 }
@@ -569,22 +541,6 @@ int wc_ShaUpdate(wc_Sha* sha, const byte* data, word32 len)
         return 0;
     }
 
-#ifdef WOLF_CRYPTO_CB
-    if (sha->devId != INVALID_DEVID) {
-        ret = wc_CryptoCb_ShaHash(sha, data, len, NULL);
-        if (ret != CRYPTOCB_UNAVAILABLE)
-            return ret;
-        ret = 0; /* reset ret */
-        /* fall-through when unavailable */
-    }
-#endif
-#if defined(WOLFSSL_ASYNC_CRYPT) && defined(WC_ASYNC_ENABLE_SHA)
-    if (sha->asyncDev.marker == WOLFSSL_ASYNC_MARKER_SHA) {
-    #if defined(HAVE_INTEL_QA)
-        return IntelQaSymSha(&sha->asyncDev, NULL, data, len);
-    #endif
-    }
-#endif /* WOLFSSL_ASYNC_CRYPT */
 
     /* check that internal buffLen is valid */
     if (sha->buffLen >= WC_SHA_BLOCK_SIZE)
@@ -719,21 +675,6 @@ int wc_ShaFinal(wc_Sha* sha, byte* hash)
 
     local = (byte*)sha->buffer;
 
-#ifdef WOLF_CRYPTO_CB
-    if (sha->devId != INVALID_DEVID) {
-        ret = wc_CryptoCb_ShaHash(sha, NULL, 0, hash);
-        if (ret != CRYPTOCB_UNAVAILABLE)
-            return ret;
-        /* fall-through when unavailable */
-    }
-#endif
-#if defined(WOLFSSL_ASYNC_CRYPT) && defined(WC_ASYNC_ENABLE_SHA)
-    if (sha->asyncDev.marker == WOLFSSL_ASYNC_MARKER_SHA) {
-    #if defined(HAVE_INTEL_QA)
-        return IntelQaSymSha(&sha->asyncDev, hash, NULL, WC_SHA_DIGEST_SIZE);
-    #endif
-    }
-#endif /* WOLFSSL_ASYNC_CRYPT */
 
     local[sha->buffLen++] = 0x80;  /* add 1 */
 
@@ -811,20 +752,6 @@ int wc_ShaFinal(wc_Sha* sha, byte* hash)
     return ret;
 }
 
-#if defined(OPENSSL_EXTRA)
-/* Apply SHA1 transformation to the data                  */
-/* @param sha  a pointer to wc_Sha structure              */
-/* @param data data to be applied SHA1 transformation     */
-/* @return 0 on successful, otherwise non-zero on failure */
-int wc_ShaTransform(wc_Sha* sha, const unsigned char* data)
-{
-    /* sanity check */
-    if (sha == NULL || data == NULL) {
-        return BAD_FUNC_ARG;
-    }
-    return (Transform(sha, data));
-}
-#endif
 
 #endif /* USE_SHA_SOFTWARE_IMPL */
 
@@ -841,9 +768,6 @@ void wc_ShaFree(wc_Sha* sha)
     if (sha == NULL)
         return;
 
-#if defined(WOLFSSL_ASYNC_CRYPT) && defined(WC_ASYNC_ENABLE_SHA)
-    wolfAsync_DevCtxFree(&sha->asyncDev, WOLFSSL_ASYNC_MARKER_SHA);
-#endif /* WOLFSSL_ASYNC_CRYPT */
 
 #ifdef WOLFSSL_PIC32MZ_HASH
     wc_ShaPic32Free(sha);
@@ -917,9 +841,6 @@ int wc_ShaCopy(wc_Sha* src, wc_Sha* dst)
     dst->silabsCtx.hash_ctx.hash_type_ctx = &(dst->silabsCtx.hash_type_ctx);
 #endif
 
-#if defined(WOLFSSL_ASYNC_CRYPT) && defined(WC_ASYNC_ENABLE_SHA)
-    ret = wolfAsync_DevCopy(&src->asyncDev, &dst->asyncDev);
-#endif
 #ifdef WOLFSSL_PIC32MZ_HASH
     ret = wc_Pic32HashCopy(&src->cache, &dst->cache);
 #endif
@@ -955,4 +876,3 @@ int wc_ShaGetFlags(wc_Sha* sha, word32* flags)
 }
 #endif
 
-#endif /* !NO_SHA */

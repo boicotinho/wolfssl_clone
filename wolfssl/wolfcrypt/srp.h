@@ -39,17 +39,7 @@
 #endif
 
 /* Select the largest available hash for the buffer size. */
-#if defined(WOLFSSL_SHA512)
     #define SRP_MAX_DIGEST_SIZE WC_SHA512_DIGEST_SIZE
-#elif defined(WOLFSSL_SHA384)
-    #define SRP_MAX_DIGEST_SIZE WC_SHA384_DIGEST_SIZE
-#elif !defined(NO_SHA256)
-    #define SRP_MAX_DIGEST_SIZE WC_SHA256_DIGEST_SIZE
-#elif !defined(NO_SHA)
-    #define SRP_MAX_DIGEST_SIZE WC_SHA_DIGEST_SIZE
-#else
-    #error "You have to have some kind of SHA hash if you want to use SRP."
-#endif
 
 /* Set the minimum number of bits acceptable in an SRP modulus */
 #define SRP_MODULUS_MIN_BITS 512
@@ -85,18 +75,10 @@ typedef enum {
 typedef struct {
     byte type;
     union {
-        #ifndef NO_SHA
             wc_Sha sha;
-        #endif
-        #ifndef NO_SHA256
             wc_Sha256 sha256;
-        #endif
-        #ifdef WOLFSSL_SHA384
             wc_Sha384 sha384;
-        #endif
-        #ifdef WOLFSSL_SHA512
             wc_Sha512 sha512;
-        #endif
     } data;
 } SrpHash;
 

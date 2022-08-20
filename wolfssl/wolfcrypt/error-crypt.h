@@ -33,8 +33,7 @@ the error status.
 
 #include <wolfssl/wolfcrypt/types.h>
 
-#if defined(HAVE_FIPS) && \
-    (!defined(HAVE_FIPS_VERSION) || (HAVE_FIPS_VERSION < 2))
+#if defined(HAVE_FIPS)
     #include <cyassl/ctaocrypt/error-crypt.h>
 #endif /* HAVE_FIPS V1 */
 
@@ -258,16 +257,8 @@ enum {
 };
 
 
-#ifdef NO_ERROR_STRINGS
-    #define wc_GetErrorString(error) "no support for error strings built in"
-    #define wc_ErrorString(err, buf) \
-        (void)err; XSTRNCPY((buf), wc_GetErrorString((err)), \
-        WOLFSSL_MAX_ERROR_SZ);
-
-#else
 WOLFSSL_API void wc_ErrorString(int err, char* buff);
 WOLFSSL_API const char* wc_GetErrorString(int error);
-#endif
 
 #ifdef __cplusplus
     } /* extern "C" */

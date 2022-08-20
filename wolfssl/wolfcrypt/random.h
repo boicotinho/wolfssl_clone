@@ -30,14 +30,9 @@
 
 #include <wolfssl/wolfcrypt/types.h>
 
-#if defined(HAVE_FIPS) && \
-    defined(HAVE_FIPS_VERSION) && (HAVE_FIPS_VERSION >= 2)
-    #include <wolfssl/wolfcrypt/fips.h>
-#endif /* HAVE_FIPS_VERSION >= 2 */
 
 /* included for fips @wc_fips */
-#if defined(HAVE_FIPS) && \
-        (!defined(HAVE_FIPS_VERSION) || (HAVE_FIPS_VERSION < 2))
+#if defined(HAVE_FIPS)
 #include <cyassl/ctaocrypt/random.h>
 #endif
 
@@ -68,8 +63,6 @@
 /* make sure Hash DRBG is enabled, unless WC_NO_HASHDRBG is defined
     or CUSTOM_RAND_GENERATE_BLOCK is defined */
 #if !defined(WC_NO_HASHDRBG) && !defined(CUSTOM_RAND_GENERATE_BLOCK)
-    #undef  HAVE_HASHDRBG
-    #define HAVE_HASHDRBG
     #ifndef WC_RESEED_INTERVAL
         #define WC_RESEED_INTERVAL (1000000)
     #endif
@@ -77,8 +70,7 @@
 
 
 /* avoid redefinition of structs */
-#if !defined(HAVE_FIPS) || \
-    (defined(HAVE_FIPS_VERSION) && (HAVE_FIPS_VERSION >= 2))
+#if !defined(HAVE_FIPS)
 
 /* RNG supports the following sources (in order):
  * 1. CUSTOM_RAND_GENERATE_BLOCK: Defines name of function as RNG source and
@@ -104,36 +96,16 @@
         #define CUSTOM_RAND_GENERATE_BLOCK wc_hwrng_generate_block
         WOLFSSL_LOCAL int wc_hwrng_generate_block(byte *output, word32 sz);
     #endif
-#elif defined(HAVE_HASHDRBG)
-    #ifdef NO_SHA256
-        #error "Hash DRBG requires SHA-256."
-    #endif /* NO_SHA256 */
+#else
     #include <wolfssl/wolfcrypt/sha256.h>
-#elif defined(HAVE_WNR)
-     /* allow whitewood as direct RNG source using wc_GenerateSeed directly */
-#elif defined(HAVE_INTEL_RDRAND)
-    /* Intel RDRAND or RDSEED */
-#elif !defined(WC_NO_RNG)
-    #error No RNG source defined!
 #endif
 
 #ifdef HAVE_WNR
     #include <wnr.h>
 #endif
 
-#ifdef WOLFSSL_ASYNC_CRYPT
-    #include <wolfssl/wolfcrypt/async.h>
-#endif
 
 
-#if defined(USE_WINDOWS_API)
-    #if defined(_WIN64)
-        typedef unsigned __int64 ProviderHandle;
-        /* type HCRYPTPROV, avoid #include <windows.h> */
-    #else
-        typedef unsigned long ProviderHandle;
-    #endif
-#endif
 
 #ifndef WC_RNG_TYPE_DEFINED /* guard on redeclaration */
     typedef struct OS_Seed OS_Seed;
@@ -146,51 +118,30 @@
 
 /* OS specific seeder */
 struct OS_Seed {
-    #if defined(USE_WINDOWS_API)
-        ProviderHandle handle;
-    #else
         int fd;
-    #endif
-    #if defined(WOLF_CRYPTO_CB)
-        int devId;
-    #endif
 };
 
-#ifdef HAVE_HASHDRBG
 struct DRBG_internal {
     word32 reseedCtr;
     word32 lastBlock;
     byte V[DRBG_SEED_LEN];
     byte C[DRBG_SEED_LEN];
-#if defined(WOLFSSL_ASYNC_CRYPT) || defined(WOLF_CRYPTO_CB)
-    void* heap;
-    int devId;
-#endif
     byte   matchCount;
 #ifdef WOLFSSL_SMALL_STACK_CACHE
     wc_Sha256 sha256;
 #endif
 };
-#endif
 
 /* RNG context */
 struct WC_RNG {
     struct OS_Seed seed;
     void* heap;
-#ifdef HAVE_HASHDRBG
     /* Hash-based Deterministic Random Bit Generator */
     struct DRBG* drbg;
-#if defined(WOLFSSL_NO_MALLOC) && !defined(WOLFSSL_STATIC_MEMORY)
+#if defined(WOLFSSL_NO_MALLOC)
     struct DRBG_internal drbg_data;
 #endif
     byte status;
-#endif
-#ifdef WOLFSSL_ASYNC_CRYPT
-    WC_ASYNC_DEV asyncDev;
-#endif
-#if defined(WOLFSSL_ASYNC_CRYPT) || defined(WOLF_CRYPTO_CB)
-    int devId;
-#endif
 };
 
 #endif /* NO FIPS or have FIPS v2*/
@@ -244,7 +195,6 @@ WOLFSSL_API int  wc_FreeRng(WC_RNG* rng);
     WOLFSSL_API int wc_SetSeed_Cb(wc_RngSeed_Cb cb);
 #endif
 
-#ifdef HAVE_HASHDRBG
     WOLFSSL_LOCAL int wc_RNG_DRBG_Reseed(WC_RNG* rng, const byte* entropy,
                                         word32 entropySz);
     WOLFSSL_API int wc_RNG_TestSeed(const byte* seed, word32 seedSz);
@@ -258,7 +208,6 @@ WOLFSSL_API int  wc_FreeRng(WC_RNG* rng);
                                         const byte* entropyB, word32 entropyBSz,
                                         byte* output, word32 outputSz,
                                         void* heap, int devId);
-#endif /* HAVE_HASHDRBG */
 
 #ifdef __cplusplus
     } /* extern "C" */

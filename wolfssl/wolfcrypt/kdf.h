@@ -28,10 +28,6 @@
 #ifndef WOLF_CRYPT_KDF_H
 #define WOLF_CRYPT_KDF_H
 
-#if defined(HAVE_FIPS) && \
-    defined(HAVE_FIPS_VERSION) && (HAVE_FIPS_VERSION >= 5)
-    #include <wolfssl/wolfcrypt/fips.h>
-#endif
 
 #include <wolfssl/wolfcrypt/hmac.h>
 

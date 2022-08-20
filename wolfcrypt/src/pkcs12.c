@@ -27,20 +27,15 @@
 
 #include <wolfssl/wolfcrypt/settings.h>
 
-#if defined(HAVE_PKCS12) && \
-    !defined(NO_ASN) && !defined(NO_PWDBASED) && !defined(NO_HMAC)
+#if defined(HAVE_PKCS12) &&  !defined(NO_ASN) && !defined(NO_PWDBASED)
 
 #include <wolfssl/wolfcrypt/asn.h>
 #include <wolfssl/wolfcrypt/asn_public.h>
 #include <wolfssl/wolfcrypt/error-crypt.h>
 #include <wolfssl/wolfcrypt/hmac.h>
 #include <wolfssl/wolfcrypt/logging.h>
-#ifdef NO_INLINE
-    #include <wolfssl/wolfcrypt/misc.h>
-#else
     #define WOLFSSL_MISC_INCLUDED
     #include <wolfcrypt/src/misc.c>
-#endif
 #include <wolfssl/wolfcrypt/pkcs12.h>
 #include <wolfssl/wolfcrypt/pwdbased.h>
 #include <wolfssl/wolfcrypt/hash.h>
@@ -2400,20 +2395,7 @@ WC_PKCS12* wc_PKCS12_create(char* pass, word32 passSz, char* name,
         XMEMSET(mac, 0, sizeof(MacData));
         pkcs12->signData = mac; /* now wc_PKCS12_free will free all mac too */
 
-        #ifndef NO_SHA256
             mac->oid = SHA256h;
-        #elif !defined(NO_SHA)
-            mac->oid = SHA;
-        #elif defined(WOLFSSL_SHA384)
-            mac->oid = SHA384;
-        #elif defined(WOLFSSL_SHA512)
-            mac->oid = SHA512;
-        #else
-            WOLFSSL_MSG("No supported hash algorithm compiled in!");
-            wc_PKCS12_free(pkcs12);
-            wc_FreeRng(&rng);
-            return NULL;
-        #endif
 
         /* store number of iterations */
         mac->itt = macIter;

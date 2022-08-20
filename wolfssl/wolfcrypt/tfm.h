@@ -85,10 +85,6 @@
     #define FP_64BIT
 #endif
 /* if intel compiler doesn't provide 128 bit type don't turn on 64bit */
-#if defined(FP_64BIT) && defined(__INTEL_COMPILER) && !defined(HAVE___UINT128_T)
-    #undef FP_64BIT
-    #undef TFM_X86_64
-#endif
 #endif /* NO_TFM_64BIT */
 
 /* try to detect x86-32 */
@@ -181,7 +177,6 @@
    #endif
 #endif
 
-#ifdef TFM_ECC256
    #ifdef FP_64BIT
        #define TFM_MUL4
        #define TFM_SQR4
@@ -189,7 +184,6 @@
        #define TFM_MUL8
        #define TFM_SQR8
    #endif
-#endif
 
 #ifdef TFM_ECC384
    #ifdef FP_64BIT
@@ -231,7 +225,7 @@
 #else
 
    #ifndef NO_TFM_64BIT
-      #if defined(_MSC_VER) || defined(__BORLANDC__)
+      #if defined(__BORLANDC__)
          typedef unsigned __int64   ulong64;
          typedef   signed __int64    long64;
       #else
@@ -811,11 +805,8 @@ MP_API int mp_radix_size (mp_int * a, int radix, int *size);
     #define mp_dump(desc, a, verbose)
 #endif
 
-#if !defined(NO_DSA) || defined(HAVE_ECC)
     MP_API int mp_read_radix(mp_int* a, const char* str, int radix);
-#endif
 
-#ifdef HAVE_ECC
     MP_API int mp_sqr(fp_int *a, fp_int *b);
     MP_API int mp_montgomery_reduce(fp_int *a, fp_int *m, fp_digit mp);
     MP_API int mp_montgomery_reduce_ex(fp_int *a, fp_int *m, fp_digit mp,
@@ -823,23 +814,14 @@ MP_API int mp_radix_size (mp_int * a, int radix, int *size);
     MP_API int mp_montgomery_setup(fp_int *a, fp_digit *rho);
     MP_API int mp_div_2(fp_int * a, fp_int * b);
     MP_API int mp_div_2_mod_ct(mp_int *a, mp_int *b, mp_int *c);
-#endif
 
-#if defined(HAVE_ECC) || !defined(NO_RSA) || !defined(NO_DSA) || \
-    defined(WOLFSSL_KEY_GEN)
     MP_API int mp_set(fp_int *a, fp_digit b);
-#endif
 
-#if defined(HAVE_ECC) || defined(WOLFSSL_KEY_GEN) || !defined(NO_RSA) || \
-    !defined(NO_DSA) || !defined(NO_DH)
     MP_API int mp_sqrmod(mp_int* a, mp_int* b, mp_int* c);
     MP_API int mp_montgomery_calc_normalization(mp_int *a, mp_int *b);
-#endif
 
-#if !defined(NO_DH) || !defined(NO_DSA) || !defined(NO_RSA) || defined(WOLFSSL_KEY_GEN)
 MP_API int  mp_prime_is_prime(mp_int* a, int t, int* result);
 MP_API int  mp_prime_is_prime_ex(mp_int* a, int t, int* result, WC_RNG* rng);
-#endif /* !NO_DH || !NO_DSA || !NO_RSA || WOLFSSL_KEY_GEN */
 #ifdef WOLFSSL_KEY_GEN
 MP_API int  mp_gcd(fp_int *a, fp_int *b, fp_int *c);
 MP_API int  mp_lcm(fp_int *a, fp_int *b, fp_int *c);

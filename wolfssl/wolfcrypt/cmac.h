@@ -26,20 +26,15 @@
 #include <wolfssl/wolfcrypt/types.h>
 #include <wolfssl/wolfcrypt/aes.h>
 
-#if !defined(NO_AES) && defined(WOLFSSL_CMAC)
+#if defined(WOLFSSL_CMAC)
 
-#if defined(HAVE_FIPS) && \
-    defined(HAVE_FIPS_VERSION) && (HAVE_FIPS_VERSION >= 2)
-    #include <wolfssl/wolfcrypt/fips.h>
-#endif /* HAVE_FIPS_VERSION >= 2 */
 
 #ifdef __cplusplus
     extern "C" {
 #endif
 
 /* avoid redefinition of structs */
-#if !defined(HAVE_FIPS) || \
-    (defined(HAVE_FIPS_VERSION) && (HAVE_FIPS_VERSION >= 2))
+#if !defined(HAVE_FIPS)
 
 #ifndef WC_CMAC_TYPE_DEFINED
     typedef struct Cmac Cmac;
@@ -53,16 +48,6 @@ struct Cmac {
     byte k2[AES_BLOCK_SIZE];
     word32 bufferSz;
     word32 totalSz;
-#ifdef WOLF_CRYPTO_CB
-    int devId;
-    void* devCtx;
-    #ifdef WOLFSSL_CAAM
-    byte ctx[32]; /* hold state for save and return */
-    word32 blackKey;
-    word32 keylen;
-    byte   initialized;
-    #endif
-#endif
 #if defined(WOLFSSL_HASH_KEEP)
     byte*  msg;
     word32 used;

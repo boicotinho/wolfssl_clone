@@ -85,9 +85,6 @@ static WC_INLINE void store32( void *dst, word32 w )
 
 static WC_INLINE void store64( void *dst, word64 w )
 {
-#if defined(LITTLE_ENDIAN_ORDER) && !defined(WOLFSSL_GENERAL_ALIGNMENT)
-  *( word64 * )( dst ) = w;
-#else
   byte *p = ( byte * )dst;
   *p++ = ( byte )w; w >>= 8;
   *p++ = ( byte )w; w >>= 8;
@@ -97,7 +94,6 @@ static WC_INLINE void store64( void *dst, word64 w )
   *p++ = ( byte )w; w >>= 8;
   *p++ = ( byte )w; w >>= 8;
   *p++ = ( byte )w;
-#endif
 }
 
 static WC_INLINE word64 load48( const void *src )

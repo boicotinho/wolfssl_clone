@@ -28,7 +28,6 @@
 
 #include <wolfssl/wolfcrypt/types.h>
 
-#ifdef HAVE_POLY1305
 
 #ifdef __cplusplus
     extern "C" {
@@ -39,22 +38,12 @@
 #define WC_HAS_SIZEOF_INT128_64BIT
 #endif
 
-#if defined(_MSC_VER) && defined(_M_X64)
-#define WC_HAS_MSVC_64BIT
-#endif
 
 #if (defined(__GNUC__) && defined(__LP64__) && \
         ((__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 4))))
 #define WC_HAS_GCC_4_4_64BIT
 #endif
 
-#ifdef USE_INTEL_SPEEDUP
-#elif (defined(WC_HAS_SIZEOF_INT128_64BIT) || defined(WC_HAS_MSVC_64BIT) ||  \
-       defined(WC_HAS_GCC_4_4_64BIT))
-#define POLY130564
-#else
-#define POLY130532
-#endif
 
 enum {
     POLY1305 = 7,
@@ -67,7 +56,6 @@ enum {
 
 /* Poly1305 state */
 typedef struct Poly1305 {
-#ifdef USE_INTEL_SPEEDUP
     word64 r[3];
     word64 h[3];
     word64 pad[2];
@@ -81,29 +69,6 @@ typedef struct Poly1305 {
     size_t leftover;
     unsigned char finished;
     unsigned char started;
-#else
-#if defined(WOLFSSL_ARMASM) && defined(__aarch64__)
-    ALIGN128 word32 r[5];
-    ALIGN128 word32 r_2[5]; /* r^2 */
-    ALIGN128 word32 r_4[5]; /* r^4 */
-    ALIGN128 word32 h[5];
-    word32 pad[4];
-    word64 leftover;
-#else
-#if defined(POLY130564)
-    word64 r[3];
-    word64 h[3];
-    word64 pad[2];
-#else
-    word32 r[5];
-    word32 h[5];
-    word32 pad[4];
-#endif
-    size_t leftover;
-#endif /* WOLFSSL_ARMASM */
-    unsigned char buffer[POLY1305_BLOCK_SIZE];
-    unsigned char finished;
-#endif
 } Poly1305;
 
 /* does init */
@@ -134,5 +99,4 @@ void poly1305_block(Poly1305* ctx, const unsigned char *m);
     } /* extern "C" */
 #endif
 
-#endif /* HAVE_POLY1305 */
 #endif /* WOLF_CRYPT_POLY1305_H */

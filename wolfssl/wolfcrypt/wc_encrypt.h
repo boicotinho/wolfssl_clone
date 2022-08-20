@@ -28,18 +28,8 @@
 #define WOLF_CRYPT_ENCRYPT_H
 
 #include <wolfssl/wolfcrypt/types.h>
-#ifndef NO_AES
     #include <wolfssl/wolfcrypt/aes.h>
-#endif
-#ifdef HAVE_CHACHA
     #include <wolfssl/wolfcrypt/chacha.h>
-#endif
-#ifndef NO_DES3
-    #include <wolfssl/wolfcrypt/des3.h>
-#endif
-#ifndef NO_RC4
-    #include <wolfssl/wolfcrypt/arc4.h>
-#endif
 
 #ifdef __cplusplus
     extern "C" {
@@ -47,22 +37,10 @@
 
 /* determine max cipher key size - cannot use enum values here, must be define,
  * since WC_MAX_SYM_KEY_SIZE is used in if macro logic. */
-#ifndef NO_AES
     #define WC_MAX_SYM_KEY_SIZE     (AES_MAX_KEY_SIZE/8)
-#elif defined(HAVE_CHACHA)
-    #define WC_MAX_SYM_KEY_SIZE     32 /* CHACHA_MAX_KEY_SZ */
-#elif !defined(NO_DES3)
-    #define WC_MAX_SYM_KEY_SIZE     24 /* DES3_KEY_SIZE */
-#elif !defined(NO_RC4)
-    #define WC_MAX_SYM_KEY_SIZE     16 /* RC4_KEY_SIZE */
-#else
-    #define WC_MAX_SYM_KEY_SIZE     32
-#endif
 
 
-#if (defined(HAVE_FIPS) && defined(HAVE_FIPS_VERSION) && \
-     (HAVE_FIPS_VERSION <= 2)) || (defined(HAVE_SELFTEST) && \
-     (!defined(HAVE_SELFTEST_VERSION) || (HAVE_SELFTEST_VERSION < 2)))
+#if defined(HAVE_SELFTEST) &&  (!defined(HAVE_SELFTEST_VERSION) || (HAVE_SELFTEST_VERSION < 2))
     /* In FIPS cert 3389 and CAVP selftest v1 build, these enums are
      * not in aes.h. Define them here outside the fips boundary.
      */
@@ -76,7 +54,7 @@
 #endif
 
 
-#if !defined(NO_AES) && defined(HAVE_AES_CBC)
+#if defined(HAVE_AES_CBC)
 WOLFSSL_API int wc_AesCbcEncryptWithKey(byte* out, const byte* in, word32 inSz,
                                         const byte* key, word32 keySz,
                                         const byte* iv);
@@ -86,20 +64,6 @@ WOLFSSL_API int wc_AesCbcDecryptWithKey(byte* out, const byte* in, word32 inSz,
 #endif /* !NO_AES */
 
 
-#ifndef NO_DES3
-WOLFSSL_API int wc_Des_CbcDecryptWithKey(byte* out,
-                                         const byte* in, word32 sz,
-                                         const byte* key, const byte* iv);
-WOLFSSL_API int wc_Des_CbcEncryptWithKey(byte* out,
-                                         const byte* in, word32 sz,
-                                         const byte* key, const byte* iv);
-WOLFSSL_API int wc_Des3_CbcEncryptWithKey(byte* out,
-                                          const byte* in, word32 sz,
-                                          const byte* key, const byte* iv);
-WOLFSSL_API int wc_Des3_CbcDecryptWithKey(byte* out,
-                                          const byte* in, word32 sz,
-                                          const byte* key, const byte* iv);
-#endif /* !NO_DES3 */
 
 
 

@@ -34,7 +34,6 @@ This library contains implementation for the ChaCha20 stream cipher.
 
 #include <wolfssl/wolfcrypt/types.h>
 
-#ifdef HAVE_CHACHA
 
 #ifdef __cplusplus
     extern "C" {
@@ -63,11 +62,9 @@ Block counter is located at index 12.
 #define CHACHA_CHUNK_WORDS 16
 #define CHACHA_CHUNK_BYTES (CHACHA_CHUNK_WORDS * sizeof(word32))
 
-#ifdef WOLFSSL_X86_64_BUILD
-#if defined(USE_INTEL_SPEEDUP) && !defined(NO_CHACHA_ASM)
+#if !defined(NO_CHACHA_ASM)
     #define USE_INTEL_CHACHA_SPEEDUP
     #define HAVE_INTEL_AVX1
-#endif
 #endif
 
 enum {
@@ -110,6 +107,5 @@ WOLFSSL_API int wc_XChacha_SetKey(ChaCha *ctx, const byte *key, word32 keySz,
     } /* extern "C" */
 #endif
 
-#endif /* HAVE_CHACHA */
 #endif /* WOLF_CRYPT_CHACHA_H */
 

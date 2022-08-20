@@ -55,17 +55,7 @@ WOLFSSL_API const char*   wolfSSLeay_version(int type);
 WOLFSSL_API unsigned long wolfSSLeay(void);
 WOLFSSL_API unsigned long wolfSSL_OpenSSL_version_num(void);
 
-#if defined(OPENSSL_EXTRA) || defined(OPENSSL_EXTRA_X509_SMALL)
-WOLFSSL_API void wolfSSL_OPENSSL_free(void* p);
-#endif
 
-#ifdef OPENSSL_EXTRA
-WOLFSSL_API void *wolfSSL_OPENSSL_malloc(size_t a);
-WOLFSSL_API int wolfSSL_OPENSSL_hexchar2int(unsigned char c);
-WOLFSSL_API unsigned char *wolfSSL_OPENSSL_hexstr2buf(const char *str, long *len);
-
-WOLFSSL_API int wolfSSL_OPENSSL_init_crypto(word64 opts, const OPENSSL_INIT_SETTINGS *settings);
-#endif
 
 /* class index for wolfSSL_CRYPTO_get_ex_new_index */
 #define CRYPTO_EX_INDEX_SSL             WOLF_CRYPTO_EX_INDEX_SSL
@@ -93,11 +83,7 @@ WOLFSSL_API int wolfSSL_OPENSSL_init_crypto(word64 opts, const OPENSSL_INIT_SETT
 #define SSLeay wolfSSLeay
 #define OpenSSL_version_num wolfSSL_OpenSSL_version_num
 
-#ifdef WOLFSSL_QT
-    #define SSLEAY_VERSION 0x10001000L
-#else
     #define SSLEAY_VERSION 0x0090600fL
-#endif
 #define SSLEAY_VERSION_NUMBER SSLEAY_VERSION
 #define CRYPTO_lock wc_LockMutex_ex
 
@@ -126,8 +112,7 @@ WOLFSSL_API int wolfSSL_OPENSSL_init_crypto(word64 opts, const OPENSSL_INIT_SETT
     }
 #endif
 
-#if defined(OPENSSL_ALL) || defined(HAVE_STUNNEL) || defined(WOLFSSL_NGINX) || \
-    defined(WOLFSSL_HAPROXY) || defined(OPENSSL_EXTRA) || defined(HAVE_EX_DATA)
+#if defined(HAVE_STUNNEL) || defined(WOLFSSL_NGINX) ||  defined(WOLFSSL_HAPROXY) || defined(HAVE_EX_DATA)
 #define CRYPTO_set_mem_ex_functions      wolfSSL_CRYPTO_set_mem_ex_functions
 #define FIPS_mode                        wolfSSL_FIPS_mode
 #define FIPS_mode_set                    wolfSSL_FIPS_mode_set

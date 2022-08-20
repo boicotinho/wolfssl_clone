@@ -37,17 +37,6 @@ This library contains implementation for the random number generator.
 
 */
 
-#if defined(HAVE_FIPS) && \
-    defined(HAVE_FIPS_VERSION) && (HAVE_FIPS_VERSION >= 2)
-
-    /* set NO_WRAPPERS before headers, use direct internal f()s not wrappers */
-    #define FIPS_NO_WRAPPERS
-
-    #ifdef USE_WINDOWS_API
-        #pragma code_seg(".fipsA$c")
-        #pragma const_seg(".fipsB$c")
-    #endif
-#endif
 
 
 #include <wolfssl/wolfcrypt/random.h>
@@ -55,8 +44,7 @@ This library contains implementation for the random number generator.
 
 
 /* If building for old FIPS. */
-#if defined(HAVE_FIPS) && \
-    (!defined(HAVE_FIPS_VERSION) || (HAVE_FIPS_VERSION < 2))
+#if defined(HAVE_FIPS)
 
 int wc_GenerateSeed(OS_Seed* os, byte* seed, word32 sz)
 {
@@ -87,7 +75,6 @@ int wc_RNG_GenerateByte(WC_RNG* rng, byte* b)
     return RNG_GenerateByte(rng, b);
 }
 
-#ifdef HAVE_HASHDRBG
 
     int wc_FreeRng(WC_RNG* rng)
     {
@@ -101,7 +88,6 @@ int wc_RNG_GenerateByte(WC_RNG* rng, byte* b)
         return RNG_HealthTest_fips(reseed, seedA, seedASz,
                               seedB, seedBSz, output, outputSz);
    }
-#endif /* HAVE_HASHDRBG */
 
 #else /* else build without fips, or for new fips */
 
@@ -109,25 +95,12 @@ int wc_RNG_GenerateByte(WC_RNG* rng, byte* b)
 
 #include <wolfssl/wolfcrypt/sha256.h>
 
-#ifdef WOLF_CRYPTO_CB
-    #include <wolfssl/wolfcrypt/cryptocb.h>
-#endif
 
-#ifdef NO_INLINE
-    #include <wolfssl/wolfcrypt/misc.h>
-#else
     #define WOLFSSL_MISC_INCLUDED
     #include <wolfcrypt/src/misc.c>
-#endif
 
 #if defined(WOLFSSL_SGX)
     #include <sgx_trts.h>
-#elif defined(USE_WINDOWS_API)
-    #ifndef _WIN32_WINNT
-        #define _WIN32_WINNT 0x0400
-    #endif
-    #include <windows.h>
-    #include <wincrypt.h>
 #elif defined(HAVE_WNR)
     #include <wnr.h>
     #include <wolfssl/wolfcrypt/logging.h>
@@ -167,9 +140,7 @@ int wc_RNG_GenerateByte(WC_RNG* rng, byte* b)
 #else
     /* include headers that may be needed to get good seed */
     #include <fcntl.h>
-    #ifndef EBSNET
         #include <unistd.h>
-    #endif
 #endif
 
 #if defined(WOLFSSL_SILABS_SE_ACCEL)
@@ -184,24 +155,17 @@ int wc_RNG_GenerateByte(WC_RNG* rng, byte* b)
 #include <wolfssl/wolfcrypt/port/psa/psa.h>
 #endif
 
-#if defined(HAVE_INTEL_RDRAND) || defined(HAVE_INTEL_RDSEED) || \
-    defined(HAVE_AMD_RDSEED)
     static word32 intel_flags = 0;
     static void wc_InitRng_IntelRD(void)
     {
         intel_flags = cpuid_get_flags();
     }
-    #if (defined(HAVE_INTEL_RDSEED) || defined(HAVE_AMD_RDSEED)) && \
-        !defined(WOLFSSL_LINUXKM)
+    #if defined(HAVE_INTEL_RDSEED) || defined(HAVE_AMD_RDSEED)
     static int wc_GenerateSeed_IntelRD(OS_Seed* os, byte* output, word32 sz);
     #endif
-    #ifdef HAVE_INTEL_RDRAND
     static int wc_GenerateRand_IntelRD(OS_Seed* os, byte* output, word32 sz);
-    #endif
 
-#ifdef USE_WINDOWS_API
-    #define USE_INTEL_INTRINSICS
-#elif !defined __GNUC__ || defined __clang__ || __GNUC__ > 4
+#if !defined __GNUC__ || defined __clang__ || __GNUC__ > 4
     #define USE_INTEL_INTRINSICS
 #else
     #undef USE_INTEL_INTRINSICS
@@ -227,10 +191,8 @@ int wc_RNG_GenerateByte(WC_RNG* rng, byte* b)
         #endif
     #endif
 #endif /* USE_WINDOWS_API */
-#endif
 
 /* Start NIST DRBG code */
-#ifdef HAVE_HASHDRBG
 
 #define OUTPUT_BLOCK_LEN  (WC_SHA256_DIGEST_SIZE)
 #define MAX_REQUEST_LEN   (0x10000)
@@ -251,26 +213,12 @@ int wc_RNG_GenerateByte(WC_RNG* rng, byte* b)
         /* This will yield a SEED_SZ of 16kb. Since nonceSz will be 0,
          * we'll add an additional 8kb on top. */
         #define ENTROPY_SCALE_FACTOR  (512)
-    #elif defined(HAVE_INTEL_RDSEED) || defined(HAVE_INTEL_RDRAND)
+    #else
         /* The value of 2 applies to Intel's RDSEED which provides about
          * 0.5 bits minimum of entropy per bit. The value of 4 gives a
          * conservative margin for FIPS. */
-        #if defined(HAVE_FIPS) && defined(HAVE_FIPS_VERSION) && \
-            (HAVE_FIPS_VERSION >= 2)
-            #define ENTROPY_SCALE_FACTOR (2*4)
-        #else
             /* Not FIPS, but Intel RDSEED, only double. */
             #define ENTROPY_SCALE_FACTOR (2)
-        #endif
-    #elif defined(HAVE_FIPS) && defined(HAVE_FIPS_VERSION) && \
-        (HAVE_FIPS_VERSION >= 2)
-        /* If doing a FIPS build without a specific scale factor, default
-         * to 4. This will give 1024 bits of entropy. More is better, but
-         * more is also slower. */
-        #define ENTROPY_SCALE_FACTOR (4)
-    #else
-        /* Setting the default to 1. */
-        #define ENTROPY_SCALE_FACTOR (1)
     #endif
 #endif
 
@@ -281,12 +229,9 @@ int wc_RNG_GenerateByte(WC_RNG* rng, byte* b)
         /* AMD's RDSEED instruction works in 128-bit blocks read 64-bits
         * at a time. */
         #define SEED_BLOCK_SZ (sizeof(word64)*2)
-    #elif defined(HAVE_INTEL_RDSEED) || defined(HAVE_INTEL_RDRAND)
+    #else
         /* RDSEED outputs in blocks of 64-bits. */
         #define SEED_BLOCK_SZ sizeof(word64)
-    #else
-        /* Setting the default to 4. */
-        #define SEED_BLOCK_SZ 4
     #endif
 #endif
 
@@ -383,11 +328,7 @@ static int Hash_df(DRBG_internal* drbg, byte* out, word32 outSz, byte type,
     ctr = 1;
     for (i = 0; i < len; i++) {
 #ifndef WOLFSSL_SMALL_STACK_CACHE
-    #if defined(WOLFSSL_ASYNC_CRYPT) || defined(WOLF_CRYPTO_CB)
-        ret = wc_InitSha256_ex(sha, drbg->heap, drbg->devId);
-    #else
         ret = wc_InitSha256(sha);
-    #endif
         if (ret != 0)
             break;
 #endif
@@ -473,13 +414,11 @@ int wc_RNG_DRBG_Reseed(WC_RNG* rng, const byte* seed, word32 seedSz)
     }
 
     if (rng->drbg == NULL) {
-    #if defined(HAVE_INTEL_RDSEED) || defined(HAVE_INTEL_RDRAND)
         if (IS_INTEL_RDRAND(intel_flags)) {
             /* using RDRAND not DRBG, so return success */
             return 0;
         }
         return BAD_FUNC_ARG;
-    #endif
     }
 
     return Hash_DRBG_Reseed((DRBG_internal *)rng->drbg, seed, seedSz);
@@ -527,11 +466,7 @@ static int Hash_gen(DRBG_internal* drbg, byte* out, word32 outSz, const byte* V)
     XMEMCPY(data, V, sizeof(data));
     for (i = 0; i < len; i++) {
 #ifndef WOLFSSL_SMALL_STACK_CACHE
-    #if defined(WOLFSSL_ASYNC_CRYPT) || defined(WOLF_CRYPTO_CB)
-        ret = wc_InitSha256_ex(sha, drbg->heap, drbg->devId);
-    #else
         ret = wc_InitSha256(sha);
-    #endif
         if (ret == 0)
 #endif
             ret = wc_Sha256Update(sha, data, sizeof(data));
@@ -641,11 +576,7 @@ static int Hash_DRBG_Generate(DRBG_internal* drbg, byte* out, word32 outSz)
         ret = Hash_gen(drbg, out, outSz, drbg->V);
         if (ret == DRBG_SUCCESS) {
 #ifndef WOLFSSL_SMALL_STACK_CACHE
-        #if defined(WOLFSSL_ASYNC_CRYPT) || defined(WOLF_CRYPTO_CB)
-            ret = wc_InitSha256_ex(sha, drbg->heap, drbg->devId);
-        #else
             ret = wc_InitSha256(sha);
-        #endif
             if (ret == 0)
 #endif
                 ret = wc_Sha256Update(sha, &type, sizeof(type));
@@ -687,20 +618,11 @@ static int Hash_DRBG_Instantiate(DRBG_internal* drbg, const byte* seed, word32 s
     int ret = DRBG_FAILURE;
 
     XMEMSET(drbg, 0, sizeof(DRBG_internal));
-#if defined(WOLFSSL_ASYNC_CRYPT) || defined(WOLF_CRYPTO_CB)
-    drbg->heap = heap;
-    drbg->devId = devId;
-#else
     (void)heap;
     (void)devId;
-#endif
 
 #ifdef WOLFSSL_SMALL_STACK_CACHE
-    #if defined(WOLFSSL_ASYNC_CRYPT) || defined(WOLF_CRYPTO_CB)
-        ret = wc_InitSha256_ex(&drbg->sha256, drbg->heap, drbg->devId);
-    #else
         ret = wc_InitSha256(&drbg->sha256);
-    #endif
     if (ret != 0)
         return ret;
 #endif
@@ -760,7 +682,6 @@ int wc_RNG_TestSeed(const byte* seed, word32 seedSz)
 
     return ret;
 }
-#endif /* HAVE_HASHDRBG */
 /* End NIST DRBG Code */
 
 
@@ -768,9 +689,7 @@ static int _InitRng(WC_RNG* rng, byte* nonce, word32 nonceSz,
                     void* heap, int devId)
 {
     int ret = 0;
-#ifdef HAVE_HASHDRBG
     word32 seedSz = SEED_SZ + SEED_BLOCK_SZ;
-#endif
 
     (void)nonce;
     (void)nonceSz;
@@ -786,45 +705,24 @@ static int _InitRng(WC_RNG* rng, byte* nonce, word32 nonceSz,
 #else
     rng->heap = heap;
 #endif
-#if defined(WOLFSSL_ASYNC_CRYPT) || defined(WOLF_CRYPTO_CB)
-    rng->devId = devId;
-    #if defined(WOLF_CRYPTO_CB)
-        rng->seed.devId = devId;
-    #endif
-#else
     (void)devId;
-#endif
 
-#ifdef HAVE_HASHDRBG
     /* init the DBRG to known values */
     rng->drbg = NULL;
     rng->status = DRBG_NOT_INIT;
-#endif
 
-#if defined(HAVE_INTEL_RDSEED) || defined(HAVE_INTEL_RDRAND) || \
-    defined(HAVE_AMD_RDSEED)
     /* init the intel RD seed and/or rand */
     wc_InitRng_IntelRD();
-#endif
 
     /* configure async RNG source if available */
-#ifdef WOLFSSL_ASYNC_CRYPT
-    ret = wolfAsync_DevCtxInit(&rng->asyncDev, WOLFSSL_ASYNC_MARKER_RNG,
-                                                        rng->heap, rng->devId);
-    if (ret != 0)
-        return ret;
-#endif
 
-#ifdef HAVE_INTEL_RDRAND
     /* if CPU supports RDRAND, use it directly and by-pass DRBG init */
     if (IS_INTEL_RDRAND(intel_flags))
         return 0;
-#endif
 
 #ifdef CUSTOM_RAND_GENERATE_BLOCK
     ret = 0; /* success */
 #else
-#ifdef HAVE_HASHDRBG
     if (nonceSz == 0)
         seedSz = MAX_SEED_SZ;
 
@@ -837,7 +735,7 @@ static int _InitRng(WC_RNG* rng, byte* nonce, word32 nonceSz,
         byte seed[MAX_SEED_SZ];
     #endif
 
-#if !defined(WOLFSSL_NO_MALLOC) || defined(WOLFSSL_STATIC_MEMORY)
+#if !defined(WOLFSSL_NO_MALLOC)
         rng->drbg =
                 (struct DRBG*)XMALLOC(sizeof(DRBG_internal), rng->heap,
                                                           DYNAMIC_TYPE_RNG);
@@ -875,7 +773,7 @@ static int _InitRng(WC_RNG* rng, byte* nonce, word32 nonceSz,
                             nonce, nonceSz, rng->heap, devId);
 
             if (ret != DRBG_SUCCESS) {
-            #if !defined(WOLFSSL_NO_MALLOC) || defined(WOLFSSL_STATIC_MEMORY)
+            #if !defined(WOLFSSL_NO_MALLOC)
                 XFREE(rng->drbg, rng->heap, DYNAMIC_TYPE_RNG);
             #endif
                 rng->drbg = NULL;
@@ -905,7 +803,6 @@ static int _InitRng(WC_RNG* rng, byte* nonce, word32 nonceSz,
     else {
         rng->status = DRBG_FAILED;
     }
-#endif /* HAVE_HASHDRBG */
 #endif /* CUSTOM_RAND_GENERATE_BLOCK */
 
     return ret;
@@ -981,43 +878,20 @@ int wc_RNG_GenerateBlock(WC_RNG* rng, byte* output, word32 sz)
     if (sz == 0)
         return 0;
 
-#ifdef WOLF_CRYPTO_CB
-    if (rng->devId != INVALID_DEVID) {
-        ret = wc_CryptoCb_RandomBlock(rng, output, sz);
-        if (ret != CRYPTOCB_UNAVAILABLE)
-            return ret;
-        /* fall-through when unavailable */
-    }
-#endif
 
-#ifdef HAVE_INTEL_RDRAND
     if (IS_INTEL_RDRAND(intel_flags))
         return wc_GenerateRand_IntelRD(NULL, output, sz);
-#endif
 
 #if defined(WOLFSSL_SILABS_SE_ACCEL) && defined(WOLFSSL_SILABS_TRNG)
     return silabs_GenerateRand(output, sz);
 #endif
 
-#if defined(WOLFSSL_ASYNC_CRYPT)
-    if (rng->asyncDev.marker == WOLFSSL_ASYNC_MARKER_RNG) {
-        /* these are blocking */
-    #ifdef HAVE_CAVIUM
-        return NitroxRngGenerateBlock(rng, output, sz);
-    #elif defined(HAVE_INTEL_QA) && defined(QAT_ENABLE_RNG)
-        return IntelQaDrbg(&rng->asyncDev, output, sz);
-    #else
-        /* simulator not supported */
-    #endif
-    }
-#endif
 
 #ifdef CUSTOM_RAND_GENERATE_BLOCK
     XMEMSET(output, 0, sz);
     ret = CUSTOM_RAND_GENERATE_BLOCK(output, sz);
 #else
 
-#ifdef HAVE_HASHDRBG
     if (sz > RNG_MAX_BLOCK_LEN)
         return BAD_FUNC_ARG;
 
@@ -1059,12 +933,6 @@ int wc_RNG_GenerateBlock(WC_RNG* rng, byte* output, word32 sz)
         ret = RNG_FAILURE_E;
         rng->status = DRBG_FAILED;
     }
-#else
-
-    /* if we get here then there is an RNG configuration error */
-    ret = RNG_FAILURE_E;
-
-#endif /* HAVE_HASHDRBG */
 #endif /* CUSTOM_RAND_GENERATE_BLOCK */
 
     return ret;
@@ -1084,28 +952,22 @@ int wc_FreeRng(WC_RNG* rng)
     if (rng == NULL)
         return BAD_FUNC_ARG;
 
-#if defined(WOLFSSL_ASYNC_CRYPT)
-    wolfAsync_DevCtxFree(&rng->asyncDev, WOLFSSL_ASYNC_MARKER_RNG);
-#endif
 
-#ifdef HAVE_HASHDRBG
     if (rng->drbg != NULL) {
       if (Hash_DRBG_Uninstantiate((DRBG_internal *)rng->drbg) != DRBG_SUCCESS)
             ret = RNG_FAILURE_E;
 
-    #if !defined(WOLFSSL_NO_MALLOC) || defined(WOLFSSL_STATIC_MEMORY)
+    #if !defined(WOLFSSL_NO_MALLOC)
         XFREE(rng->drbg, rng->heap, DYNAMIC_TYPE_RNG);
     #endif
         rng->drbg = NULL;
     }
 
     rng->status = DRBG_NOT_INIT;
-#endif /* HAVE_HASHDRBG */
 
     return ret;
 }
 
-#ifdef HAVE_HASHDRBG
 int wc_RNG_HealthTest(int reseed, const byte* seedA, word32 seedASz,
                                   const byte* seedB, word32 seedBSz,
                                   byte* output, word32 outputSz)
@@ -1125,9 +987,7 @@ int wc_RNG_HealthTest_ex(int reseed, const byte* nonce, word32 nonceSz,
 {
     int ret = -1;
     DRBG_internal* drbg;
-#ifndef WOLFSSL_SMALL_STACK
     DRBG_internal  drbg_var;
-#endif
 
     if (seedA == NULL || output == NULL) {
         return BAD_FUNC_ARG;
@@ -1141,14 +1001,7 @@ int wc_RNG_HealthTest_ex(int reseed, const byte* nonce, word32 nonceSz,
         return ret;
     }
 
-#ifdef WOLFSSL_SMALL_STACK
-    drbg = (DRBG_internal*)XMALLOC(sizeof(DRBG_internal), NULL, DYNAMIC_TYPE_RNG);
-    if (drbg == NULL) {
-        return MEMORY_E;
-    }
-#else
     drbg = &drbg_var;
-#endif
 
     if (Hash_DRBG_Instantiate(drbg, seedA, seedASz, nonce, nonceSz,
                               heap, devId) != 0) {
@@ -1184,9 +1037,6 @@ exit_rng_ht:
         ret = -1;
     }
 
-#ifdef WOLFSSL_SMALL_STACK
-    XFREE(drbg, NULL, DYNAMIC_TYPE_RNG);
-#endif
 
     return ret;
 }
@@ -1245,19 +1095,8 @@ const FLASH_QUALIFIER byte outputB_data[] = {
 static int wc_RNG_HealthTestLocal(int reseed)
 {
     int ret = 0;
-#ifdef WOLFSSL_SMALL_STACK
-    byte* check;
-#else
     byte  check[RNG_HEALTH_TEST_CHECK_SIZE];
-#endif
 
-#ifdef WOLFSSL_SMALL_STACK
-    check = (byte*)XMALLOC(RNG_HEALTH_TEST_CHECK_SIZE, NULL,
-                           DYNAMIC_TYPE_TMP_BUFFER);
-    if (check == NULL) {
-        return MEMORY_E;
-    }
-#endif
 
     if (reseed) {
 #ifdef WOLFSSL_USE_FLASHMEM
@@ -1351,14 +1190,10 @@ static int wc_RNG_HealthTestLocal(int reseed)
 #endif
     }
 
-#ifdef WOLFSSL_SMALL_STACK
-    XFREE(check, NULL, DYNAMIC_TYPE_TMP_BUFFER);
-#endif
 
     return ret;
 }
 
-#endif /* HAVE_HASHDRBG */
 
 
 #ifdef HAVE_WNR
@@ -1458,15 +1293,8 @@ int wc_FreeNetRandom(void)
 #endif /* HAVE_WNR */
 
 
-#if defined(HAVE_INTEL_RDRAND) || defined(HAVE_INTEL_RDSEED) || \
-    defined(HAVE_AMD_RDSEED)
 
-#ifdef WOLFSSL_ASYNC_CRYPT
-    /* need more retries if multiple cores */
-    #define INTELRD_RETRY (32 * 8)
-#else
     #define INTELRD_RETRY 32
-#endif
 
 #if defined(HAVE_INTEL_RDSEED) || defined(HAVE_AMD_RDSEED)
 
@@ -1510,7 +1338,6 @@ static WC_INLINE int IntelRDseed64_r(word64* rnd)
     return -1;
 }
 
-#ifndef WOLFSSL_LINUXKM
 /* return 0 on success */
 static int wc_GenerateSeed_IntelRD(OS_Seed* os, byte* output, word32 sz)
 {
@@ -1541,11 +1368,9 @@ static int wc_GenerateSeed_IntelRD(OS_Seed* os, byte* output, word32 sz)
 
     return 0;
 }
-#endif
 
 #endif /* HAVE_INTEL_RDSEED || HAVE_AMD_RDSEED */
 
-#ifdef HAVE_INTEL_RDRAND
 
 #ifndef USE_INTEL_INTRINSICS
 
@@ -1619,8 +1444,6 @@ static int wc_GenerateRand_IntelRD(OS_Seed* os, byte* output, word32 sz)
     return 0;
 }
 
-#endif /* HAVE_INTEL_RDRAND */
-#endif /* HAVE_INTEL_RDRAND || HAVE_INTEL_RDSEED || HAVE_AMD_RDSEED */
 
 
 /* Begin wc_GenerateSeed Implementations */
@@ -1696,48 +1519,7 @@ int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz)
     return (ret == SGX_SUCCESS) ? 0 : 1;
 }
 
-#elif defined(USE_WINDOWS_API)
-
-int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz)
-{
-#ifdef WOLF_CRYPTO_CB
-    int ret;
-
-    if (os != NULL && os->devId != INVALID_DEVID) {
-        ret = wc_CryptoCb_RandomSeed(os, output, sz);
-        if (ret != CRYPTOCB_UNAVAILABLE)
-            return ret;
-        /* fall-through when unavailable */
-    }
-#endif
-
-    #ifdef HAVE_INTEL_RDSEED
-        if (IS_INTEL_RDSEED(intel_flags)) {
-             if (!wc_GenerateSeed_IntelRD(NULL, output, sz)) {
-                 /* success, we're done */
-                 return 0;
-             }
-        #ifdef FORCE_FAILURE_RDSEED
-             /* don't fall back to CryptoAPI */
-             return READ_RAN_E;
-        #endif
-        }
-    #endif /* HAVE_INTEL_RDSEED */
-
-    if(!CryptAcquireContext(&os->handle, 0, 0, PROV_RSA_FULL,
-                            CRYPT_VERIFYCONTEXT))
-        return WINCRYPT_E;
-
-    if (!CryptGenRandom(os->handle, sz, output))
-        return CRYPTGEN_E;
-
-    CryptReleaseContext(os->handle, 0);
-
-    return 0;
-}
-
-
-#elif defined(HAVE_RTP_SYS) || defined(EBSNET)
+#elif defined(HAVE_RTP_SYS)
 
 #include "rtprand.h"   /* rtp_rand () */
 #include "rtptime.h"   /* rtp_get_system_msec() */
@@ -1978,8 +1760,7 @@ int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz)
         return RAN_BLOCK_E;
     }
 
-#elif defined(FREESCALE_MQX) || defined(FREESCALE_KSDK_MQX) || \
-    defined(FREESCALE_KSDK_BM) || defined(FREESCALE_FREE_RTOS)
+#elif  defined(FREESCALE_KSDK_BM) || defined(FREESCALE_FREE_RTOS)
     /*
      * Fallback to USE_TEST_GENSEED if a FREESCALE platform did not match any
      * of the TRNG/RNGA/RNGB support
@@ -2478,17 +2259,6 @@ int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz)
         }
     #endif /* end WOLFSSL_ESPWROOM32 */
 
-#elif defined(WOLFSSL_LINUXKM)
-    #include <linux/random.h>
-    int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz)
-    {
-        (void)os;
-
-        get_random_bytes(output, sz);
-
-        return 0;
-    }
-
 #elif defined(WOLFSSL_RENESAS_TSIP)
 #if defined(WOLFSSL_RENESA_TSIP_IAREWRX)
    #include "r_bsp/mcu/all/r_rx_compiler.h"
@@ -2738,15 +2508,6 @@ int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz)
             return BAD_FUNC_ARG;
         }
 
-    #ifdef WOLF_CRYPTO_CB
-        if (os->devId != INVALID_DEVID) {
-            ret = wc_CryptoCb_RandomSeed(os, output, sz);
-            if (ret != CRYPTOCB_UNAVAILABLE)
-                return ret;
-            /* fall-through when unavailable */
-            ret = 0; /* reset error code */
-        }
-    #endif
 
     #if defined(HAVE_INTEL_RDSEED) || defined(HAVE_AMD_RDSEED)
         if (IS_INTEL_RDSEED(intel_flags)) {
@@ -2803,11 +2564,7 @@ int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz)
 #endif
 
 #ifdef USE_TEST_GENSEED
-    #ifndef _MSC_VER
         #warning "write a real random seed!!!!, just for testing now"
-    #else
-        #pragma message("Warning: write a real random seed!!!!, just for testing now")
-    #endif
     int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz)
     {
         word32 i;

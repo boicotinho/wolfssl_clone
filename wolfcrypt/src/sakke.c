@@ -27,12 +27,8 @@
 
 #include <wolfssl/wolfcrypt/settings.h>
 
-#ifdef NO_INLINE
-    #include <wolfssl/wolfcrypt/misc.h>
-#else
     #define WOLFSSL_MISC_INCLUDED
     #include <wolfcrypt/src/misc.c>
-#endif
 
 #ifdef WOLFSSL_HAVE_SP_ECC
     #include <wolfssl/wolfcrypt/sp.h>
@@ -2494,7 +2490,7 @@ static int sakke_modexp_loop(SakkeKey* key, mp_int* b, mp_int* e, mp_proj* c,
     return err;
 }
 
-#elif defined(WOLFSSL_SAKKE_SMALL_MODEXP) || !defined(USE_FAST_MATH)
+#elif defined(WOLFSSL_SAKKE_SMALL_MODEXP)
 
 /*
  * Modular exponentiate the value in F_p*.

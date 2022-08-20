@@ -43,14 +43,10 @@ masking and clearing memory logic.
    a source header
  */
 
-#ifdef NO_INLINE
-    #define WC_STATIC
-#else
     #define WC_STATIC static
-#endif
 
 /* Check for if compiling misc.c when not needed. */
-#if !defined(WOLFSSL_MISC_INCLUDED) && !defined(NO_INLINE)
+#if !defined(WOLFSSL_MISC_INCLUDED)
     #ifndef WOLFSSL_IGNORE_FILE_WARN
         #warning misc.c does not need to be compiled when using inline (NO_INLINE not defined)
     #endif
@@ -85,25 +81,11 @@ masking and clearing memory logic.
 
     #include <builtin.h>      /* get intrinsic definitions */
 
-    #if !defined(NO_INLINE)
 
     #define rotlFixed(x, y) _builtin_rotl(x, y)
 
     #define rotrFixed(x, y) _builtin_rotr(x, y)
 
-    #else /* create real function */
-
-    WC_STATIC WC_INLINE word32 rotlFixed(word32 x, word32 y)
-    {
-        return _builtin_rotl(x, y);
-    }
-
-    WC_STATIC WC_INLINE word32 rotrFixed(word32 x, word32 y)
-    {
-        return _builtin_rotr(x, y);
-    }
-
-    #endif
 
 #else /* generic */
 /* This routine performs a left circular arithmetic shift of <x> by <y> value. */
@@ -139,7 +121,7 @@ WC_STATIC WC_INLINE word16 rotrFixed16(word16 x, word16 y)
 #endif /* WC_RC2 */
 
 /* This routine performs a byte swap of 32-bit word value. */
-#if defined(__CCRX__) && !defined(NO_INLINE) /* shortest version for CC-RX */
+#if defined(__CCRX__)
     #define ByteReverseWord32(value) _builtin_revl(value)
 #else
 WC_STATIC WC_INLINE word32 ByteReverseWord32(word32 value)
@@ -303,8 +285,7 @@ WC_STATIC WC_INLINE void ForceZero(void* mem, word32 len)
 {
     volatile byte* z = (volatile byte*)mem;
 
-#if (defined(WOLFSSL_X86_64_BUILD) || defined(WOLFSSL_AARCH64_BUILD)) \
-            && defined(WORD64_AVAILABLE)
+#if defined(WORD64_AVAILABLE)
     volatile word64* w;
     #ifndef WOLFSSL_UNALIGNED_64BIT_ACCESS
         word32 l = (sizeof(word64) - ((size_t)z & (sizeof(word64)-1))) &

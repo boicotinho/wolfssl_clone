@@ -32,9 +32,6 @@
     extern "C" {
 #endif
 
-#ifdef WOLFSSL_ASYNC_CRYPT
-    #include <wolfssl/wolfcrypt/async.h>
-#endif
 
 enum {
     ARC4_ENC_TYPE   = 4,    /* cipher unique type */
@@ -47,9 +44,6 @@ typedef struct Arc4 {
     byte x;
     byte y;
     byte state[ARC4_STATE_SIZE];
-#ifdef WOLFSSL_ASYNC_CRYPT
-    WC_ASYNC_DEV asyncDev;
-#endif
     void* heap;
 } Arc4;
 

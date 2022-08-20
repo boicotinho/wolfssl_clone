@@ -39,12 +39,8 @@
 #include <wolfssl/wolfcrypt/logging.h>
 #include <wolfssl/wolfcrypt/hash.h>
 
-#ifdef NO_INLINE
-#include <wolfssl/wolfcrypt/misc.h>
-#else
 #define WOLFSSL_MISC_INCLUDED
 #include <wolfcrypt/src/misc.c>
-#endif
 
 
 /* Hardware Acceleration */
@@ -174,8 +170,7 @@ static int Transform_Len(wc_Md5* md5, const byte* data, word32 len)
 #include <wolfssl/wolfcrypt/port/pic32/pic32mz-crypt.h>
 #define HAVE_MD5_CUST_API
 
-#elif defined(WOLFSSL_IMX6_CAAM) && !defined(NO_IMX6_CAAM_HASH) && \
-    !defined(WOLFSSL_QNX_CAAM)
+#elif defined(WOLFSSL_IMX6_CAAM) && !defined(NO_IMX6_CAAM_HASH)
 /* functions implemented in wolfcrypt/src/port/caam/caam_sha.c */
 #define HAVE_MD5_CUST_API
 #else
@@ -323,12 +318,7 @@ int wc_InitMd5_ex(wc_Md5* md5, void* heap, int devId)
     if (ret != 0)
         return ret;
 
-#if defined(WOLFSSL_ASYNC_CRYPT) && defined(WC_ASYNC_ENABLE_MD5)
-    ret = wolfAsync_DevCtxInit(&md5->asyncDev, WOLFSSL_ASYNC_MARKER_MD5,
-                               md5->heap, devId);
-#else
     (void)devId;
-#endif
     return ret;
 }
 
@@ -343,13 +333,6 @@ int wc_Md5Update(wc_Md5* md5, const byte* data, word32 len)
         return BAD_FUNC_ARG;
     }
 
-#if defined(WOLFSSL_ASYNC_CRYPT) && defined(WC_ASYNC_ENABLE_MD5)
-    if (md5->asyncDev.marker == WOLFSSL_ASYNC_MARKER_MD5) {
-#if defined(HAVE_INTEL_QA)
-        return IntelQaSymMd5(&md5->asyncDev, NULL, data, len);
-#endif
-    }
-#endif /* WOLFSSL_ASYNC_CRYPT */
 
     /* check that internal buffLen is valid */
     if (md5->buffLen >= WC_MD5_BLOCK_SIZE)
@@ -442,13 +425,6 @@ int wc_Md5Final(wc_Md5* md5, byte* hash)
         return BAD_FUNC_ARG;
     }
 
-#if defined(WOLFSSL_ASYNC_CRYPT) && defined(WC_ASYNC_ENABLE_MD5)
-    if (md5->asyncDev.marker == WOLFSSL_ASYNC_MARKER_MD5) {
-#if defined(HAVE_INTEL_QA)
-        return IntelQaSymMd5(&md5->asyncDev, hash, NULL, WC_MD5_DIGEST_SIZE);
-#endif
-    }
-#endif /* WOLFSSL_ASYNC_CRYPT */
 
     local = (byte*)md5->buffer;
 
@@ -505,9 +481,6 @@ void wc_Md5Free(wc_Md5* md5)
 {
     if (md5 == NULL)
         return;
-#if defined(WOLFSSL_ASYNC_CRYPT) && defined(WC_ASYNC_ENABLE_MD5)
-    wolfAsync_DevCtxFree(&md5->asyncDev, WOLFSSL_ASYNC_MARKER_MD5);
-#endif /* WOLFSSL_ASYNC_CRYPT */
 
 #ifdef WOLFSSL_PIC32MZ_HASH
     wc_Md5Pic32Free(md5);
@@ -539,9 +512,6 @@ int wc_Md5Copy(wc_Md5* src, wc_Md5* dst)
 
     XMEMCPY(dst, src, sizeof(wc_Md5));
 
-#if defined(WOLFSSL_ASYNC_CRYPT) && defined(WC_ASYNC_ENABLE_MD5)
-    ret = wolfAsync_DevCopy(&src->asyncDev, &dst->asyncDev);
-#endif
 #ifdef WOLFSSL_PIC32MZ_HASH
     ret = wc_Pic32HashCopy(&src->cache, &dst->cache);
 #endif
@@ -551,20 +521,6 @@ int wc_Md5Copy(wc_Md5* src, wc_Md5* dst)
 
     return ret;
 }
-#ifdef OPENSSL_EXTRA
-/* Apply MD5 transformation to the data                   */
-/* @param md5  a pointer to wc_MD5 structure              */
-/* @param data data to be applied MD5 transformation      */
-/* @return 0 on successful, otherwise non-zero on failure */
-int wc_Md5Transform(wc_Md5* md5, const byte* data)
-{
-    /* sanity check */
-    if (md5 == NULL || data == NULL) {
-        return BAD_FUNC_ARG;
-    }
-    return Transform(md5, data);
-}
-#endif
 #ifdef WOLFSSL_HASH_FLAGS
 int wc_Md5SetFlags(wc_Md5* md5, word32 flags)
 {

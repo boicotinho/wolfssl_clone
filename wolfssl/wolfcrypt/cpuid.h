@@ -32,9 +32,7 @@
     extern "C" {
 #endif
 
-#if (defined(WOLFSSL_X86_64_BUILD) || defined(USE_INTEL_SPEEDUP) || \
-    defined(WOLFSSL_AESNI) || defined(WOLFSSL_SP_X86_64_ASM)) && \
-    !defined(WOLFSSL_NO_ASM)
+#if  !defined(WOLFSSL_NO_ASM)
     #define HAVE_CPUID
     #define HAVE_CPUID_INTEL
 #endif

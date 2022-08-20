@@ -77,23 +77,13 @@ typedef WOLFSSL_MD5_CTX MD5_CTX;
  * If FIPS V2 and NO_OLD_WC_NAMES defined
  * If FIPS v1 not allowed
  */
-#if (defined(NO_OLD_MD5_NAME) && !defined(HAVE_FIPS)) || \
-    (defined(NO_OLD_MD5_NAME)    && defined(HAVE_FIPS) && \
-        defined(HAVE_FIPS_VERSION) && HAVE_FIPS_VERSION >= 2) || \
-    (defined(NO_OLD_WC_NAMES) && defined(HAVE_FIPS) && \
-        defined(HAVE_FIPS_VERSION) && HAVE_FIPS_VERSION == 2)
+#if defined(NO_OLD_MD5_NAME) && !defined(HAVE_FIPS)
 
     #define MD5               wolfSSL_MD5
 #endif
 
 /* FIPS v1 uses old MD5_DIGEST_SIZE naming */
-#if (!defined(HAVE_FIPS) || \
-        (defined(HAVE_FIPS_VERSION) && HAVE_FIPS_VERSION >= 2)) && \
-         defined(OPENSSL_EXTRA)
-    #define MD5_DIGEST_LENGTH WC_MD5_DIGEST_SIZE
-#else
     #define MD5_DIGEST_LENGTH MD5_DIGEST_SIZE
-#endif
 
 #ifdef __cplusplus
     }  /* extern "C" */

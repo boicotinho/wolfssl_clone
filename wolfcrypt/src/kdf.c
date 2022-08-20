@@ -30,25 +30,10 @@
 
 #ifndef NO_KDF
 
-#if defined(HAVE_FIPS) && \
-    defined(HAVE_FIPS_VERSION) && (HAVE_FIPS_VERSION >= 5)
-
-    /* set NO_WRAPPERS before headers, use direct internal f()s not wrappers */
-    #define FIPS_NO_WRAPPERS
-
-    #ifdef USE_WINDOWS_API
-        #pragma code_seg(".fipsA$m")
-        #pragma const_seg(".fipsB$m")
-    #endif
-#endif
 
 
-#ifdef NO_INLINE
-    #include <wolfssl/wolfcrypt/misc.h>
-#else
     #define WOLFSSL_MISC_INCLUDED
     #include <wolfcrypt/src/misc.c>
-#endif
 
 #include <wolfssl/wolfcrypt/hmac.h>
 #include <wolfssl/wolfcrypt/kdf.h>
@@ -56,13 +41,7 @@
 
 #ifdef WOLFSSL_HAVE_PRF
 
-#ifdef WOLFSSL_SHA512
     #define P_HASH_MAX_SIZE WC_SHA512_DIGEST_SIZE
-#elif defined(WOLFSSL_SHA384)
-    #define P_HASH_MAX_SIZE WC_SHA384_DIGEST_SIZE
-#else
-    #define P_HASH_MAX_SIZE WC_SHA256_DIGEST_SIZE
-#endif
 
 /* Pseudo Random Function for MD5, SHA-1, SHA-256, SHA-384, or SHA-512 */
 int wc_PRF(byte* result, word32 resLen, const byte* secret,
@@ -76,29 +55,10 @@ int wc_PRF(byte* result, word32 resLen, const byte* secret,
     word32 i;
     word32 idx = 0;
     int    ret = 0;
-#ifdef WOLFSSL_SMALL_STACK
-    byte*  previous;
-    byte*  current;
-    Hmac*  hmac;
-#else
     byte   previous[P_HASH_MAX_SIZE];  /* max size */
     byte   current[P_HASH_MAX_SIZE];   /* max size */
     Hmac   hmac[1];
-#endif
 
-#ifdef WOLFSSL_SMALL_STACK
-    previous = (byte*)XMALLOC(P_HASH_MAX_SIZE, heap, DYNAMIC_TYPE_DIGEST);
-    current  = (byte*)XMALLOC(P_HASH_MAX_SIZE, heap, DYNAMIC_TYPE_DIGEST);
-    hmac     = (Hmac*)XMALLOC(sizeof(Hmac),    heap, DYNAMIC_TYPE_HMAC);
-
-    if (previous == NULL || current == NULL || hmac == NULL) {
-        if (previous) XFREE(previous, heap, DYNAMIC_TYPE_DIGEST);
-        if (current)  XFREE(current,  heap, DYNAMIC_TYPE_DIGEST);
-        if (hmac)     XFREE(hmac,     heap, DYNAMIC_TYPE_HMAC);
-
-        return MEMORY_E;
-    }
-#endif
 
     switch (hash) {
     #ifndef NO_MD5
@@ -108,39 +68,26 @@ int wc_PRF(byte* result, word32 resLen, const byte* secret,
         break;
     #endif
 
-    #ifndef NO_SHA256
         case sha256_mac:
             hash = WC_SHA256;
             len  = WC_SHA256_DIGEST_SIZE;
         break;
-    #endif
 
-    #ifdef WOLFSSL_SHA384
         case sha384_mac:
             hash = WC_SHA384;
             len  = WC_SHA384_DIGEST_SIZE;
         break;
-    #endif
 
-    #ifdef WOLFSSL_SHA512
         case sha512_mac:
             hash = WC_SHA512;
             len  = WC_SHA512_DIGEST_SIZE;
         break;
-    #endif
 
-    #ifndef NO_SHA
         case sha_mac:
             hash = WC_SHA;
             len  = WC_SHA_DIGEST_SIZE;
         break;
-    #endif
         default:
-        #ifdef WOLFSSL_SMALL_STACK
-            if (previous) XFREE(previous, heap, DYNAMIC_TYPE_DIGEST);
-            if (current)  XFREE(current,  heap, DYNAMIC_TYPE_DIGEST);
-            if (hmac)     XFREE(hmac,     heap, DYNAMIC_TYPE_HMAC);
-        #endif
             return HASH_TYPE_E;
     }
 
@@ -193,11 +140,6 @@ int wc_PRF(byte* result, word32 resLen, const byte* secret,
     ForceZero(current,   P_HASH_MAX_SIZE);
     ForceZero(hmac,      sizeof(Hmac));
 
-#ifdef WOLFSSL_SMALL_STACK
-    XFREE(previous, heap, DYNAMIC_TYPE_DIGEST);
-    XFREE(current,  heap, DYNAMIC_TYPE_DIGEST);
-    XFREE(hmac,     heap, DYNAMIC_TYPE_HMAC);
-#endif
 
     return ret;
 }
@@ -211,54 +153,19 @@ int wc_PRF_TLSv1(byte* digest, word32 digLen, const byte* secret,
     int    ret  = 0;
     word32 half = (secLen + 1) / 2;
 
-#ifdef WOLFSSL_SMALL_STACK
-    byte* md5_half;
-    byte* sha_half;
-    byte* md5_result;
-    byte* sha_result;
-#else
     byte  md5_half[MAX_PRF_HALF];     /* half is real size */
     byte  sha_half[MAX_PRF_HALF];     /* half is real size */
     byte  md5_result[MAX_PRF_DIG];    /* digLen is real size */
     byte  sha_result[MAX_PRF_DIG];    /* digLen is real size */
-#endif
-#if defined(WOLFSSL_ASYNC_CRYPT) && !defined(WC_ASYNC_NO_HASH)
-    WC_DECLARE_VAR(labelSeed, byte, MAX_PRF_LABSEED, heap);
-    if (labelSeed == NULL)
-        return MEMORY_E;
-#else
     byte labelSeed[MAX_PRF_LABSEED];
-#endif
 
     if (half > MAX_PRF_HALF ||
         labLen + seedLen > MAX_PRF_LABSEED ||
         digLen > MAX_PRF_DIG)
     {
-    #if defined(WOLFSSL_ASYNC_CRYPT) && !defined(WC_ASYNC_NO_HASH)
-        WC_FREE_VAR(labelSeed, heap);
-    #endif
         return BUFFER_E;
     }
 
-#ifdef WOLFSSL_SMALL_STACK
-    md5_half   = (byte*)XMALLOC(MAX_PRF_HALF,    heap, DYNAMIC_TYPE_DIGEST);
-    sha_half   = (byte*)XMALLOC(MAX_PRF_HALF,    heap, DYNAMIC_TYPE_DIGEST);
-    md5_result = (byte*)XMALLOC(MAX_PRF_DIG,     heap, DYNAMIC_TYPE_DIGEST);
-    sha_result = (byte*)XMALLOC(MAX_PRF_DIG,     heap, DYNAMIC_TYPE_DIGEST);
-
-    if (md5_half == NULL || sha_half == NULL || md5_result == NULL ||
-                                                           sha_result == NULL) {
-        if (md5_half)   XFREE(md5_half,   heap, DYNAMIC_TYPE_DIGEST);
-        if (sha_half)   XFREE(sha_half,   heap, DYNAMIC_TYPE_DIGEST);
-        if (md5_result) XFREE(md5_result, heap, DYNAMIC_TYPE_DIGEST);
-        if (sha_result) XFREE(sha_result, heap, DYNAMIC_TYPE_DIGEST);
-    #if defined(WOLFSSL_ASYNC_CRYPT) && !defined(WC_ASYNC_NO_HASH)
-        WC_FREE_VAR(labelSeed, heap);
-    #endif
-
-        return MEMORY_E;
-    }
-#endif
 
     XMEMSET(md5_result, 0, digLen);
     XMEMSET(sha_result, 0, digLen);
@@ -279,16 +186,7 @@ int wc_PRF_TLSv1(byte* digest, word32 digLen, const byte* secret,
         }
     }
 
-#ifdef WOLFSSL_SMALL_STACK
-    XFREE(md5_half,   heap, DYNAMIC_TYPE_DIGEST);
-    XFREE(sha_half,   heap, DYNAMIC_TYPE_DIGEST);
-    XFREE(md5_result, heap, DYNAMIC_TYPE_DIGEST);
-    XFREE(sha_result, heap, DYNAMIC_TYPE_DIGEST);
-#endif
 
-#if defined(WOLFSSL_ASYNC_CRYPT) && !defined(WC_ASYNC_NO_HASH)
-    WC_FREE_VAR(labelSeed, heap);
-#endif
 
     return ret;
 }
@@ -302,13 +200,7 @@ int wc_PRF_TLS(byte* digest, word32 digLen, const byte* secret, word32 secLen,
     int ret = 0;
 
     if (useAtLeastSha256) {
-    #if defined(WOLFSSL_ASYNC_CRYPT) && !defined(WC_ASYNC_NO_HASH)
-        WC_DECLARE_VAR(labelSeed, byte, MAX_PRF_LABSEED, heap);
-        if (labelSeed == NULL)
-            return MEMORY_E;
-    #else
         byte labelSeed[MAX_PRF_LABSEED];
-    #endif
 
         if (labLen + seedLen > MAX_PRF_LABSEED)
             return BUFFER_E;
@@ -324,18 +216,11 @@ int wc_PRF_TLS(byte* digest, word32 digLen, const byte* secret, word32 secLen,
         ret = wc_PRF(digest, digLen, secret, secLen, labelSeed,
                      labLen + seedLen, hash_type, heap, devId);
 
-    #if defined(WOLFSSL_ASYNC_CRYPT) && !defined(WC_ASYNC_NO_HASH)
-        WC_FREE_VAR(labelSeed, heap);
-    #endif
     }
     else {
-#ifndef NO_OLD_TLS
         /* compute TLSv1 PRF (pseudo random function using HMAC) */
         ret = wc_PRF_TLSv1(digest, digLen, secret, secLen, label, labLen, seed,
                           seedLen, heap, devId);
-#else
-        ret = BAD_FUNC_ARG;
-#endif
     }
 
 
@@ -344,7 +229,7 @@ int wc_PRF_TLS(byte* digest, word32 digLen, const byte* secret, word32 secLen,
 #endif /* WOLFSSL_HAVE_PRF */
 
 
-#if defined(HAVE_HKDF) && !defined(NO_HMAC)
+#if defined(HAVE_HKDF)
 
     /* Extract data using HMAC, salt and input.
      * RFC 5869 - HMAC-based Extract-and-Expand Key Derivation Function (HKDF)
@@ -364,17 +249,13 @@ int wc_PRF_TLS(byte* digest, word32 digLen, const byte* secret, word32 secLen,
         int len = 0;
 
         switch (digest) {
-            #ifndef NO_SHA256
             case WC_SHA256:
                 len = WC_SHA256_DIGEST_SIZE;
                 break;
-            #endif
 
-            #ifdef WOLFSSL_SHA384
             case WC_SHA384:
                 len = WC_SHA384_DIGEST_SIZE;
                 break;
-            #endif
 
             #ifdef WOLFSSL_TLS13_SHA512
             case WC_SHA512:
@@ -391,19 +272,9 @@ int wc_PRF_TLS(byte* digest, word32 digLen, const byte* secret, word32 secLen,
             XMEMSET(ikm, 0, len);
         }
 
-#ifdef WOLFSSL_DEBUG_TLS
-        WOLFSSL_MSG("  Salt");
-        WOLFSSL_BUFFER(salt, saltLen);
-        WOLFSSL_MSG("  IKM");
-        WOLFSSL_BUFFER(ikm, ikmLen);
-#endif
 
         ret = wc_HKDF_Extract(digest, salt, saltLen, ikm, ikmLen, prk);
 
-#ifdef WOLFSSL_DEBUG_TLS
-        WOLFSSL_MSG("  PRK");
-        WOLFSSL_BUFFER(prk, len);
-#endif
 
         return ret;
     }
@@ -451,19 +322,9 @@ int wc_PRF_TLS(byte* digest, word32 digLen, const byte* secret, word32 secLen,
         XMEMCPY(&data[idx], info, infoLen);
         idx += infoLen;
 
-#ifdef WOLFSSL_DEBUG_TLS
-        WOLFSSL_MSG("  PRK");
-        WOLFSSL_BUFFER(prk, prkLen);
-        WOLFSSL_MSG("  Info");
-        WOLFSSL_BUFFER(data, idx);
-#endif
 
         ret = wc_HKDF_Expand(digest, prk, prkLen, data, idx, okm, okmLen);
 
-#ifdef WOLFSSL_DEBUG_TLS
-        WOLFSSL_MSG("  OKM");
-        WOLFSSL_BUFFER(okm, okmLen);
-#endif
 
         ForceZero(data, idx);
 
@@ -480,24 +341,12 @@ typedef union {
 #ifndef NO_MD5
     wc_Md5 md5;
 #endif
-#ifndef NO_SHA
     wc_Sha sha;
-#endif
-#ifdef WOLFSSL_SHA224
     wc_Sha224 sha224;
-#endif
-#ifndef NO_SHA256
     wc_Sha256 sha256;
-#endif
-#ifdef WOLFSSL_SHA384
     wc_Sha384 sha384;
-#endif
-#ifdef WOLFSSL_SHA512
     wc_Sha512 sha512;
-#endif
-#ifdef WOLFSSL_SHA3
     wc_Sha3 sha3;
-#endif
 } _hash;
 
 static
@@ -506,28 +355,20 @@ int _HashInit(byte hashId, _hash* hash)
     int ret = BAD_FUNC_ARG;
 
     switch (hashId) {
-    #ifndef NO_SHA
         case WC_SHA:
             ret = wc_InitSha(&hash->sha);
             break;
-    #endif /* !NO_SHA */
 
-    #ifndef NO_SHA256
         case WC_SHA256:
             ret = wc_InitSha256(&hash->sha256);
             break;
-    #endif /* !NO_SHA256 */
 
-    #ifdef WOLFSSL_SHA384
         case WC_SHA384:
             ret = wc_InitSha384(&hash->sha384);
             break;
-    #endif /* WOLFSSL_SHA384 */
-    #ifdef WOLFSSL_SHA512
         case WC_SHA512:
             ret = wc_InitSha512(&hash->sha512);
             break;
-    #endif /* WOLFSSL_SHA512 */
     }
 
     return ret;
@@ -540,28 +381,20 @@ int _HashUpdate(byte hashId, _hash* hash,
     int ret = BAD_FUNC_ARG;
 
     switch (hashId) {
-    #ifndef NO_SHA
         case WC_SHA:
             ret = wc_ShaUpdate(&hash->sha, data, dataSz);
             break;
-    #endif /* !NO_SHA */
 
-    #ifndef NO_SHA256
         case WC_SHA256:
             ret = wc_Sha256Update(&hash->sha256, data, dataSz);
             break;
-    #endif /* !NO_SHA256 */
 
-    #ifdef WOLFSSL_SHA384
         case WC_SHA384:
             ret = wc_Sha384Update(&hash->sha384, data, dataSz);
             break;
-    #endif /* WOLFSSL_SHA384 */
-    #ifdef WOLFSSL_SHA512
         case WC_SHA512:
             ret = wc_Sha512Update(&hash->sha512, data, dataSz);
             break;
-    #endif /* WOLFSSL_SHA512 */
     }
 
     return ret;
@@ -573,28 +406,20 @@ int _HashFinal(byte hashId, _hash* hash, byte* digest)
     int ret = BAD_FUNC_ARG;
 
     switch (hashId) {
-    #ifndef NO_SHA
         case WC_SHA:
             ret = wc_ShaFinal(&hash->sha, digest);
             break;
-    #endif /* !NO_SHA */
 
-    #ifndef NO_SHA256
         case WC_SHA256:
             ret = wc_Sha256Final(&hash->sha256, digest);
             break;
-    #endif /* !NO_SHA256 */
 
-    #ifdef WOLFSSL_SHA384
         case WC_SHA384:
             ret = wc_Sha384Final(&hash->sha384, digest);
             break;
-    #endif /* WOLFSSL_SHA384 */
-    #ifdef WOLFSSL_SHA512
         case WC_SHA512:
             ret = wc_Sha512Final(&hash->sha512, digest);
             break;
-    #endif /* WOLFSSL_SHA512 */
     }
 
     return ret;
@@ -604,28 +429,20 @@ static
 void _HashFree(byte hashId, _hash* hash)
 {
     switch (hashId) {
-    #ifndef NO_SHA
         case WC_SHA:
             wc_ShaFree(&hash->sha);
             break;
-    #endif /* !NO_SHA */
 
-    #ifndef NO_SHA256
         case WC_SHA256:
             wc_Sha256Free(&hash->sha256);
             break;
-    #endif /* !NO_SHA256 */
 
-    #ifdef WOLFSSL_SHA384
         case WC_SHA384:
             wc_Sha384Free(&hash->sha384);
             break;
-    #endif /* WOLFSSL_SHA384 */
-    #ifdef WOLFSSL_SHA512
         case WC_SHA512:
             wc_Sha512Free(&hash->sha512);
             break;
-    #endif /* WOLFSSL_SHA512 */
     }
 }
 

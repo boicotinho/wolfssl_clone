@@ -27,7 +27,7 @@
 #include <wolfssl/openssl/ssl.h>
 #include <wolfssl/wolfcrypt/random.h>
 
-#if !defined(WC_NO_RNG) && defined(HAVE_HASHDRBG)
+#if !defined(WC_NO_RNG)
 
 struct WOLFSSL_DRBG_CTX;
 

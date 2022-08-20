@@ -29,15 +29,9 @@
 
 #include <wolfssl/wolfcrypt/types.h>
 
-#ifndef NO_SHA
 
-#if defined(HAVE_FIPS) && \
-    defined(HAVE_FIPS_VERSION) && (HAVE_FIPS_VERSION >= 2)
-    #include <wolfssl/wolfcrypt/fips.h>
-#endif /* HAVE_FIPS_VERSION >= 2 */
 
-#if defined(HAVE_FIPS) && \
-        (!defined(HAVE_FIPS_VERSION) || (HAVE_FIPS_VERSION < 2))
+#if defined(HAVE_FIPS)
 #define wc_Sha             Sha
 #define WC_SHA             SHA
 #define WC_SHA_BLOCK_SIZE  SHA_BLOCK_SIZE
@@ -61,17 +55,13 @@
 #endif
 
 /* avoid redefinition of structs */
-#if !defined(HAVE_FIPS) || \
-    (defined(HAVE_FIPS_VERSION) && (HAVE_FIPS_VERSION >= 2))
+#if !defined(HAVE_FIPS)
 
 #ifdef WOLFSSL_MICROCHIP_PIC32MZ
     #include <wolfssl/wolfcrypt/port/pic32/pic32mz-crypt.h>
 #endif
 #ifdef STM32_HASH
     #include <wolfssl/wolfcrypt/port/st/stm32.h>
-#endif
-#ifdef WOLFSSL_ASYNC_CRYPT
-    #include <wolfssl/wolfcrypt/async.h>
 #endif
 #ifdef WOLFSSL_ESP32WROOM32_CRYPT
     #include <wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h>
@@ -103,7 +93,7 @@ enum {
 #if defined(WOLFSSL_TI_HASH)
     #include "wolfssl/wolfcrypt/port/ti/ti-hash.h"
 
-#elif defined(WOLFSSL_IMX6_CAAM) && !defined(WOLFSSL_QNX_CAAM)
+#elif defined(WOLFSSL_IMX6_CAAM)
     #include "wolfssl/wolfcrypt/port/caam/wolfcaam_sha.h"
 #elif defined(WOLFSSL_RENESAS_TSIP_CRYPT) && \
    !defined(NO_WOLFSSL_RENESAS_TSIP_CRYPT_HASH)
@@ -149,13 +139,6 @@ struct wc_Sha {
     #ifdef WOLFSSL_PIC32MZ_HASH
         hashUpdCache cache; /* cache for updates */
     #endif
-    #ifdef WOLFSSL_ASYNC_CRYPT
-        WC_ASYNC_DEV asyncDev;
-    #endif /* WOLFSSL_ASYNC_CRYPT */
-    #ifdef WOLF_CRYPTO_CB
-        int    devId;
-        void*  devCtx; /* generic crypto callback context */
-    #endif
     #if defined(WOLFSSL_DEVCRYPTO_HASH) || defined(WOLFSSL_HASH_KEEP)
         byte*  msg;
         word32 used;
@@ -190,9 +173,6 @@ WOLFSSL_API void wc_ShaFree(wc_Sha* sha);
 
 WOLFSSL_API int wc_ShaGetHash(wc_Sha* sha, byte* hash);
 WOLFSSL_API int wc_ShaCopy(wc_Sha* src, wc_Sha* dst);
-#if defined(OPENSSL_EXTRA)
-WOLFSSL_API int wc_ShaTransform(wc_Sha* sha, const unsigned char* data);
-#endif
 
 #ifdef WOLFSSL_PIC32MZ_HASH
 WOLFSSL_API void wc_ShaSizeSet(wc_Sha* sha, word32 len);
@@ -207,6 +187,5 @@ WOLFSSL_API void wc_ShaSizeSet(wc_Sha* sha, word32 len);
     } /* extern "C" */
 #endif
 
-#endif /* NO_SHA */
 #endif /* WOLF_CRYPT_SHA_H */
 

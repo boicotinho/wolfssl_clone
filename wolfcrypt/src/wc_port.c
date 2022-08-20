@@ -29,12 +29,7 @@
 #include <wolfssl/wolfcrypt/error-crypt.h>
 #include <wolfssl/wolfcrypt/logging.h>
 #include <wolfssl/wolfcrypt/wc_port.h>
-#ifdef HAVE_ECC
     #include <wolfssl/wolfcrypt/ecc.h>
-#endif
-#ifdef WOLFSSL_ASYNC_CRYPT
-    #include <wolfssl/wolfcrypt/async.h>
-#endif
 
 /* IPP header files for library initialization */
 #ifdef HAVE_FAST_RSA
@@ -64,10 +59,6 @@
     #include <wolfssl/wolfcrypt/port/st/stsafe.h>
 #endif
 
-#if (defined(OPENSSL_EXTRA) || defined(HAVE_WEBSERVER)) \
-    && !defined(WOLFCRYPT_ONLY)
-    #include <wolfssl/openssl/evp.h>
-#endif
 
 #if defined(USE_WOLFSSL_MEMORY) && defined(WOLFSSL_TRACK_MEMORY)
     #include <wolfssl/wolfcrypt/memory.h>
@@ -86,9 +77,6 @@
     #include <wolfssl/wolfcrypt/port/nxp/dcp_port.h>
 #endif
 
-#ifdef WOLF_CRYPTO_CB
-    #include <wolfssl/wolfcrypt/cryptocb.h>
-#endif
 
 #ifdef HAVE_INTEL_QA_SYNC
     #include <wolfssl/wolfcrypt/port/intel/quickassist_sync.h>
@@ -110,10 +98,6 @@
     #include "rpcmem.h"
 #endif
 
-#ifdef _MSC_VER
-    /* 4996 warning to use MS extensions e.g., strcpy_s instead of strncpy */
-    #pragma warning(disable: 4996)
-#endif
 
 #if defined(WOLFSSL_HAVE_PSA)
     #include <wolfssl/wolfcrypt/port/psa/psa.h>
@@ -143,17 +127,7 @@ int wolfCrypt_Init(void)
         }
     #endif
 
-    #ifdef WOLF_CRYPTO_CB
-        wc_CryptoCb_Init();
-    #endif
 
-    #ifdef WOLFSSL_ASYNC_CRYPT
-        ret = wolfAsync_HardwareStart();
-        if (ret != 0) {
-            WOLFSSL_MSG("Async hardware start failed");
-            /* don't return failure, allow operation to continue */
-        }
-    #endif
 
     #if defined(WOLFSSL_RENESAS_TSIP_CRYPT)
         ret = tsip_Open( );
@@ -175,7 +149,7 @@ int wolfCrypt_Init(void)
         }
     #endif
 
-    #if defined(WOLFSSL_TRACK_MEMORY) && !defined(WOLFSSL_STATIC_MEMORY)
+    #if defined(WOLFSSL_TRACK_MEMORY)
         ret = InitMemoryTracker();
         if (ret != 0) {
             WOLFSSL_MSG("InitMemoryTracker failed");
@@ -267,11 +241,8 @@ int wolfCrypt_Init(void)
         WOLFSSL_MSG("Using AF_ALG for crypto acceleration");
     #endif
 
-    #if !defined(WOLFCRYPT_ONLY) && defined(OPENSSL_EXTRA)
-        wolfSSL_EVP_init();
-    #endif
 
-    #if defined(OPENSSL_EXTRA) || defined(DEBUG_WOLFSSL_VERBOSE)
+    #if defined(DEBUG_WOLFSSL_VERBOSE)
         if ((ret = wc_LoggingInit()) != 0) {
             WOLFSSL_MSG("Error creating logging mutex");
             return ret;
@@ -283,7 +254,6 @@ int wolfCrypt_Init(void)
             return ret;
     #endif
 
-#ifdef HAVE_ECC
     #ifdef FP_ECC
         wc_ecc_fp_init();
     #endif
@@ -293,7 +263,6 @@ int wolfCrypt_Init(void)
             return ret;
         }
     #endif
-#endif
 
 #ifdef WOLFSSL_SCE
         ret = (int)WOLFSSL_SCE_GSCE_HANDLE.p_api->open(
@@ -366,26 +335,21 @@ int wolfCrypt_Cleanup(void)
     if (initRefCount == 0) {
         WOLFSSL_ENTER("wolfCrypt_Cleanup");
 
-#ifdef HAVE_ECC
     #ifdef FP_ECC
         wc_ecc_fp_free();
     #endif
     #ifdef ECC_CACHE_CURVE
         wc_ecc_curve_cache_free();
     #endif
-#endif /* HAVE_ECC */
 
-    #if defined(OPENSSL_EXTRA) || defined(DEBUG_WOLFSSL_VERBOSE)
+    #if defined(DEBUG_WOLFSSL_VERBOSE)
         ret = wc_LoggingCleanup();
     #endif
 
-    #if defined(WOLFSSL_TRACK_MEMORY) && !defined(WOLFSSL_STATIC_MEMORY)
+    #if defined(WOLFSSL_TRACK_MEMORY)
         ShowMemoryTracker();
     #endif
 
-    #ifdef WOLFSSL_ASYNC_CRYPT
-        wolfAsync_HardwareStop();
-    #endif
 
     #ifdef WOLFSSL_RENESAS_TSIP
         tsip_Close();
@@ -501,11 +465,7 @@ int wc_FileExists(const char* fname)
          WOLFSSL_MSG("stat on name failed");
          return BAD_PATH_ERROR;
     } else {
-#if defined(USE_WINDOWS_API)
-        if (XS_ISREG(ctx.s.st_mode)) {
-            return 0;
-        }
-#elif defined(WOLFSSL_ZEPHYR)
+#if defined(WOLFSSL_ZEPHYR)
         if (XS_ISREG(ctx.s.type)) {
             return 0;
         }
@@ -540,38 +500,7 @@ int wc_ReadDirFirst(ReadDirCtx* ctx, const char* path, char** name)
     XMEMSET(ctx, 0, sizeof(ReadDirCtx));
     pathLen = (int)XSTRLEN(path);
 
-#ifdef USE_WINDOWS_API
-    if (pathLen > MAX_FILENAME_SZ - 3)
-        return BAD_PATH_ERROR;
-
-    XSTRNCPY(ctx->name, path, MAX_FILENAME_SZ - 3);
-    XSTRNCPY(ctx->name + pathLen, "\\*", MAX_FILENAME_SZ - pathLen);
-
-    ctx->hFind = FindFirstFileA(ctx->name, &ctx->FindFileData);
-    if (ctx->hFind == INVALID_HANDLE_VALUE) {
-        WOLFSSL_MSG("FindFirstFile for path verify locations failed");
-        return BAD_PATH_ERROR;
-    }
-
-    do {
-        if (!(ctx->FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
-            dnameLen = (int)XSTRLEN(ctx->FindFileData.cFileName);
-
-            if (pathLen + dnameLen + 2 > MAX_FILENAME_SZ) {
-                return BAD_PATH_ERROR;
-            }
-            XSTRNCPY(ctx->name, path, pathLen + 1);
-            ctx->name[pathLen] = '\\';
-            XSTRNCPY(ctx->name + pathLen + 1,
-                     ctx->FindFileData.cFileName,
-                     MAX_FILENAME_SZ - pathLen - 1);
-            if (name)
-                *name = ctx->name;
-            return 0;
-        }
-    } while (FindNextFileA(ctx->hFind, &ctx->FindFileData));
-
-#elif defined(INTIME_RTOS)
+#if defined(INTIME_RTOS)
     if (pathLen > MAX_FILENAME_SZ - 3)
         return BAD_PATH_ERROR;
 
@@ -706,26 +635,7 @@ int wc_ReadDirNext(ReadDirCtx* ctx, const char* path, char** name)
     XMEMSET(ctx->name, 0, MAX_FILENAME_SZ);
     pathLen = (int)XSTRLEN(path);
 
-#ifdef USE_WINDOWS_API
-    while (FindNextFileA(ctx->hFind, &ctx->FindFileData)) {
-        if (!(ctx->FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
-            dnameLen = (int)XSTRLEN(ctx->FindFileData.cFileName);
-
-            if (pathLen + dnameLen + 2 > MAX_FILENAME_SZ) {
-                return BAD_PATH_ERROR;
-            }
-            XSTRNCPY(ctx->name, path, pathLen + 1);
-            ctx->name[pathLen] = '\\';
-            XSTRNCPY(ctx->name + pathLen + 1,
-                     ctx->FindFileData.cFileName,
-                     MAX_FILENAME_SZ - pathLen - 1);
-            if (name)
-                *name = ctx->name;
-            return 0;
-        }
-    }
-
-#elif defined(INTIME_RTOS)
+#if defined(INTIME_RTOS)
     while (IntimeFindNext(&ctx->FindFileData)) {
         dnameLen = (int)XSTRLEN(IntimeFilename(ctx));
 
@@ -821,13 +731,7 @@ void wc_ReadDirClose(ReadDirCtx* ctx)
         return;
     }
 
-#ifdef USE_WINDOWS_API
-    if (ctx->hFind != INVALID_HANDLE_VALUE) {
-        FindClose(ctx->hFind);
-        ctx->hFind = INVALID_HANDLE_VALUE;
-    }
-
-#elif defined(INTIME_RTOS)
+#if defined(INTIME_RTOS)
     IntimeFindClose(&ctx->FindFileData);
 
 #elif defined(WOLFSSL_ZEPHYR)
@@ -1058,68 +962,7 @@ int wolfSSL_CryptHwMutexUnLock(void)
 /* ---------------------------------------------------------------------------*/
 /* Mutex Ports */
 /* ---------------------------------------------------------------------------*/
-#if defined(OPENSSL_EXTRA) || defined(HAVE_WEBSERVER)
-    static mutex_cb*     compat_mutex_cb = NULL;
-
-    /* Function that locks or unlocks a mutex based on the flag passed in.
-     *
-     * flag lock or unlock i.e. CRYPTO_LOCK
-     * type the type of lock to unlock or lock
-     * file name of the file calling
-     * line the line number from file calling
-     */
-    int wc_LockMutex_ex(int flag, int type, const char* file, int line)
-    {
-        if (compat_mutex_cb != NULL) {
-            compat_mutex_cb(flag, type, file, line);
-            return 0;
-        }
-        else {
-            WOLFSSL_MSG("Mutex call back function not set. Call wc_SetMutexCb");
-            return BAD_STATE_E;
-        }
-    }
-
-
-    /* Set the callback function to use for locking/unlocking mutex
-     *
-     * cb callback function to use
-     */
-    int wc_SetMutexCb(mutex_cb* cb)
-    {
-        compat_mutex_cb = cb;
-        return 0;
-    }
-#endif /* defined(OPENSSL_EXTRA) || defined(HAVE_WEBSERVER) */
-#ifdef SINGLE_THREADED
-
-    int wc_InitMutex(wolfSSL_Mutex* m)
-    {
-        (void)m;
-        return 0;
-    }
-
-    int wc_FreeMutex(wolfSSL_Mutex *m)
-    {
-        (void)m;
-        return 0;
-    }
-
-
-    int wc_LockMutex(wolfSSL_Mutex *m)
-    {
-        (void)m;
-        return 0;
-    }
-
-
-    int wc_UnLockMutex(wolfSSL_Mutex *m)
-    {
-        (void)m;
-        return 0;
-    }
-
-#elif defined(FREERTOS) || defined(FREERTOS_TCP) || \
+#if defined(FREERTOS) || defined(FREERTOS_TCP) || \
   defined(FREESCALE_FREE_RTOS)
 
     int wc_InitMutex(wolfSSL_Mutex* m)
@@ -1215,35 +1058,6 @@ int wolfSSL_CryptHwMutexUnLock(void)
     int wc_UnLockMutex(wolfSSL_Mutex* m)
     {
         xSemaphoreGive(m->mutex);
-        return 0;
-    }
-
-#elif defined(USE_WINDOWS_API)
-
-    int wc_InitMutex(wolfSSL_Mutex* m)
-    {
-        InitializeCriticalSection(m);
-        return 0;
-    }
-
-
-    int wc_FreeMutex(wolfSSL_Mutex* m)
-    {
-        DeleteCriticalSection(m);
-        return 0;
-    }
-
-
-    int wc_LockMutex(wolfSSL_Mutex* m)
-    {
-        EnterCriticalSection(m);
-        return 0;
-    }
-
-
-    int wc_UnLockMutex(wolfSSL_Mutex* m)
-    {
-        LeaveCriticalSection(m);
         return 0;
     }
 
@@ -1515,83 +1329,6 @@ int wolfSSL_CryptHwMutexUnLock(void)
         OSMutexPost(m, OS_OPT_POST_NONE, &err);
 
         if (MICRIUM_ERR_CODE(err) == MICRIUM_ERR_NONE)
-            return 0;
-        else
-            return BAD_MUTEX_E;
-    }
-
-#elif defined(EBSNET)
-
-    int wc_InitMutex(wolfSSL_Mutex* m)
-    {
-        if (rtp_sig_mutex_alloc(m, "wolfSSL Mutex") == -1)
-            return BAD_MUTEX_E;
-        else
-            return 0;
-    }
-
-    int wc_FreeMutex(wolfSSL_Mutex* m)
-    {
-        rtp_sig_mutex_free(*m);
-        return 0;
-    }
-
-    int wc_LockMutex(wolfSSL_Mutex* m)
-    {
-        if (rtp_sig_mutex_claim_timed(*m, RTIP_INF) == 0)
-            return 0;
-        else
-            return BAD_MUTEX_E;
-    }
-
-    int wc_UnLockMutex(wolfSSL_Mutex* m)
-    {
-        rtp_sig_mutex_release(*m);
-        return 0;
-    }
-
-    int ebsnet_fseek(int a, long b, int c)
-    {
-        int retval;
-
-        retval = vf_lseek(a, b, c);
-        if (retval > 0)
-            retval = 0;
-        else
-            retval =  -1;
-
-        return(retval);
-    }
-
-#elif defined(FREESCALE_MQX) || defined(FREESCALE_KSDK_MQX)
-
-    int wc_InitMutex(wolfSSL_Mutex* m)
-    {
-        if (_mutex_init(m, NULL) == MQX_EOK)
-            return 0;
-        else
-            return BAD_MUTEX_E;
-    }
-
-    int wc_FreeMutex(wolfSSL_Mutex* m)
-    {
-        if (_mutex_destroy(m) == MQX_EOK)
-            return 0;
-        else
-            return BAD_MUTEX_E;
-    }
-
-    int wc_LockMutex(wolfSSL_Mutex* m)
-    {
-        if (_mutex_lock(m) == MQX_EOK)
-            return 0;
-        else
-            return BAD_MUTEX_E;
-    }
-
-    int wc_UnLockMutex(wolfSSL_Mutex* m)
-    {
-        if (_mutex_unlock(m) == MQX_EOK)
             return 0;
         else
             return BAD_MUTEX_E;
@@ -2288,9 +2025,7 @@ struct tm* gmtime(const time_t* timer)
     }
 
     ret->tm_mday  = (int)++dayno;
-#ifndef WOLFSSL_LINUXKM
     ret->tm_isdst = 0;
-#endif
 
     return ret;
 }
@@ -2384,21 +2119,6 @@ time_t micrium_time(time_t* timer)
 
 #endif /* MICRIUM */
 
-#if defined(FREESCALE_MQX) || defined(FREESCALE_KSDK_MQX)
-
-time_t mqx_time(time_t* timer)
-{
-    TIME_STRUCT time_s;
-
-    _time_get(&time_s);
-
-    if (timer != NULL)
-        *timer = (time_t)time_s.SECONDS;
-
-    return (time_t)time_s.SECONDS;
-}
-
-#endif /* FREESCALE_MQX || FREESCALE_KSDK_MQX */
 
 
 #if defined(WOLFSSL_TIRTOS) && defined(USER_TIME)
@@ -2494,23 +2214,6 @@ time_t wiced_pseudo_unix_epoch_time(time_t * timer)
         }
         return myTime;
     }
-    #ifdef WOLFSSL_TLS13
-    time_t m2mb_xtime_ms(time_t * timer)
-    {
-        time_t myTime = 0;
-        INT32 fd = m2mb_rtc_open("/dev/rtc0", 0);
-        if (fd != -1) {
-            M2MB_RTC_TIMEVAL_T timeval;
-
-            m2mb_rtc_ioctl(fd, M2MB_RTC_IOCTL_GET_TIMEVAL, &timeval);
-
-            myTime = timeval.sec + timeval.msec;
-
-            m2mb_rtc_close(fd);
-        }
-        return myTime;
-    }
-    #endif /* WOLFSSL_TLS13 */
     #ifndef NO_CRYPT_BENCHMARK
     double m2mb_xtime_bench(int reset)
     {
@@ -2531,28 +2234,6 @@ time_t wiced_pseudo_unix_epoch_time(time_t * timer)
 #endif /* WOLFSSL_TELIT_M2MB */
 
 
-#if defined(WOLFSSL_LINUXKM)
-time_t time(time_t * timer)
-{
-    time_t ret;
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)
-    struct timespec ts;
-    getnstimeofday(&ts);
-    ret = ts.tv_sec;
-#else
-    struct timespec64 ts;
-#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 0, 0)
-    ts = current_kernel_time64();
-#else
-    ktime_get_coarse_real_ts64(&ts);
-#endif
-    ret = ts.tv_sec;
-#endif
-    if (timer)
-        *timer = ret;
-    return ret;
-}
-#endif /* WOLFSSL_LINUXKM */
 
 #ifdef HAL_RTC_MODULE_ENABLED
 extern RTC_HandleTypeDef hrtc;
@@ -2663,55 +2344,6 @@ char* mystrnstr(const char* s1, const char* s2, unsigned int n)
 
 #endif /* WOLFSSL_NUCLEUS_1_2 */
 
-#if defined(WOLFSSL_LINUXKM) && defined(HAVE_KVMALLOC)
-    /* adapted from kvrealloc() draft by Changli Gao, 2010-05-13 */
-    void *lkm_realloc(void *ptr, size_t newsize) {
-        void *nptr;
-        size_t oldsize;
-
-        if (unlikely(newsize == 0)) {
-            kvfree(ptr);
-            return ZERO_SIZE_PTR;
-        }
-
-        if (unlikely(ptr == NULL))
-            return kvmalloc_node(newsize, GFP_KERNEL, NUMA_NO_NODE);
-
-        if (is_vmalloc_addr(ptr)) {
-            /* no way to discern the size of the old allocation,
-             * because the kernel doesn't export find_vm_area().  if
-             * it did, we could then call get_vm_area_size() on the
-             * returned struct vm_struct.
-             */
-            return NULL;
-        } else {
-#ifndef __PIE__
-            struct page *page;
-
-            page = virt_to_head_page(ptr);
-            if (PageSlab(page) || PageCompound(page)) {
-                if (newsize < PAGE_SIZE)
-#endif /* ! __PIE__ */
-                    return krealloc(ptr, newsize, GFP_KERNEL);
-#ifndef __PIE__
-                oldsize = ksize(ptr);
-            } else {
-                oldsize = page->private;
-                if (newsize <= oldsize)
-                    return ptr;
-            }
-#endif /* ! __PIE__ */
-        }
-
-        nptr = kvmalloc_node(newsize, GFP_KERNEL, NUMA_NO_NODE);
-        if (nptr != NULL) {
-            memcpy(nptr, ptr, oldsize);
-            kvfree(ptr);
-        }
-
-        return nptr;
-    }
-#endif /* WOLFSSL_LINUXKM && HAVE_KVMALLOC */
 
 #if defined(WOLFSSL_TI_CRYPT) || defined(WOLFSSL_TI_HASH)
     #include <wolfcrypt/src/port/ti/ti-ccm.c>  /* initialize and Mutex for TI Crypt Engine */
@@ -2721,8 +2353,6 @@ char* mystrnstr(const char* s1, const char* s2, unsigned int n)
 #if defined(WOLFSSL_CRYPTOCELL)
     #define WOLFSSL_CRYPTOCELL_C
     #include <wolfcrypt/src/port/arm/cryptoCell.c> /* CC310, RTC and RNG */
-    #if !defined(NO_SHA256)
         #define WOLFSSL_CRYPTOCELL_HASH_C
         #include <wolfcrypt/src/port/arm/cryptoCellHash.c> /* sha256 */
-    #endif
 #endif

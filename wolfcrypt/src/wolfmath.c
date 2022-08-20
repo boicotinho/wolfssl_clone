@@ -34,23 +34,13 @@
 #include <wolfssl/wolfcrypt/error-crypt.h>
 #include <wolfssl/wolfcrypt/logging.h>
 
-#if defined(USE_FAST_MATH) || !defined(NO_BIG_INT)
 
-#ifdef WOLFSSL_ASYNC_CRYPT
-    #include <wolfssl/wolfcrypt/async.h>
-#endif
 
-#ifdef NO_INLINE
-    #include <wolfssl/wolfcrypt/misc.h>
-#else
     #define WOLFSSL_MISC_INCLUDED
     #include <wolfcrypt/src/misc.c>
-#endif
 
 
-#if !defined(WC_NO_CACHE_RESISTANT) && \
-    ((defined(HAVE_ECC) && defined(ECC_TIMING_RESISTANT)) || \
-     (defined(USE_FAST_MATH) && defined(TFM_TIMING_RESISTANT)))
+#if !defined(WC_NO_CACHE_RESISTANT) &&  ( defined(ECC_TIMING_RESISTANT) ||  defined(TFM_TIMING_RESISTANT))
 
     /* all off / all on pointer addresses for constant calculations */
     /* ecc.c uses same table */
@@ -87,7 +77,6 @@ mp_digit get_digit(const mp_int* a, int n)
     return (n >= a->used || n < 0) ? 0 : a->dp[n];
 }
 
-#if defined(HAVE_ECC) || defined(WOLFSSL_MP_COND_COPY)
 /* Conditionally copy a into b. Performed in constant time.
  *
  * a     MP integer to copy.
@@ -134,7 +123,6 @@ int mp_cond_copy(mp_int* a, int copy, mp_int* b)
 
     return err;
 }
-#endif
 
 #ifndef WC_NO_RNG
 int get_rand_digit(WC_RNG* rng, mp_digit* d)
@@ -147,9 +135,6 @@ int mp_rand(mp_int* a, int digits, WC_RNG* rng)
 {
     int ret = 0;
     int cnt = digits * sizeof(mp_digit);
-#if !defined(USE_FAST_MATH) && !defined(WOLFSSL_SP_MATH)
-    int i;
-#endif
 
     if (rng == NULL) {
         ret = MISSING_RNG_E;
@@ -158,12 +143,6 @@ int mp_rand(mp_int* a, int digits, WC_RNG* rng)
         ret = BAD_FUNC_ARG;
     }
 
-#if !defined(USE_FAST_MATH) && !defined(WOLFSSL_SP_MATH)
-    /* allocate space for digits */
-    if (ret == MP_OKAY) {
-        ret = mp_set_bit(a, digits * DIGIT_BIT - 1);
-    }
-#else
 #if defined(WOLFSSL_SP_MATH) || defined(WOLFSSL_SP_MATH_ALL)
     if ((ret == MP_OKAY) && (digits > SP_INT_DIGITS))
 #else
@@ -175,24 +154,14 @@ int mp_rand(mp_int* a, int digits, WC_RNG* rng)
     if (ret == MP_OKAY) {
         a->used = digits;
     }
-#endif
     /* fill the data with random bytes */
     if (ret == MP_OKAY) {
         ret = wc_RNG_GenerateBlock(rng, (byte*)a->dp, cnt);
     }
     if (ret == MP_OKAY) {
-#if !defined(USE_FAST_MATH) && !defined(WOLFSSL_SP_MATH)
-        /* Mask down each digit to only bits used */
-        for (i = 0; i < a->used; i++) {
-            a->dp[i] &= MP_MASK;
-        }
-#endif
         /* ensure top digit is not zero */
         while ((ret == MP_OKAY) && (a->dp[a->used - 1] == 0)) {
             ret = get_rand_digit(rng, &a->dp[a->used - 1]);
-#if !defined(USE_FAST_MATH) && !defined(WOLFSSL_SP_MATH)
-            a->dp[a->used - 1] &= MP_MASK;
-#endif
         }
     }
 
@@ -201,7 +170,6 @@ int mp_rand(mp_int* a, int digits, WC_RNG* rng)
 #endif /* WC_RSA_BLINDING || WOLFCRYPT_HAVE_SAKKE */
 #endif
 
-#if defined(HAVE_ECC) || defined(WOLFSSL_EXPORT_INT)
 /* export an mp_int as unsigned char or hex string
  * encType is WC_TYPE_UNSIGNED_BIN or WC_TYPE_HEX_STR
  * return MP_OKAY on success */
@@ -246,7 +214,6 @@ int wc_export_int(mp_int* mp, byte* buf, word32* len, word32 keySz,
 
     return err;
 }
-#endif
 
 
 #ifdef HAVE_WOLF_BIGINT
@@ -399,4 +366,3 @@ int wc_bigint_to_mp(WC_BIGINT* src, mp_int* dst)
 }
 #endif /* HAVE_WOLF_BIGINT */
 
-#endif /* USE_FAST_MATH || !NO_BIG_INT */

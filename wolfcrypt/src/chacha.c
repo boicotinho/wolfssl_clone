@@ -38,18 +38,14 @@ Public domain.
 
 #include <wolfssl/wolfcrypt/settings.h>
 
-#if defined(HAVE_CHACHA) && !defined(WOLFSSL_ARMASM)
+#if !defined(WOLFSSL_ARMASM)
 
 #include <wolfssl/wolfcrypt/chacha.h>
 #include <wolfssl/wolfcrypt/error-crypt.h>
 #include <wolfssl/wolfcrypt/logging.h>
 #include <wolfssl/wolfcrypt/cpuid.h>
-#ifdef NO_INLINE
-    #include <wolfssl/wolfcrypt/misc.h>
-#else
     #define WOLFSSL_MISC_INCLUDED
     #include <wolfcrypt/src/misc.c>
-#endif
 
 #ifdef CHACHA_AEAD_TEST
     #include <stdio.h>

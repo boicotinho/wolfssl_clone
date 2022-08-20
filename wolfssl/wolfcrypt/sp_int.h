@@ -27,19 +27,13 @@ This library provides single precision (SP) integer math functions.
 #ifndef WOLF_CRYPT_SP_INT_H
 #define WOLF_CRYPT_SP_INT_H
 
-#ifndef WOLFSSL_LINUXKM
 #include <limits.h>
-#endif
 #include  <wolfssl/wolfcrypt/settings.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#if defined(OPENSSL_EXTRA) && !defined(NO_ASN) && \
-    !defined(WOLFSSL_SP_INT_NEGATIVE)
-    #define WOLFSSL_SP_INT_NEGATIVE
-#endif
 
 /* Find smallest type for smallest bits. */
 #if UCHAR_MAX == 255
@@ -95,9 +89,7 @@ extern "C" {
     #error "Size of unsigned int not detected"
 #endif
 
-#if ULONG_MAX == 18446744073709551615ULL && \
-        4294967295UL != 18446744073709551615ULL /* verify pre-processor supports
-                                                * 64-bit ULL types */
+#if ULONG_MAX == 18446744073709551615ULL /* verify pre-processor supports * 64-bit ULL types */
     #define SP_ULONG_BITS    64
 
     typedef unsigned long sp_uint64;
@@ -167,9 +159,6 @@ extern "C" {
 #ifdef SP_WORD_SIZE
 #elif defined(WOLFSSL_DSP_BUILD)
     #define SP_WORD_SIZE 32
-#elif defined(WOLFSSL_SP_X86_64) && !defined(WOLFSSL_SP_X86_64_ASM) && \
-      !defined(HAVE___UINT128_T)
-    #define SP_WORD_SIZE 32
 #elif defined(WOLFSSL_SP_X86_64_ASM) || defined(WOLFSSL_SP_X86_64)
     #if SP_ULONG_BITS == 64 || SP_ULLONG_BITS == 64
         #define SP_WORD_SIZE 64
@@ -212,7 +201,7 @@ extern "C" {
  * with compiler.
  */
 #ifndef SP_WORD_SIZE
-    #if defined(NO_64BIT) || !defined(HAVE___UINT128_T)
+    #if defined(NO_64BIT)
         #define SP_WORD_SIZE 32
     #else
         #define SP_WORD_SIZE 64
@@ -223,7 +212,6 @@ extern "C" {
 #define SP_WORD_SIZEOF  (SP_WORD_SIZE / 8)
 
 /* Define the types used. */
-#ifdef HAVE___UINT128_T
     #ifdef __SIZEOF_INT128__
         typedef __uint128_t   sp_uint128;
         typedef  __int128_t    sp_int128;
@@ -241,7 +229,6 @@ extern "C" {
         #endif
         #define WOLFSSL_UINT128_T_DEFINED
     #endif
-#endif
 
 #if SP_WORD_SIZE == 8
     typedef   sp_uint8  sp_int_digit;
@@ -373,19 +360,7 @@ typedef struct sp_ecc_ctx {
      */
     #if !defined(WOLFSSL_HAVE_SP_RSA) && !defined(WOLFSSL_HAVE_SP_DH) && \
         !defined(WOLFSSL_HAVE_SP_ECC)
-        #if !defined(NO_RSA) || !defined(NO_DH) || !defined(NO_DSA)
             #define SP_INT_DIGITS        (((6144 + SP_WORD_SIZE) / SP_WORD_SIZE) + 1)
-        #elif defined(WOLFCRYPT_HAVE_SAKKE)
-            #define SP_INT_DIGITS   \
-                    (((2 * (1024 + SP_WORD_SIZE) + SP_WORD_SIZE) / SP_WORD_SIZE) + 1)
-        #elif defined(HAVE_ECC)
-            #define SP_INT_DIGITS   \
-                    (((2 * ( 521 + SP_WORD_SIZE) + SP_WORD_SIZE) / SP_WORD_SIZE) + 1)
-        #elif !defined(NO_PWDBASED) && defined(WOLFSSL_SHA512)
-            #define SP_INT_DIGITS        ((( 512 + SP_WORD_SIZE) / SP_WORD_SIZE) + 1)
-        #else
-            #define SP_INT_DIGITS        ((( 256 + SP_WORD_SIZE) / SP_WORD_SIZE) + 1)
-        #endif
     #elif !defined(WOLFSSL_HAVE_SP_RSA) && !defined(WOLFSSL_HAVE_SP_DH)
         #if defined(WOLFCRYPT_HAVE_SAKKE)
             #define SP_INT_DIGITS   \
@@ -801,7 +776,7 @@ MP_API int sp_cmp(sp_int* a, sp_int* b);
 
 MP_API int sp_is_bit_set(sp_int* a, unsigned int b);
 MP_API int sp_count_bits(const sp_int* a);
-#if defined(HAVE_ECC) && defined(HAVE_COMP_KEY)
+#if defined(HAVE_COMP_KEY)
 MP_API int sp_cnt_lsb(sp_int* a);
 #endif
 MP_API int sp_leading_bit(sp_int* a);
@@ -819,11 +794,10 @@ MP_API int sp_mul_d(sp_int* a, sp_int_digit d, sp_int* r);
     defined(WC_MP_TO_RADIX)
 MP_API int sp_div_d(sp_int* a, sp_int_digit d, sp_int* r, sp_int_digit* rem);
 #endif
-#if defined(WOLFSSL_SP_MATH_ALL) || (defined(HAVE_ECC) && \
-    defined(HAVE_COMP_KEY))
+#if defined(WOLFSSL_SP_MATH_ALL) ||  defined(HAVE_COMP_KEY)
 MP_API int sp_mod_d(sp_int* a, sp_int_digit d, sp_int_digit* r);
 #endif
-#if defined(WOLFSSL_SP_MATH_ALL) && defined(HAVE_ECC)
+#if defined(WOLFSSL_SP_MATH_ALL)
 MP_API int sp_div_2_mod_ct (sp_int* a, sp_int* b, sp_int* c);
 MP_API int sp_div_2(sp_int* a, sp_int* r);
 #endif
@@ -838,7 +812,7 @@ MP_API int sp_addmod(sp_int* a, sp_int* b, sp_int* m, sp_int* r);
 #if defined(WOLFSSL_SP_MATH_ALL) && !defined(WOLFSSL_RSA_VERIFY_ONLY)
 MP_API int sp_submod(sp_int* a, sp_int* b, sp_int* m, sp_int* r);
 #endif
-#if defined(WOLFSSL_SP_MATH_ALL) && defined(HAVE_ECC)
+#if defined(WOLFSSL_SP_MATH_ALL)
 MP_API int sp_submod_ct (sp_int* a, sp_int* b, sp_int* c, sp_int* d);
 MP_API int sp_addmod_ct (sp_int* a, sp_int* b, sp_int* c, sp_int* d);
 #endif
@@ -856,7 +830,7 @@ MP_API int sp_mul(sp_int* a, sp_int* b, sp_int* r);
 MP_API int sp_mulmod(sp_int* a, sp_int* b, sp_int* m, sp_int* r);
 
 MP_API int sp_invmod(sp_int* a, sp_int* m, sp_int* r);
-#if defined(WOLFSSL_SP_MATH_ALL) && defined(HAVE_ECC)
+#if defined(WOLFSSL_SP_MATH_ALL)
 MP_API int sp_invmod_mont_ct(sp_int* a, sp_int* m, sp_int* r, sp_int_digit mp);
 #endif
 
@@ -899,10 +873,10 @@ MP_API int sp_radix_size(mp_int* a, int radix, int* size);
 MP_API int sp_rand_prime(sp_int* r, int len, WC_RNG* rng, void* heap);
 MP_API int sp_prime_is_prime(mp_int* a, int t, int* result);
 MP_API int sp_prime_is_prime_ex(mp_int* a, int t, int* result, WC_RNG* rng);
-#if !defined(NO_RSA) && defined(WOLFSSL_KEY_GEN)
+#if defined(WOLFSSL_KEY_GEN)
 MP_API int sp_gcd(sp_int* a, sp_int* b, sp_int* r);
 #endif
-#if !defined(NO_RSA) && defined(WOLFSSL_KEY_GEN) && !defined(WC_RSA_BLINDING)
+#if defined(WOLFSSL_KEY_GEN) && !defined(WC_RSA_BLINDING)
 MP_API int sp_lcm(sp_int* a, sp_int* b, sp_int* r);
 #endif
 

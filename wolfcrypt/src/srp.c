@@ -32,12 +32,8 @@
 #include <wolfssl/wolfcrypt/random.h>
 #include <wolfssl/wolfcrypt/error-crypt.h>
 
-#ifdef NO_INLINE
-    #include <wolfssl/wolfcrypt/misc.h>
-#else
     #define WOLFSSL_MISC_INCLUDED
     #include <wolfcrypt/src/misc.c>
-#endif
 
 /** Computes the session key using the Mask Generation Function 1. */
 static int wc_SrpSetKey(Srp* srp, byte* secret, word32 size);
@@ -48,32 +44,16 @@ static int SrpHashInit(SrpHash* hash, SrpType type, void* heap)
 
     switch (type) {
         case SRP_TYPE_SHA:
-            #ifndef NO_SHA
                 return wc_InitSha_ex(&hash->data.sha, heap, INVALID_DEVID);
-            #else
-                return BAD_FUNC_ARG;
-            #endif
 
         case SRP_TYPE_SHA256:
-            #ifndef NO_SHA256
                 return wc_InitSha256_ex(&hash->data.sha256, heap, INVALID_DEVID);
-            #else
-                return BAD_FUNC_ARG;
-            #endif
 
         case SRP_TYPE_SHA384:
-            #ifdef WOLFSSL_SHA384
                 return wc_InitSha384_ex(&hash->data.sha384, heap, INVALID_DEVID);
-            #else
-                return BAD_FUNC_ARG;
-            #endif
 
         case SRP_TYPE_SHA512:
-            #ifdef WOLFSSL_SHA512
                 return wc_InitSha512_ex(&hash->data.sha512, heap, INVALID_DEVID);
-            #else
-                return BAD_FUNC_ARG;
-            #endif
 
         default:
             return BAD_FUNC_ARG;
@@ -84,32 +64,16 @@ static int SrpHashUpdate(SrpHash* hash, const byte* data, word32 size)
 {
     switch (hash->type) {
         case SRP_TYPE_SHA:
-            #ifndef NO_SHA
                 return wc_ShaUpdate(&hash->data.sha, data, size);
-            #else
-                return BAD_FUNC_ARG;
-            #endif
 
         case SRP_TYPE_SHA256:
-            #ifndef NO_SHA256
                 return wc_Sha256Update(&hash->data.sha256, data, size);
-            #else
-                return BAD_FUNC_ARG;
-            #endif
 
         case SRP_TYPE_SHA384:
-            #ifdef WOLFSSL_SHA384
                 return wc_Sha384Update(&hash->data.sha384, data, size);
-            #else
-                return BAD_FUNC_ARG;
-            #endif
 
         case SRP_TYPE_SHA512:
-            #ifdef WOLFSSL_SHA512
                 return wc_Sha512Update(&hash->data.sha512, data, size);
-            #else
-                return BAD_FUNC_ARG;
-            #endif
 
         default:
             return BAD_FUNC_ARG;
@@ -120,32 +84,16 @@ static int SrpHashFinal(SrpHash* hash, byte* digest)
 {
     switch (hash->type) {
         case SRP_TYPE_SHA:
-            #ifndef NO_SHA
                 return wc_ShaFinal(&hash->data.sha, digest);
-            #else
-                return BAD_FUNC_ARG;
-            #endif
 
         case SRP_TYPE_SHA256:
-            #ifndef NO_SHA256
                 return wc_Sha256Final(&hash->data.sha256, digest);
-            #else
-                return BAD_FUNC_ARG;
-            #endif
 
         case SRP_TYPE_SHA384:
-            #ifdef WOLFSSL_SHA384
                 return wc_Sha384Final(&hash->data.sha384, digest);
-            #else
-                return BAD_FUNC_ARG;
-            #endif
 
         case SRP_TYPE_SHA512:
-            #ifdef WOLFSSL_SHA512
                 return wc_Sha512Final(&hash->data.sha512, digest);
-            #else
-                return BAD_FUNC_ARG;
-            #endif
 
         default:
             return BAD_FUNC_ARG;
@@ -156,32 +104,16 @@ static word32 SrpHashSize(SrpType type)
 {
     switch (type) {
         case SRP_TYPE_SHA:
-            #ifndef NO_SHA
                 return WC_SHA_DIGEST_SIZE;
-            #else
-                return 0;
-            #endif
 
         case SRP_TYPE_SHA256:
-            #ifndef NO_SHA256
                 return WC_SHA256_DIGEST_SIZE;
-            #else
-                return 0;
-            #endif
 
         case SRP_TYPE_SHA384:
-            #ifdef WOLFSSL_SHA384
                 return WC_SHA384_DIGEST_SIZE;
-            #else
-                return 0;
-            #endif
 
         case SRP_TYPE_SHA512:
-            #ifdef WOLFSSL_SHA512
                 return WC_SHA512_DIGEST_SIZE;
-            #else
-                return 0;
-            #endif
 
         default:
             return 0;
@@ -192,24 +124,16 @@ static void SrpHashFree(SrpHash* hash)
 {
     switch (hash->type) {
         case SRP_TYPE_SHA:
-        #ifndef NO_SHA
             wc_ShaFree(&hash->data.sha);
-        #endif
             break;
         case SRP_TYPE_SHA256:
-        #ifndef NO_SHA256
             wc_Sha256Free(&hash->data.sha256);
-        #endif
             break;
         case SRP_TYPE_SHA384:
-        #ifdef WOLFSSL_SHA384
             wc_Sha384Free(&hash->data.sha384);
-        #endif
             break;
         case SRP_TYPE_SHA512:
-        #ifdef WOLFSSL_SHA512
             wc_Sha512Free(&hash->data.sha512);
-        #endif
             break;
         default:
             break;
@@ -231,32 +155,16 @@ int wc_SrpInit_ex(Srp* srp, SrpType type, SrpSide side, void* heap, int devId)
 
     switch (type) {
         case SRP_TYPE_SHA:
-            #ifdef NO_SHA
-                return NOT_COMPILED_IN;
-            #else
                 break; /* OK */
-            #endif
 
         case SRP_TYPE_SHA256:
-            #ifdef NO_SHA256
-                return NOT_COMPILED_IN;
-            #else
                 break; /* OK */
-            #endif
 
         case SRP_TYPE_SHA384:
-            #ifndef WOLFSSL_SHA384
-                return NOT_COMPILED_IN;
-            #else
                 break; /* OK */
-            #endif
 
         case SRP_TYPE_SHA512:
-            #ifndef WOLFSSL_SHA512
-                return NOT_COMPILED_IN;
-            #else
                 break; /* OK */
-            #endif
 
         default:
             return BAD_FUNC_ARG;
@@ -472,11 +380,7 @@ int wc_SrpSetPassword(Srp* srp, const byte* password, word32 size)
 
 int wc_SrpGetVerifier(Srp* srp, byte* verifier, word32* size)
 {
-#ifdef WOLFSSL_SMALL_STACK
-    mp_int *v = NULL;
-#else
     mp_int v[1];
-#endif
     int r;
 
     if (!srp || !verifier || !size || srp->side != SRP_CLIENT_SIDE)
@@ -485,10 +389,6 @@ int wc_SrpGetVerifier(Srp* srp, byte* verifier, word32* size)
     if (mp_iszero(&srp->auth) == MP_YES)
         return SRP_CALL_ORDER_E;
 
-#ifdef WOLFSSL_SMALL_STACK
-    if ((v = (mp_int *)XMALLOC(sizeof(*v), srp->heap, DYNAMIC_TYPE_TMP_BUFFER)) == NULL)
-        return MEMORY_E;
-#endif
 
     r = mp_init(v);
     if (r != MP_OKAY)
@@ -500,9 +400,6 @@ int wc_SrpGetVerifier(Srp* srp, byte* verifier, word32* size)
     if (!r) *size = mp_unsigned_bin_size(v);
 
     mp_clear(v);
-#ifdef WOLFSSL_SMALL_STACK
-    XFREE(v, srp->heap, DYNAMIC_TYPE_TMP_BUFFER);
-#endif
 
     return r;
 }
@@ -517,11 +414,7 @@ int wc_SrpSetVerifier(Srp* srp, const byte* verifier, word32 size)
 
 int wc_SrpSetPrivate(Srp* srp, const byte* priv, word32 size)
 {
-#ifdef WOLFSSL_SMALL_STACK
-    mp_int *p = NULL;
-#else
     mp_int p[1];
-#endif
     int r;
 
     if (!srp || !priv || !size)
@@ -530,10 +423,6 @@ int wc_SrpSetPrivate(Srp* srp, const byte* priv, word32 size)
     if (mp_iszero(&srp->auth) == MP_YES)
         return SRP_CALL_ORDER_E;
 
-#ifdef WOLFSSL_SMALL_STACK
-    if ((p = (mp_int *)XMALLOC(sizeof(*p), srp->heap, DYNAMIC_TYPE_TMP_BUFFER)) == NULL)
-        return MEMORY_E;
-#endif
 
     r = mp_init(p);
     if (r != MP_OKAY)
@@ -543,9 +432,6 @@ int wc_SrpSetPrivate(Srp* srp, const byte* priv, word32 size)
     if (!r) r = mp_iszero(&srp->priv) == MP_YES ? SRP_BAD_KEY_E : 0;
 
     mp_clear(p);
-#ifdef WOLFSSL_SMALL_STACK
-    XFREE(p, srp->heap, DYNAMIC_TYPE_TMP_BUFFER);
-#endif
 
     return r;
 }
@@ -565,11 +451,7 @@ static int wc_SrpGenPrivate(Srp* srp, byte* priv, word32 size)
 
 int wc_SrpGetPublic(Srp* srp, byte* pub, word32* size)
 {
-#ifdef WOLFSSL_SMALL_STACK
-    mp_int *pubkey = NULL;
-#else
     mp_int pubkey[1];
-#endif
     word32 modulusSz;
     int r;
 
@@ -583,10 +465,6 @@ int wc_SrpGetPublic(Srp* srp, byte* pub, word32* size)
     if (*size < modulusSz)
         return BUFFER_E;
 
-#ifdef WOLFSSL_SMALL_STACK
-    if ((pubkey = (mp_int *)XMALLOC(sizeof(*pubkey), srp->heap, DYNAMIC_TYPE_TMP_BUFFER)) == NULL)
-        return MEMORY_E;
-#endif
     r = mp_init(pubkey);
     if (r != MP_OKAY)
         r = MP_INIT_E;
@@ -602,17 +480,7 @@ int wc_SrpGetPublic(Srp* srp, byte* pub, word32* size)
     /* server side: B = (k * v + (g ^ b % N)) % N */
     } else {
         if (! r) {
-#ifdef WOLFSSL_SMALL_STACK
-            mp_int *i = NULL, *j = NULL;
-#else
             mp_int i[1], j[1];
-#endif
-#ifdef WOLFSSL_SMALL_STACK
-            if (((i = (mp_int *)XMALLOC(sizeof(*i), srp->heap, DYNAMIC_TYPE_TMP_BUFFER)) == NULL) ||
-                ((j = (mp_int *)XMALLOC(sizeof(*j), srp->heap, DYNAMIC_TYPE_TMP_BUFFER)) == NULL))
-                r = MEMORY_E;
-            if (!r)
-#endif
             {
                 r = mp_init_multi(i, j, 0, 0, 0, 0);
             }
@@ -622,18 +490,7 @@ int wc_SrpGetPublic(Srp* srp, byte* pub, word32* size)
             if (!r) r = mp_mulmod(i, &srp->auth, &srp->N, j);
             if (!r) r = mp_add(j, pubkey, i);
             if (!r) r = mp_mod(i, &srp->N, pubkey);
-#ifdef WOLFSSL_SMALL_STACK
-            if (i != NULL) {
-                mp_clear(i);
-                XFREE(i, srp->heap, DYNAMIC_TYPE_TMP_BUFFER);
-            }
-            if (j != NULL) {
-                mp_clear(j);
-                XFREE(j, srp->heap, DYNAMIC_TYPE_TMP_BUFFER);
-            }
-#else
             mp_clear(i); mp_clear(j);
-#endif
         }
     }
 
@@ -643,9 +500,6 @@ int wc_SrpGetPublic(Srp* srp, byte* pub, word32* size)
     if (!r) *size = mp_unsigned_bin_size(pubkey);
 
     mp_clear(pubkey);
-#ifdef WOLFSSL_SMALL_STACK
-    XFREE(pubkey, srp->heap, DYNAMIC_TYPE_TMP_BUFFER);
-#endif
 
     return r;
 }
@@ -702,18 +556,9 @@ static int wc_SrpSetKey(Srp* srp, byte* secret, word32 size)
 int wc_SrpComputeKey(Srp* srp, byte* clientPubKey, word32 clientPubKeySz,
                                byte* serverPubKey, word32 serverPubKeySz)
 {
-#ifdef WOLFSSL_SMALL_STACK
-    SrpHash *hash = NULL;
-    byte *digest = NULL;
-    mp_int *u = NULL;
-    mp_int *s = NULL;
-    mp_int *temp1 = NULL;
-    mp_int *temp2 = NULL;
-#else
     SrpHash hash[1];
     byte digest[SRP_MAX_DIGEST_SIZE];
     mp_int u[1], s[1], temp1[1], temp2[1];
-#endif
     byte *secret = NULL;
     word32 i, secretSz, digestSz;
     byte pad = 0;
@@ -726,24 +571,6 @@ int wc_SrpComputeKey(Srp* srp, byte* clientPubKey, word32 clientPubKeySz,
         return BAD_FUNC_ARG;
     }
 
-#ifdef WOLFSSL_SMALL_STACK
-    hash = (SrpHash *)XMALLOC(sizeof *hash, srp->heap, DYNAMIC_TYPE_SRP);
-    digest = (byte *)XMALLOC(SRP_MAX_DIGEST_SIZE, srp->heap, DYNAMIC_TYPE_SRP);
-    u = (mp_int *)XMALLOC(sizeof *u, srp->heap, DYNAMIC_TYPE_SRP);
-    s = (mp_int *)XMALLOC(sizeof *s, srp->heap, DYNAMIC_TYPE_SRP);
-    temp1 = (mp_int *)XMALLOC(sizeof *temp1, srp->heap, DYNAMIC_TYPE_SRP);
-    temp2 = (mp_int *)XMALLOC(sizeof *temp2, srp->heap, DYNAMIC_TYPE_SRP);
-
-    if ((hash == NULL) ||
-        (digest == NULL) ||
-        (u == NULL) ||
-        (s == NULL) ||
-        (temp1 == NULL) ||
-        (temp2 == NULL)) {
-        r = MEMORY_E;
-        goto out;
-    }
-#endif
 
     if ((mp_init_multi(u, s, temp1, temp2, 0, 0)) != MP_OKAY) {
         r = MP_INIT_E;
@@ -902,39 +729,12 @@ int wc_SrpComputeKey(Srp* srp, byte* clientPubKey, word32 clientPubKeySz,
         XFREE(secret, srp->heap, DYNAMIC_TYPE_SRP);
     }
 
-#ifdef WOLFSSL_SMALL_STACK
-    if (hash)
-        XFREE(hash, srp->heap, DYNAMIC_TYPE_SRP);
-    if (digest)
-        XFREE(digest, srp->heap, DYNAMIC_TYPE_SRP);
-    if (u) {
-        if (r != MP_INIT_E)
-            mp_clear(u);
-        XFREE(u, srp->heap, DYNAMIC_TYPE_SRP);
-    }
-    if (s) {
-        if (r != MP_INIT_E)
-            mp_clear(s);
-        XFREE(s, srp->heap, DYNAMIC_TYPE_SRP);
-    }
-    if (temp1) {
-        if (r != MP_INIT_E)
-            mp_clear(temp1);
-        XFREE(temp1, srp->heap, DYNAMIC_TYPE_SRP);
-    }
-    if (temp2) {
-        if (r != MP_INIT_E)
-            mp_clear(temp2);
-        XFREE(temp2, srp->heap, DYNAMIC_TYPE_SRP);
-    }
-#else
     if (r != MP_INIT_E) {
         mp_clear(u);
         mp_clear(s);
         mp_clear(temp1);
         mp_clear(temp2);
     }
-#endif
 
     return r;
 }

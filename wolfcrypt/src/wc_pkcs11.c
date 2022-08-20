@@ -35,33 +35,27 @@
 #include <wolfssl/wolfcrypt/error-crypt.h>
 #include <wolfssl/wolfcrypt/asn.h>
 #include <wolfssl/wolfcrypt/logging.h>
-#ifndef NO_RSA
     #include <wolfssl/wolfcrypt/rsa.h>
-#endif
-#ifdef NO_INLINE
-    #include <wolfssl/wolfcrypt/misc.h>
-#else
     #define WOLFSSL_MISC_INCLUDED
     #include <wolfcrypt/src/misc.c>
-#endif
 
-#if defined(NO_PKCS11_RSA) && !defined(NO_RSA)
-    #define NO_RSA
+#if defined(NO_PKCS11_RSA)
+// error : inserted by coan: "#define NO_RSA" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfcrypt/src/wc_pkcs11.c(49)
 #endif
-#if defined(NO_PKCS11_ECC) && defined(HAVE_ECC)
-    #undef HAVE_ECC
+#if defined(NO_PKCS11_ECC)
+// error : inserted by coan: "#undef HAVE_ECC" contradicts -D symbol at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfcrypt/src/wc_pkcs11.c(52)
 #endif
-#if defined(NO_PKCS11_AES) && !defined(NO_AES)
-    #define NO_AES
+#if defined(NO_PKCS11_AES)
+// error : inserted by coan: "#define NO_AES" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfcrypt/src/wc_pkcs11.c(55)
 #endif
-#if defined(NO_PKCS11_AESGCM) && defined(HAVE_AESGCM)
-    #undef HAVE_AESGCM
+#if defined(NO_PKCS11_AESGCM)
+// error : inserted by coan: "#undef HAVE_AESGCM" contradicts -D symbol at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfcrypt/src/wc_pkcs11.c(58)
 #endif
 #if defined(NO_PKCS11_AESCBC) && defined(HAVE_AES_CBC)
     #undef HAVE_AES_CBC
 #endif
-#if defined(NO_PKCS11_HMAC) && !defined(NO_HMAC)
-    #define NO_HMAC
+#if defined(NO_PKCS11_HMAC)
+// error : inserted by coan: "#define NO_HMAC" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfcrypt/src/wc_pkcs11.c(64)
 #endif
 #if defined(NO_PKCS11_RNG) && !defined(WC_NO_RNG)
     #define WC_NO_RNG
@@ -72,35 +66,23 @@
 #define MAX_EC_PARAM_LEN   16
 
 
-#if defined(HAVE_ECC) && !defined(NO_PKCS11_ECDH)
+#if !defined(NO_PKCS11_ECDH)
 /* Pointer to false required for templates. */
 static CK_BBOOL ckFalse = CK_FALSE;
 #endif
-#if !defined(NO_RSA) || defined(HAVE_ECC) || (!defined(NO_AES) && \
-           (defined(HAVE_AESGCM) || defined(HAVE_AES_CBC))) || !defined(NO_HMAC)
 /* Pointer to true required for templates. */
 static CK_BBOOL ckTrue  = CK_TRUE;
-#endif
 
-#ifndef NO_RSA
 /* Pointer to RSA key type required for templates. */
 static CK_KEY_TYPE rsaKeyType  = CKK_RSA;
-#endif
-#ifdef HAVE_ECC
 /* Pointer to EC key type required for templates. */
 static CK_KEY_TYPE ecKeyType   = CKK_EC;
-#endif
-#if !defined(NO_RSA) || defined(HAVE_ECC)
 /* Pointer to public key class required for templates. */
 static CK_OBJECT_CLASS pubKeyClass     = CKO_PUBLIC_KEY;
 /* Pointer to private key class required for templates. */
 static CK_OBJECT_CLASS privKeyClass    = CKO_PRIVATE_KEY;
-#endif
-#if (!defined(NO_AES) && (defined(HAVE_AESGCM) || defined(HAVE_AES_CBC))) || \
-            !defined(NO_HMAC) || (defined(HAVE_ECC) && !defined(NO_PKCS11_ECDH))
 /* Pointer to secret key class required for templates. */
 static CK_OBJECT_CLASS secretKeyClass  = CKO_SECRET_KEY;
-#endif
 
 #ifdef WOLFSSL_DEBUG_PKCS11
 /* Enable logging of PKCS#11 calls and return value. */
@@ -199,15 +181,12 @@ static void pkcs11_dump_template(const char* name, CK_ATTRIBUTE* templ,
 
         switch (format) {
         case PKCS11_FMT_BOOLEAN:
-#if !defined(NO_RSA) || defined(HAVE_ECC) || (!defined(NO_AES) && \
-           (defined(HAVE_AESGCM) || defined(HAVE_AES_CBC))) || !defined(NO_HMAC)
             if (templ[i].pValue == &ckTrue) {
                 XSNPRINTF(line, sizeof(line), "%25s: TRUE", type);
                 WOLFSSL_MSG(line);
             }
             else
-#endif
-#if defined(HAVE_ECC) && !defined(NO_PKCS11_ECDH)
+#if !defined(NO_PKCS11_ECDH)
             if (templ[i].pValue == &ckFalse) {
                 XSNPRINTF(line, sizeof(line), "%25s: FALSE", type);
                 WOLFSSL_MSG(line);
@@ -765,8 +744,6 @@ void wc_Pkcs11Token_Close(Pkcs11Token* token)
 }
 
 
-#if (!defined(NO_AES) && (defined(HAVE_AESGCM) || defined(HAVE_AES_CBC))) || \
-                                                               !defined(NO_HMAC)
 /*
  * Create a secret key.
  *
@@ -856,9 +833,7 @@ static int Pkcs11CreateSecretKey(CK_OBJECT_HANDLE* key, Pkcs11Session* session,
 
     return ret;
 }
-#endif
 
-#ifndef NO_RSA
 /**
  * Create a PKCS#11 object containing the RSA private key data.
  *
@@ -935,9 +910,7 @@ static int Pkcs11CreateRsaPrivateKey(CK_OBJECT_HANDLE* privateKey,
 
     return ret;
 }
-#endif
 
-#ifdef HAVE_ECC
 /**
  * Set the ECC parameters into the template.
  *
@@ -1115,10 +1088,7 @@ static int Pkcs11CreateEccPrivateKey(CK_OBJECT_HANDLE* privateKey,
 
     return ret;
 }
-#endif
 
-#if !defined(NO_RSA) || defined(HAVE_ECC) || (!defined(NO_AES) && \
-           (defined(HAVE_AESGCM) || defined(HAVE_AES_CBC))) || !defined(NO_HMAC)
 /**
  * Check if mechanism is available in session on token.
  *
@@ -1141,9 +1111,7 @@ static int Pkcs11MechAvail(Pkcs11Session* session, CK_MECHANISM_TYPE mech)
 
     return ret;
 }
-#endif
 
-#ifndef NO_HMAC
 /**
  * Return the mechanism type and key type for the digest type when using HMAC.
  *
@@ -1165,36 +1133,26 @@ static int Pkcs11HmacTypes(int macType, int* mechType, int* keyType)
             *keyType = CKK_MD5_HMAC;
             break;
     #endif
-    #ifndef NO_SHA
         case WC_SHA:
             *mechType = CKM_SHA_1_HMAC;
             *keyType = CKK_SHA_1_HMAC;
             break;
-    #endif
-    #ifdef WOLFSSL_SHA224
         case WC_SHA224:
             *mechType = CKM_SHA224_HMAC;
             *keyType = CKK_SHA224_HMAC;
             break;
-    #endif
-    #ifndef NO_SHA256
         case WC_SHA256:
             *mechType = CKM_SHA256_HMAC;
             *keyType = CKK_SHA256_HMAC;
             break;
-    #endif
-    #ifdef WOLFSSL_SHA384
         case WC_SHA384:
             *mechType = CKM_SHA384_HMAC;
             *keyType = CKK_SHA384_HMAC;
             break;
-    #endif
-    #ifdef WOLFSSL_SHA512
         case WC_SHA512:
             *mechType = CKM_SHA512_HMAC;
             *keyType = CKK_SHA512_HMAC;
             break;
-    #endif
         default:
             ret = NOT_COMPILED_IN;
             break;
@@ -1202,7 +1160,6 @@ static int Pkcs11HmacTypes(int macType, int* mechType, int* keyType)
 
     return ret;
 }
-#endif
 
 /**
  * Store the private key on the token in the session.
@@ -1223,7 +1180,6 @@ int wc_Pkcs11StoreKey(Pkcs11Token* token, int type, int clear, void* key)
     ret = Pkcs11OpenSession(token, &session, 1);
     if (ret == 0) {
         switch (type) {
-    #if !defined(NO_AES) && defined(HAVE_AESGCM)
             case PKCS11_KEY_TYPE_AES_GCM: {
                 Aes* aes = (Aes*)key;
 
@@ -1240,8 +1196,7 @@ int wc_Pkcs11StoreKey(Pkcs11Token* token, int type, int clear, void* key)
                     ForceZero(aes->devKey, aes->keylen);
                 break;
             }
-    #endif
-    #if !defined(NO_AES) && defined(HAVE_AES_CBC)
+    #if defined(HAVE_AES_CBC)
             case PKCS11_KEY_TYPE_AES_CBC: {
                 Aes* aes = (Aes*)key;
 
@@ -1259,7 +1214,6 @@ int wc_Pkcs11StoreKey(Pkcs11Token* token, int type, int clear, void* key)
                 break;
             }
     #endif
-    #ifndef NO_HMAC
             case PKCS11_KEY_TYPE_HMAC: {
                 Hmac* hmac = (Hmac*)key;
                 int mechType;
@@ -1290,8 +1244,6 @@ int wc_Pkcs11StoreKey(Pkcs11Token* token, int type, int clear, void* key)
                 }
                 break;
             }
-    #endif
-    #ifndef NO_RSA
             case PKCS11_KEY_TYPE_RSA: {
                 RsaKey* rsaKey = (RsaKey*)key;
 
@@ -1309,8 +1261,6 @@ int wc_Pkcs11StoreKey(Pkcs11Token* token, int type, int clear, void* key)
                 }
                 break;
             }
-    #endif
-    #ifdef HAVE_ECC
             case PKCS11_KEY_TYPE_EC: {
                 ecc_key* eccKey = (ecc_key*)key;
                 int      ret2 = NOT_COMPILED_IN;
@@ -1346,7 +1296,6 @@ int wc_Pkcs11StoreKey(Pkcs11Token* token, int type, int clear, void* key)
                     mp_forcezero(&eccKey->k);
                 break;
             }
-    #endif
             default:
                 ret = NOT_COMPILED_IN;
                 break;
@@ -1362,8 +1311,6 @@ int wc_Pkcs11StoreKey(Pkcs11Token* token, int type, int clear, void* key)
     return ret;
 }
 
-#if !defined(NO_RSA) || defined(HAVE_ECC) || (!defined(NO_AES) && \
-           (defined(HAVE_AESGCM) || defined(HAVE_AES_CBC))) || !defined(NO_HMAC)
 
 /**
  * Find the PKCS#11 object containing key data using template.
@@ -1479,9 +1426,7 @@ static int Pkcs11FindKeyById(CK_OBJECT_HANDLE* key, CK_OBJECT_CLASS keyClass,
 
     return ret;
 }
-#endif
 
-#ifndef NO_RSA
 /**
  * Find the PKCS#11 object containing the RSA public or private key data with
  * the modulus specified.
@@ -2005,9 +1950,7 @@ static int Pkcs11RsaKeyGen(Pkcs11Session* session, wc_CryptoInfo* info)
     return ret;
 }
 #endif /* WOLFSSL_KEY_GEN */
-#endif /* !NO_RSA */
 
-#ifdef HAVE_ECC
 /**
  * Find the PKCS#11 object containing the ECC public or private key data.
  * Search for public key by public point.
@@ -2809,9 +2752,7 @@ static int Pkcs11ECDSA_Verify(Pkcs11Session* session, wc_CryptoInfo* info)
 
     return ret;
 }
-#endif
 
-#ifndef NO_RSA
 /**
  * Check the private RSA key matches the public key.
  *
@@ -2826,19 +2767,9 @@ static int wc_Pkcs11CheckPrivKey_Rsa(RsaKey* priv,
     const unsigned char* publicKey, word32 pubKeySize)
 {
     int ret = 0;
-    #ifdef WOLFSSL_SMALL_STACK
-        RsaKey* pub = NULL;
-    #else
         RsaKey pub[1];
-    #endif
     word32 keyIdx = 0;
 
-    #ifdef WOLFSSL_SMALL_STACK
-        pub = (RsaKey*)XMALLOC(sizeof(RsaKey), NULL, DYNAMIC_TYPE_RSA);
-        if (pub == NULL) {
-            ret = MEMORY_E;
-        }
-    #endif
 
     if ((ret == 0) && (ret = wc_InitRsaKey(pub, NULL)) == 0) {
         if (ret == 0) {
@@ -2856,11 +2787,6 @@ static int wc_Pkcs11CheckPrivKey_Rsa(RsaKey* priv,
         }
         wc_FreeRsaKey(pub);
     }
-    #ifdef WOLFSSL_SMALL_STACK
-        if (pub != NULL) {
-            XFREE(pub, NULL, DYNAMIC_TYPE_RSA);
-        }
-    #endif
 
     return ret;
 }
@@ -2910,9 +2836,7 @@ static int Pkcs11RsaCheckPrivKey(Pkcs11Session* session, wc_CryptoInfo* info)
 
     return ret;
 }
-#endif
 
-#ifdef HAVE_ECC
 /**
  * Check the private ECC key matches the public key.
  * Do this by looking up the public key data from the associated public key.
@@ -2929,19 +2853,9 @@ static int wc_Pkcs11CheckPrivKey_Ecc(ecc_key* priv,
     const unsigned char* publicKey, word32 pubKeySize)
 {
     int ret = 0;
-    #ifdef WOLFSSL_SMALL_STACK
-        ecc_key* pub = NULL;
-    #else
         ecc_key pub[1];
-    #endif
     word32 keyIdx = 0;
 
-    #ifdef WOLFSSL_SMALL_STACK
-        pub = (ecc_key*)XMALLOC(sizeof(ecc_key), NULL, DYNAMIC_TYPE_ECC);
-        if (pub == NULL) {
-            ret = MEMORY_E;
-        }
-    #endif
 
     if ((ret == 0) && (ret = wc_ecc_init(pub)) == 0) {
         ret = wc_EccPublicKeyDecode(publicKey, &keyIdx, pub, pubKeySize);
@@ -2958,11 +2872,6 @@ static int wc_Pkcs11CheckPrivKey_Ecc(ecc_key* priv,
         }
         wc_ecc_free(pub);
     }
-    #ifdef WOLFSSL_SMALL_STACK
-        if (pub != NULL) {
-            XFREE(pub, NULL, DYNAMIC_TYPE_ECC);
-        }
-    #endif
 
     return ret;
 }
@@ -3017,9 +2926,7 @@ static int Pkcs11EccCheckPrivKey(Pkcs11Session* session, wc_CryptoInfo* info)
 
     return ret;
 }
-#endif
 
-#if !defined(NO_AES) && defined(HAVE_AESGCM)
 /**
  * Performs the AES-GCM encryption operation.
  *
@@ -3222,9 +3129,8 @@ static int Pkcs11AesGcmDecrypt(Pkcs11Session* session, wc_CryptoInfo* info)
 
     return ret;
 }
-#endif
 
-#if !defined(NO_AES) && defined(HAVE_AES_CBC)
+#if defined(HAVE_AES_CBC)
 /**
  * Performs the AES-CBC encryption operation.
  *
@@ -3378,7 +3284,6 @@ static int Pkcs11AesCbcDecrypt(Pkcs11Session* session, wc_CryptoInfo* info)
 }
 #endif
 
-#ifndef NO_HMAC
 /**
  * Updates or calculates the HMAC of the data.
  *
@@ -3513,34 +3418,8 @@ static int Pkcs11Hmac(Pkcs11Session* session, wc_CryptoInfo* info)
 
     return ret;
 }
-#endif
 
 #ifndef WC_NO_RNG
-#ifndef HAVE_HASHDRBG
-/**
- * Performs random number generation.
- *
- * @param  [in]  session  Session object.
- * @param  [in]  info     Cryptographic operation data.
- * @return  WC_HW_E when a PKCS#11 library call fails.
- * @return  0 on success.
- */
-static int Pkcs11RandomBlock(Pkcs11Session* session, wc_CryptoInfo* info)
-{
-    int                ret = 0;
-    CK_RV              rv;
-
-    WOLFSSL_MSG("PKCS#11: Generate Random for Block");
-
-    rv = session->func->C_GenerateRandom(session->handle, info->rng.out,
-                                                                  info->rng.sz);
-    PKCS11_RV("C_GenerateRandom", rv);
-    if (rv != CKR_OK) {
-        ret = WC_HW_E;
-    }
-    return ret;
-}
-#endif
 
 /**
  * Generates entropy (seed) data.
@@ -3591,9 +3470,7 @@ int wc_Pkcs11_CryptoDevCb(int devId, wc_CryptoInfo* info, void* ctx)
      */
     if (ret == 0) {
         if (info->algo_type == WC_ALGO_TYPE_PK) {
-#if !defined(NO_RSA) || defined(HAVE_ECC)
             switch (info->pk.type) {
-    #ifndef NO_RSA
                 case WC_PK_TYPE_RSA:
                     ret = Pkcs11OpenSession(token, &session, readWrite);
                     if (ret == 0) {
@@ -3617,8 +3494,6 @@ int wc_Pkcs11_CryptoDevCb(int devId, wc_CryptoInfo* info, void* ctx)
                         Pkcs11CloseSession(token, &session);
                     }
                     break;
-    #endif
-    #ifdef HAVE_ECC
         #ifndef NO_PKCS11_EC_KEYGEN
                 case WC_PK_TYPE_EC_KEYGEN:
                     ret = Pkcs11OpenSession(token, &session, readWrite);
@@ -3658,19 +3533,13 @@ int wc_Pkcs11_CryptoDevCb(int devId, wc_CryptoInfo* info, void* ctx)
                         Pkcs11CloseSession(token, &session);
                     }
                     break;
-    #endif
                 default:
                     ret = NOT_COMPILED_IN;
                     break;
             }
-#else
-            ret = NOT_COMPILED_IN;
-#endif /* !NO_RSA || HAVE_ECC */
         }
         else if (info->algo_type == WC_ALGO_TYPE_CIPHER) {
-    #ifndef NO_AES
             switch (info->cipher.type) {
-        #ifdef HAVE_AESGCM
                 case WC_CIPHER_AES_GCM:
                     if (info->cipher.enc) {
                         ret = Pkcs11OpenSession(token, &session, readWrite);
@@ -3687,7 +3556,6 @@ int wc_Pkcs11_CryptoDevCb(int devId, wc_CryptoInfo* info, void* ctx)
                         }
                     }
                     break;
-        #endif
         #ifdef HAVE_AES_CBC
                 case WC_CIPHER_AES_CBC:
                     if (info->cipher.enc) {
@@ -3707,31 +3575,16 @@ int wc_Pkcs11_CryptoDevCb(int devId, wc_CryptoInfo* info, void* ctx)
                     break;
         #endif
                 }
-    #else
-            ret = NOT_COMPILED_IN;
-    #endif
         }
         else if (info->algo_type == WC_ALGO_TYPE_HMAC) {
-    #ifndef NO_HMAC
             ret = Pkcs11OpenSession(token, &session, readWrite);
             if (ret == 0) {
                 ret = Pkcs11Hmac(&session, info);
                 Pkcs11CloseSession(token, &session);
             }
-    #else
-            ret = NOT_COMPILED_IN;
-    #endif
         }
         else if (info->algo_type == WC_ALGO_TYPE_RNG) {
-    #if !defined(WC_NO_RNG) && !defined(HAVE_HASHDRBG)
-            ret = Pkcs11OpenSession(token, &session, readWrite);
-            if (ret == 0) {
-                ret = Pkcs11RandomBlock(&session, info);
-                Pkcs11CloseSession(token, &session);
-            }
-    #else
             ret = NOT_COMPILED_IN;
-    #endif
         }
         else if (info->algo_type == WC_ALGO_TYPE_SEED) {
     #ifndef WC_NO_RNG

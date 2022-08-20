@@ -36,15 +36,10 @@
 WOLFSSL_API int Base64_Decode(const byte* in, word32 inLen, byte* out,
                                word32* outLen);
 
-#if defined(OPENSSL_EXTRA) || defined(SESSION_CERTS) || defined(WOLFSSL_KEY_GEN) \
-   || defined(WOLFSSL_CERT_GEN) || defined(HAVE_WEBSERVER) || !defined(NO_DSA)
-    #ifndef WOLFSSL_BASE64_ENCODE
-        #define WOLFSSL_BASE64_ENCODE
-    #endif
+#if defined(WOLFSSL_KEY_GEN)  || defined(WOLFSSL_CERT_GEN)
 #endif
 
 
-#ifdef WOLFSSL_BASE64_ENCODE
     enum Escaped {
         WC_STD_ENC = 0,       /* normal \n line ending encoding */
         WC_ESC_NL_ENC,        /* use escape sequence encoding   */
@@ -61,12 +56,8 @@ WOLFSSL_API int Base64_Decode(const byte* in, word32 inLen, byte* out,
     WOLFSSL_API
     int Base64_Encode_NoNl(const byte* in, word32 inLen, byte* out,
                                   word32* outLen);
-#endif
 
-#if defined(OPENSSL_EXTRA) || defined(OPENSSL_EXTRA_X509_SMALL) || \
-    defined(HAVE_WEBSERVER) || defined(HAVE_FIPS) || \
-    defined(HAVE_ECC_CDH) || defined(HAVE_SELFTEST) || \
-    defined(WOLFSSL_ENCRYPTED_KEYS)
+#if defined(HAVE_FIPS) ||  defined(HAVE_ECC_CDH) || defined(HAVE_SELFTEST) ||  defined(WOLFSSL_ENCRYPTED_KEYS)
     #ifndef WOLFSSL_BASE16
         #define WOLFSSL_BASE16
     #endif

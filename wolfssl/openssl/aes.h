@@ -31,7 +31,6 @@
 
 #include <wolfssl/wolfcrypt/settings.h>
 
-#ifndef NO_AES
 #include <wolfssl/openssl/ssl.h> /* for size_t */
 
 #ifdef __cplusplus
@@ -94,6 +93,5 @@ WOLFSSL_API void wolfSSL_AES_decrypt(
     } /* extern "C" */
 #endif
 
-#endif /* NO_AES */
 
 #endif /* WOLFSSL_AES_H_ */

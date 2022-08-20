@@ -193,12 +193,6 @@ enum wolfSSL_ErrorCodes {
 };
 
 
-#if defined(WOLFSSL_CALLBACKS) || defined(OPENSSL_EXTRA)
-    enum {
-        MIN_PARAM_ERR = UNSUPPORTED_SUITE,
-        MAX_PARAM_ERR = MIN_PARAM_ERR - 10
-    };
-#endif
 
 
 WOLFSSL_LOCAL

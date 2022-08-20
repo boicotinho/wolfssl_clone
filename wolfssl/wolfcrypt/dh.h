@@ -28,12 +28,7 @@
 
 #include <wolfssl/wolfcrypt/types.h>
 
-#ifndef NO_DH
 
-#if defined(HAVE_FIPS) && \
-    defined(HAVE_FIPS_VERSION) && (HAVE_FIPS_VERSION >= 2)
-    #include <wolfssl/wolfcrypt/fips.h>
-#endif /* HAVE_FIPS_VERSION >= 2 */
 
 #include <wolfssl/wolfcrypt/integer.h>
 #include <wolfssl/wolfcrypt/random.h>
@@ -46,9 +41,6 @@
     extern "C" {
 #endif
 
-#ifdef WOLFSSL_ASYNC_CRYPT
-    #include <wolfssl/wolfcrypt/async.h>
-#endif
 
 typedef struct DhParams {
 #ifdef HAVE_FFDHE_Q
@@ -69,9 +61,6 @@ struct DhKey {
     mp_int priv;
 #endif
     void* heap;
-#ifdef WOLFSSL_ASYNC_CRYPT
-    WC_ASYNC_DEV asyncDev;
-#endif
     int trustedGroup;
 #ifdef WOLFSSL_KCAPI_DH
     struct kcapi_handle* handle;
@@ -97,9 +86,7 @@ enum {
 #endif
 
 #ifdef HAVE_PUBLIC_FFDHE
-#ifdef HAVE_FFDHE_2048
 WOLFSSL_API const DhParams* wc_Dh_ffdhe2048_Get(void);
-#endif
 #ifdef HAVE_FFDHE_3072
 WOLFSSL_API const DhParams* wc_Dh_ffdhe3072_Get(void);
 #endif
@@ -173,5 +160,4 @@ WOLFSSL_API int wc_DhExportParamsRaw(DhKey* dh, byte* p, word32* pSz,
     } /* extern "C" */
 #endif
 
-#endif /* NO_DH */
 #endif /* WOLF_CRYPT_DH_H */

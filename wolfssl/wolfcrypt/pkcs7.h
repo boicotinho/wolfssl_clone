@@ -35,12 +35,7 @@
 #endif
 #include <wolfssl/wolfcrypt/asn_public.h>
 #include <wolfssl/wolfcrypt/random.h>
-#ifndef NO_AES
     #include <wolfssl/wolfcrypt/aes.h>
-#endif
-#ifndef NO_DES3
-    #include <wolfssl/wolfcrypt/des3.h>
-#endif
 #include <wolfssl/wolfcrypt/wc_encrypt.h>
 
 #ifdef __cplusplus
@@ -49,11 +44,7 @@
 
 /* Max number of certificates that PKCS7 structure can parse */
 #ifndef MAX_PKCS7_CERTS
-#ifdef OPENSSL_ALL
-    #define MAX_PKCS7_CERTS 15
-#else
     #define MAX_PKCS7_CERTS 4
-#endif
 #endif
 
 #ifndef MAX_ORI_TYPE_SZ
@@ -84,9 +75,6 @@ enum PKCS7_TYPES {
     SIGNED_AND_ENVELOPED_DATA = 654,  /* 1.2.840.113549.1.7.4 */
     DIGESTED_DATA             = 655,  /* 1.2.840.113549.1.7.5 */
     ENCRYPTED_DATA            = 656,  /* 1.2.840.113549.1.7.6 */
-#if defined(HAVE_LIBZ) && !defined(NO_PKCS7_COMPRESSED_DATA)
-    COMPRESSED_DATA           = 678,  /* 1.2.840.113549.1.9.16.1.9,  RFC 3274 */
-#endif
     FIRMWARE_PKG_DATA         = 685,  /* 1.2.840.113549.1.9.16.1.16, RFC 4108 */
     AUTH_ENVELOPED_DATA       = 692   /* 1.2.840.113549.1.9.16.1.23, RFC 5083 */
 };
@@ -150,11 +138,7 @@ enum Pkcs7_Misc {
     MAX_ENCRYPTED_KEY_SZ  = 512,    /* max enc. key size, RSA <= 4096 */
     MAX_CONTENT_KEY_LEN   = 32,     /* highest current cipher is AES-256-CBC */
     MAX_CONTENT_IV_SIZE   = 16,     /* highest current is AES128 */
-#ifndef NO_AES
     MAX_CONTENT_BLOCK_LEN = AES_BLOCK_SIZE,
-#else
-    MAX_CONTENT_BLOCK_LEN = DES_BLOCK_SIZE,
-#endif
     MAX_RECIP_SZ          = MAX_VERSION_SZ +
                             MAX_SEQ_SZ + WC_ASN_NAME_MAX + MAX_SN_SZ +
                             MAX_SEQ_SZ + MAX_ALGO_SZ + 1 + MAX_ENCRYPTED_KEY_SZ,
@@ -217,7 +201,7 @@ typedef int (*CallbackWrapCEK)(PKCS7* pkcs7, byte* cek, word32 cekSz,
                                   byte* out, word32 outSz,
                                   int keyWrapAlgo, int type, int dir);
 
-#if defined(HAVE_PKCS7_RSA_RAW_SIGN_CALLBACK) && !defined(NO_RSA)
+#if defined(HAVE_PKCS7_RSA_RAW_SIGN_CALLBACK)
 /* RSA sign raw digest callback, user builds DigestInfo */
 typedef int (*CallbackRsaSignRawDigest)(PKCS7* pkcs7, byte* digest,
                                    word32 digestSz, byte* out, word32 outSz,
@@ -326,7 +310,7 @@ struct PKCS7 {
     word32 plainDigestSz;
     word32 pkcs7DigestSz;
 
-#if defined(HAVE_PKCS7_RSA_RAW_SIGN_CALLBACK) && !defined(NO_RSA)
+#if defined(HAVE_PKCS7_RSA_RAW_SIGN_CALLBACK)
     CallbackRsaSignRawDigest rsaSignRawDigestCb;
 #endif
 
@@ -399,31 +383,6 @@ WOLFSSL_API int  wc_PKCS7_EncodeSignedEncryptedFPD(PKCS7* pkcs7,
                                           word32 signedAttribsSz,
                                           byte* output, word32 outputSz);
 #endif /* NO_PKCS7_ENCRYPTED_DATA */
-#if defined(HAVE_LIBZ) && !defined(NO_PKCS7_COMPRESSED_DATA)
-/* CMS single-shot API for Signed Compressed FirmwarePkgData */
-WOLFSSL_API int  wc_PKCS7_EncodeSignedCompressedFPD(PKCS7* pkcs7,
-                                          byte* privateKey, word32 privateKeySz,
-                                          int signOID, int hashOID,
-                                          byte* content, word32 contentSz,
-                                          PKCS7Attrib* signedAttribs,
-                                          word32 signedAttribsSz, byte* output,
-                                          word32 outputSz);
-
-#ifndef NO_PKCS7_ENCRYPTED_DATA
-/* CMS single-shot API for Signed Encrypted Compressed FirmwarePkgData */
-WOLFSSL_API int  wc_PKCS7_EncodeSignedEncryptedCompressedFPD(PKCS7* pkcs7,
-                                          byte* encryptKey, word32 encryptKeySz,
-                                          byte* privateKey, word32 privateKeySz,
-                                          int encryptOID, int signOID,
-                                          int hashOID, byte* content,
-                                          word32 contentSz,
-                                          PKCS7Attrib* unprotectedAttribs,
-                                          word32 unprotectedAttribsSz,
-                                          PKCS7Attrib* signedAttribs,
-                                          word32 signedAttribsSz,
-                                          byte* output, word32 outputSz);
-#endif /* !NO_PKCS7_ENCRYPTED_DATA */
-#endif /* HAVE_LIBZ && !NO_PKCS7_COMPRESSED_DATA */
 
 /* EnvelopedData and AuthEnvelopedData RecipientInfo functions */
 WOLFSSL_API int  wc_PKCS7_AddRecipient_KTRI(PKCS7* pkcs7, const byte* cert,
@@ -455,7 +414,7 @@ WOLFSSL_API int  wc_PKCS7_AddRecipient_ORI(PKCS7* pkcs7, CallbackOriEncrypt cb,
 WOLFSSL_API int  wc_PKCS7_SetWrapCEKCb(PKCS7* pkcs7,
         CallbackWrapCEK wrapCEKCb);
 
-#if defined(HAVE_PKCS7_RSA_RAW_SIGN_CALLBACK) && !defined(NO_RSA)
+#if defined(HAVE_PKCS7_RSA_RAW_SIGN_CALLBACK)
 WOLFSSL_API int  wc_PKCS7_SetRsaSignRawDigestCb(PKCS7* pkcs7,
         CallbackRsaSignRawDigest cb);
 #endif
@@ -487,13 +446,6 @@ WOLFSSL_API int  wc_PKCS7_SetDecodeEncryptedCtx(PKCS7* pkcs7, void* ctx);
 #endif /* NO_PKCS7_ENCRYPTED_DATA */
 
 /* CMS/PKCS#7 CompressedData */
-#if defined(HAVE_LIBZ) && !defined(NO_PKCS7_COMPRESSED_DATA)
-WOLFSSL_API int wc_PKCS7_EncodeCompressedData(PKCS7* pkcs7, byte* output,
-                                              word32 outputSz);
-WOLFSSL_API int wc_PKCS7_DecodeCompressedData(PKCS7* pkcs7, byte* pkiMsg,
-                                              word32 pkiMsgSz, byte* output,
-                                              word32 outputSz);
-#endif /* HAVE_LIBZ && !NO_PKCS7_COMPRESSED_DATA */
 
 #ifdef __cplusplus
     } /* extern "C" */

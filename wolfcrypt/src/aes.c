@@ -35,35 +35,18 @@ block cipher mechanism that uses n-bit binary string parameter key with 128-bits
 #include <wolfssl/wolfcrypt/settings.h>
 #include <wolfssl/wolfcrypt/error-crypt.h>
 
-#if !defined(NO_AES)
 
 /* Tip: Locate the software cipher modes by searching for "Software AES" */
 
-#if defined(HAVE_FIPS) && \
-    defined(HAVE_FIPS_VERSION) && (HAVE_FIPS_VERSION >= 2)
-
-    /* set NO_WRAPPERS before headers, use direct internal f()s not wrappers */
-    #define FIPS_NO_WRAPPERS
-
-    #ifdef USE_WINDOWS_API
-        #pragma code_seg(".fipsA$g")
-        #pragma const_seg(".fipsB$g")
-    #endif
-#endif
 
 #include <wolfssl/wolfcrypt/aes.h>
 
-#ifdef WOLFSSL_AESNI
 #include <wmmintrin.h>
 #include <emmintrin.h>
 #include <smmintrin.h>
-#endif /* WOLFSSL_AESNI */
 
 #include <wolfssl/wolfcrypt/cpuid.h>
 
-#ifdef WOLF_CRYPTO_CB
-    #include <wolfssl/wolfcrypt/cryptocb.h>
-#endif
 
 #ifdef WOLFSSL_SECO_CAAM
 #include <wolfssl/wolfcrypt/port/caam/wolfcaam.h>
@@ -85,8 +68,7 @@ block cipher mechanism that uses n-bit binary string parameter key with 128-bits
 #endif
 
 /* fips wrapper calls, user can call direct */
-#if defined(HAVE_FIPS) && \
-    (!defined(HAVE_FIPS_VERSION) || (HAVE_FIPS_VERSION < 2))
+#if defined(HAVE_FIPS)
 
     int wc_AesSetKey(Aes* aes, const byte* key, word32 len, const byte* iv,
                               int dir)
@@ -161,7 +143,6 @@ block cipher mechanism that uses n-bit binary string parameter key with 128-bits
     #endif /* WOLFSSL_AES_DIRECT */
 
     /* AES-GCM */
-    #ifdef HAVE_AESGCM
         int wc_AesGcmSetKey(Aes* aes, const byte* key, word32 len)
         {
             if (aes == NULL || !( (len == 16) || (len == 24) || (len == 32)) ) {
@@ -223,48 +204,8 @@ block cipher mechanism that uses n-bit binary string parameter key with 128-bits
             return GmacUpdate(gmac, iv, ivSz, authIn, authInSz,
                               authTag, authTagSz);
         }
-    #endif /* HAVE_AESGCM */
 
     /* AES-CCM */
-    #if defined(HAVE_AESCCM) && \
-        defined(HAVE_FIPS_VERSION) && (HAVE_FIPS_VERSION >= 2)
-        int wc_AesCcmSetKey(Aes* aes, const byte* key, word32 keySz)
-        {
-            return AesCcmSetKey(aes, key, keySz);
-        }
-        int wc_AesCcmEncrypt(Aes* aes, byte* out, const byte* in, word32 inSz,
-                                      const byte* nonce, word32 nonceSz,
-                                      byte* authTag, word32 authTagSz,
-                                      const byte* authIn, word32 authInSz)
-        {
-            /* sanity check on arguments */
-            if (aes == NULL || out == NULL || in == NULL || nonce == NULL
-                    || authTag == NULL || nonceSz < 7 || nonceSz > 13)
-                return BAD_FUNC_ARG;
-
-            AesCcmEncrypt(aes, out, in, inSz, nonce, nonceSz, authTag,
-                authTagSz, authIn, authInSz);
-            return 0;
-        }
-
-        #ifdef HAVE_AES_DECRYPT
-            int  wc_AesCcmDecrypt(Aes* aes, byte* out,
-                const byte* in, word32 inSz,
-                const byte* nonce, word32 nonceSz,
-                const byte* authTag, word32 authTagSz,
-                const byte* authIn, word32 authInSz)
-            {
-
-                if (aes == NULL || out == NULL || in == NULL || nonce == NULL
-                    || authTag == NULL || nonceSz < 7 || nonceSz > 13) {
-                        return BAD_FUNC_ARG;
-                }
-
-                return AesCcmDecrypt(aes, out, in, inSz, nonce, nonceSz,
-                    authTag, authTagSz, authIn, authInSz);
-            }
-        #endif /* HAVE_AES_DECRYPT */
-    #endif /* HAVE_AESCCM && HAVE_FIPS_VERSION 2 */
 
     int wc_AesInit(Aes* aes, void* h, int i)
     {
@@ -299,12 +240,8 @@ block cipher mechanism that uses n-bit binary string parameter key with 128-bits
 
 #include <wolfssl/wolfcrypt/logging.h>
 
-#ifdef NO_INLINE
-    #include <wolfssl/wolfcrypt/misc.h>
-#else
     #define WOLFSSL_MISC_INCLUDED
     #include <wolfcrypt/src/misc.c>
-#endif
 
 #if !defined(WOLFSSL_ARMASM)
 
@@ -318,17 +255,12 @@ block cipher mechanism that uses n-bit binary string parameter key with 128-bits
     #include <stdio.h>
 #endif
 
-#ifdef _MSC_VER
-    /* 4127 warning constant while(1)  */
-    #pragma warning(disable: 4127)
-#endif
 
 
 /* Define AES implementation includes and functions */
 #if defined(STM32_CRYPTO)
      /* STM32F2/F4/F7/L4/L5/H7/WB55 hardware AES support for ECB, CBC, CTR and GCM modes */
 
-#if defined(WOLFSSL_AES_DIRECT) || defined(HAVE_AESGCM) || defined(HAVE_AESCCM)
 
     static WARN_UNUSED_RESULT int wc_AesEncrypt(
         Aes* aes, const byte* inBlock, byte* outBlock)
@@ -420,10 +352,9 @@ block cipher mechanism that uses n-bit binary string parameter key with 128-bits
 
         return ret;
     }
-#endif /* WOLFSSL_AES_DIRECT || HAVE_AESGCM || HAVE_AESCCM */
 
 #ifdef HAVE_AES_DECRYPT
-    #if defined(WOLFSSL_AES_DIRECT) || defined(HAVE_AESCCM)
+    #if defined(WOLFSSL_AES_DIRECT)
     static WARN_UNUSED_RESULT int wc_AesDecrypt(
         Aes* aes, const byte* inBlock, byte* outBlock)
     {
@@ -631,7 +562,6 @@ block cipher mechanism that uses n-bit binary string parameter key with 128-bits
 
     #include <wolfssl/wolfcrypt/port/pic32/pic32mz-crypt.h>
 
-    #if defined(HAVE_AESGCM) || defined(WOLFSSL_AES_DIRECT)
     static WARN_UNUSED_RESULT int wc_AesEncrypt(
         Aes* aes, const byte* inBlock, byte* outBlock)
     {
@@ -640,7 +570,6 @@ block cipher mechanism that uses n-bit binary string parameter key with 128-bits
             outBlock, inBlock, AES_BLOCK_SIZE,
             PIC32_ENCRYPTION, PIC32_ALGO_AES, PIC32_CRYPTOALGO_RECB);
     }
-    #endif
 
     #if defined(HAVE_AES_DECRYPT) && defined(WOLFSSL_AES_DIRECT)
     static WARN_UNUSED_RESULT int wc_AesDecrypt(
@@ -679,14 +608,12 @@ block cipher mechanism that uses n-bit binary string parameter key with 128-bits
 
     #include "wolfssl/wolfcrypt/port/Espressif/esp32-crypt.h"
 
-    #if defined(HAVE_AESGCM) || defined(WOLFSSL_AES_DIRECT)
     static WARN_UNUSED_RESULT int wc_AesEncrypt(
         Aes* aes, const byte* inBlock, byte* outBlock)
     {
         /* Thread mutex protection handled in esp_aes_hw_InUse */
         return wc_esp32AesEncrypt(aes, inBlock, outBlock);
     }
-    #endif
 
     #if defined(HAVE_AES_DECRYPT) && defined(WOLFSSL_AES_DIRECT)
     static WARN_UNUSED_RESULT int wc_AesDecrypt(
@@ -697,7 +624,7 @@ block cipher mechanism that uses n-bit binary string parameter key with 128-bits
     }
     #endif
 
-#elif defined(WOLFSSL_AESNI)
+#else
 
     #define NEED_AES_TABLES
 
@@ -709,9 +636,7 @@ block cipher mechanism that uses n-bit binary string parameter key with 128-bits
         #define AESNI_ALIGN 16
     #endif
 
-    #ifdef _MSC_VER
-        #define XASM_LINK(f)
-    #elif defined(__APPLE__)
+    #if defined(__APPLE__)
         #define XASM_LINK(f) asm("_" f)
     #else
         #define XASM_LINK(f) asm(f)
@@ -810,27 +735,15 @@ block cipher mechanism that uses n-bit binary string parameter key with 128-bits
             const unsigned char* userKey, const int bits, Aes* aes)
         {
             int nr;
-#ifdef WOLFSSL_SMALL_STACK
-            Aes *temp_key;
-#else
             Aes temp_key[1];
-#endif
             __m128i *Key_Schedule;
             __m128i *Temp_Key_Schedule;
 
             if (!userKey || !aes)
                 return BAD_FUNC_ARG;
 
-#ifdef WOLFSSL_SMALL_STACK
-            if ((temp_key = (Aes *)XMALLOC(sizeof *aes, aes->heap,
-                                           DYNAMIC_TYPE_AES)) == NULL)
-                return MEMORY_E;
-#endif
 
             if (AES_set_encrypt_key(userKey,bits,temp_key) == BAD_FUNC_ARG) {
-#ifdef WOLFSSL_SMALL_STACK
-                XFREE(temp_key, aes->heap, DYNAMIC_TYPE_AES);
-#endif
                 return BAD_FUNC_ARG;
             }
 
@@ -840,11 +753,7 @@ block cipher mechanism that uses n-bit binary string parameter key with 128-bits
             nr = temp_key->rounds;
             aes->rounds = nr;
 
-#ifdef WOLFSSL_SMALL_STACK
-            SAVE_VECTOR_REGISTERS(XFREE(temp_key, aes->heap, DYNAMIC_TYPE_AES); return _svr_ret;);
-#else
             SAVE_VECTOR_REGISTERS(return _svr_ret;);
-#endif
 
             Key_Schedule[nr] = Temp_Key_Schedule[0];
             Key_Schedule[nr-1] = _mm_aesimc_si128(Temp_Key_Schedule[1]);
@@ -871,220 +780,15 @@ block cipher mechanism that uses n-bit binary string parameter key with 128-bits
 
             RESTORE_VECTOR_REGISTERS();
 
-#ifdef WOLFSSL_SMALL_STACK
-            XFREE(temp_key, aes->heap, DYNAMIC_TYPE_AES);
-#endif
 
             return 0;
         }
     #endif /* HAVE_AES_DECRYPT */
 
-#elif (defined(WOLFSSL_IMX6_CAAM) && !defined(NO_IMX6_CAAM_AES) \
-        && !defined(WOLFSSL_QNX_CAAM)) || \
-      ((defined(WOLFSSL_AFALG) || defined(WOLFSSL_DEVCRYPTO_AES)) && \
-        defined(HAVE_AESCCM))
-        static WARN_UNUSED_RESULT int wc_AesEncrypt(
-            Aes* aes, const byte* inBlock, byte* outBlock)
-        {
-            return wc_AesEncryptDirect(aes, outBlock, inBlock);
-        }
-
-#elif defined(WOLFSSL_AFALG)
-    /* implemented in wolfcrypt/src/port/af_alg/afalg_aes.c */
-
-#elif defined(WOLFSSL_DEVCRYPTO_AES)
-    /* implemented in wolfcrypt/src/port/devcrypto/devcrypto_aes.c */
-
-#elif defined(WOLFSSL_SE050) && defined(WOLFSSL_SE050_CRYPT)
-    static WARN_UNUSED_RESULT int AES_ECB_encrypt(
-        Aes* aes, const byte* inBlock, byte* outBlock, int sz)
-    {
-        return se050_aes_crypt(aes, inBlock, outBlock, sz, AES_ENCRYPTION,
-            kAlgorithm_SSS_AES_ECB);
-    }
-    static WARN_UNUSED_RESULT int AES_ECB_decrypt(
-        Aes* aes, const byte* inBlock, byte* outBlock, int sz)
-    {
-        return se050_aes_crypt(aes, inBlock, outBlock, sz, AES_DECRYPTION,
-            kAlgorithm_SSS_AES_ECB);
-    }
-    static WARN_UNUSED_RESULT int wc_AesEncrypt(
-        Aes* aes, const byte* inBlock, byte* outBlock)
-    {
-        return AES_ECB_encrypt(aes, inBlock, outBlock, AES_BLOCK_SIZE);
-    }
-    static WARN_UNUSED_RESULT int wc_AesDecrypt(
-        Aes* aes, const byte* inBlock, byte* outBlock)
-    {
-        return AES_ECB_decrypt(aes, inBlock, outBlock, AES_BLOCK_SIZE);
-    }
-
-#elif defined(WOLFSSL_SCE) && !defined(WOLFSSL_SCE_NO_AES)
-    #include "hal_data.h"
-
-    #ifndef WOLFSSL_SCE_AES256_HANDLE
-        #define WOLFSSL_SCE_AES256_HANDLE g_sce_aes_256
-    #endif
-
-    #ifndef WOLFSSL_SCE_AES192_HANDLE
-        #define WOLFSSL_SCE_AES192_HANDLE g_sce_aes_192
-    #endif
-
-    #ifndef WOLFSSL_SCE_AES128_HANDLE
-        #define WOLFSSL_SCE_AES128_HANDLE g_sce_aes_128
-    #endif
-
-    static WARN_UNUSED_RESULT int AES_ECB_encrypt(
-        Aes* aes, const byte* inBlock, byte* outBlock, int sz)
-    {
-        word32 ret;
-
-        if (WOLFSSL_SCE_GSCE_HANDLE.p_cfg->endian_flag ==
-                CRYPTO_WORD_ENDIAN_BIG) {
-            ByteReverseWords((word32*)inBlock, (word32*)inBlock, sz);
-        }
-
-        switch (aes->keylen) {
-        #ifdef WOLFSSL_AES_128
-            case AES_128_KEY_SIZE:
-                ret = WOLFSSL_SCE_AES128_HANDLE.p_api->encrypt(
-                        WOLFSSL_SCE_AES128_HANDLE.p_ctrl, aes->key,
-                        NULL, (sz / sizeof(word32)), (word32*)inBlock,
-                        (word32*)outBlock);
-                break;
-        #endif
-        #ifdef WOLFSSL_AES_192
-            case AES_192_KEY_SIZE:
-                ret = WOLFSSL_SCE_AES192_HANDLE.p_api->encrypt(
-                        WOLFSSL_SCE_AES192_HANDLE.p_ctrl, aes->key,
-                        NULL, (sz / sizeof(word32)), (word32*)inBlock,
-                        (word32*)outBlock);
-                break;
-        #endif
-        #ifdef WOLFSSL_AES_256
-            case AES_256_KEY_SIZE:
-                ret = WOLFSSL_SCE_AES256_HANDLE.p_api->encrypt(
-                        WOLFSSL_SCE_AES256_HANDLE.p_ctrl, aes->key,
-                        NULL, (sz / sizeof(word32)), (word32*)inBlock,
-                        (word32*)outBlock);
-                break;
-        #endif
-            default:
-                WOLFSSL_MSG("Unknown key size");
-                return BAD_FUNC_ARG;
-        }
-
-        if (ret != SSP_SUCCESS) {
-            /* revert input */
-            ByteReverseWords((word32*)inBlock, (word32*)inBlock, sz);
-            return WC_HW_E;
-        }
-
-        if (WOLFSSL_SCE_GSCE_HANDLE.p_cfg->endian_flag ==
-                CRYPTO_WORD_ENDIAN_BIG) {
-            ByteReverseWords((word32*)outBlock, (word32*)outBlock, sz);
-            if (inBlock != outBlock) {
-                /* revert input */
-                ByteReverseWords((word32*)inBlock, (word32*)inBlock, sz);
-            }
-        }
-        return 0;
-    }
-
-    #if defined(HAVE_AES_DECRYPT)
-    static WARN_UNUSED_RESULT int AES_ECB_decrypt(
-        Aes* aes, const byte* inBlock, byte* outBlock, int sz)
-    {
-        word32 ret;
-
-        if (WOLFSSL_SCE_GSCE_HANDLE.p_cfg->endian_flag ==
-                CRYPTO_WORD_ENDIAN_BIG) {
-            ByteReverseWords((word32*)inBlock, (word32*)inBlock, sz);
-        }
-
-        switch (aes->keylen) {
-        #ifdef WOLFSSL_AES_128
-            case AES_128_KEY_SIZE:
-                ret = WOLFSSL_SCE_AES128_HANDLE.p_api->decrypt(
-                        WOLFSSL_SCE_AES128_HANDLE.p_ctrl, aes->key, aes->reg,
-                        (sz / sizeof(word32)), (word32*)inBlock,
-                        (word32*)outBlock);
-                break;
-        #endif
-        #ifdef WOLFSSL_AES_192
-            case AES_192_KEY_SIZE:
-                ret = WOLFSSL_SCE_AES192_HANDLE.p_api->decrypt(
-                        WOLFSSL_SCE_AES192_HANDLE.p_ctrl, aes->key, aes->reg,
-                        (sz / sizeof(word32)), (word32*)inBlock,
-                        (word32*)outBlock);
-                break;
-        #endif
-        #ifdef WOLFSSL_AES_256
-            case AES_256_KEY_SIZE:
-                ret = WOLFSSL_SCE_AES256_HANDLE.p_api->decrypt(
-                        WOLFSSL_SCE_AES256_HANDLE.p_ctrl, aes->key, aes->reg,
-                        (sz / sizeof(word32)), (word32*)inBlock,
-                        (word32*)outBlock);
-                break;
-        #endif
-            default:
-                WOLFSSL_MSG("Unknown key size");
-                return BAD_FUNC_ARG;
-        }
-        if (ret != SSP_SUCCESS) {
-            return WC_HW_E;
-        }
-
-        if (WOLFSSL_SCE_GSCE_HANDLE.p_cfg->endian_flag ==
-                CRYPTO_WORD_ENDIAN_BIG) {
-            ByteReverseWords((word32*)outBlock, (word32*)outBlock, sz);
-            if (inBlock != outBlock) {
-                /* revert input */
-                ByteReverseWords((word32*)inBlock, (word32*)inBlock, sz);
-            }
-        }
-
-        return 0;
-    }
-    #endif /* HAVE_AES_DECRYPT */
-
-    #if defined(HAVE_AESGCM) || defined(WOLFSSL_AES_DIRECT)
-    static WARN_UNUSED_RESULT int wc_AesEncrypt(
-        Aes* aes, const byte* inBlock, byte* outBlock)
-    {
-        return AES_ECB_encrypt(aes, inBlock, outBlock, AES_BLOCK_SIZE);
-    }
-    #endif
-
-    #if defined(HAVE_AES_DECRYPT) && defined(WOLFSSL_AES_DIRECT)
-    static WARN_UNUSED_RESULT int wc_AesDecrypt(
-        Aes* aes, const byte* inBlock, byte* outBlock)
-    {
-        return AES_ECB_decrypt(aes, inBlock, outBlock, AES_BLOCK_SIZE);
-    }
-    #endif
-
-#elif defined(WOLFSSL_KCAPI_AES)
-    /* Only CBC and GCM that are in wolfcrypt/src/port/kcapi/kcapi_aes.c */
-    #if defined(WOLFSSL_AES_COUNTER) || defined(HAVE_AESCCM) || \
-        defined(WOLFSSL_CMAC) || defined(WOLFSSL_AES_OFB) || \
-        defined(WOLFSSL_AES_CFB) || defined(HAVE_AES_ECB) || \
-        defined(WOLFSSL_AES_DIRECT) || \
-        (defined(HAVE_AES_CBC) && defined(WOLFSSL_NO_KCAPI_AES_CBC))
-
-        #define NEED_AES_TABLES
-    #endif
-#elif defined(WOLFSSL_HAVE_PSA) && !defined(WOLFSSL_PSA_NO_AES)
-/* implemented in wolfcrypt/src/port/psa/psa_aes.c */
-#else
-
-    /* using wolfCrypt software implementation */
-    #define NEED_AES_TABLES
 #endif
 
 
 
-#ifdef NEED_AES_TABLES
 
 static const FLASH_QUALIFIER word32 rcon[] = {
     0x01000000, 0x02000000, 0x04000000, 0x08000000,
@@ -1736,8 +1440,6 @@ static WARN_UNUSED_RESULT word32 inv_col_mul(
 #endif
 #endif
 
-#if defined(HAVE_AES_CBC) || defined(WOLFSSL_AES_DIRECT) || \
-                                    defined(HAVE_AESCCM) || defined(HAVE_AESGCM)
 
 #ifndef WC_CACHE_LINE_SZ
     #if defined(__x86_64__) || defined(_M_X64) || \
@@ -1794,7 +1496,6 @@ static WARN_UNUSED_RESULT int wc_AesEncrypt(
         return KEYUSAGE_E;
     }
 
-#ifdef WOLFSSL_AESNI
     if (haveAESNI && aes->use_aesni) {
         #ifdef DEBUG_AESNI
             printf("about to aes encrypt\n");
@@ -1838,7 +1539,6 @@ static WARN_UNUSED_RESULT int wc_AesEncrypt(
             printf("Skipping AES-NI\n");
         #endif
     }
-#endif
 #if defined(WOLFSSL_SCE) && !defined(WOLFSSL_SCE_NO_AES)
     AES_ECB_encrypt(aes, inBlock, outBlock, AES_BLOCK_SIZE);
     return 0;
@@ -2099,7 +1799,6 @@ static WARN_UNUSED_RESULT int wc_AesEncrypt(
 
     return 0;
 }
-#endif /* HAVE_AES_CBC || WOLFSSL_AES_DIRECT || HAVE_AESGCM */
 
 #if defined(HAVE_AES_DECRYPT)
 #if (defined(HAVE_AES_CBC) && !defined(WOLFSSL_DEVCRYPTO_CBC)) || \
@@ -2149,7 +1848,6 @@ static WARN_UNUSED_RESULT int wc_AesDecrypt(
         return KEYUSAGE_E;
     }
 
-#ifdef WOLFSSL_AESNI
     if (haveAESNI && aes->use_aesni) {
         #ifdef DEBUG_AESNI
             printf("about to aes decrypt\n");
@@ -2172,7 +1870,6 @@ static WARN_UNUSED_RESULT int wc_AesDecrypt(
             printf("Skipping AES-NI\n");
         #endif
     }
-#endif /* WOLFSSL_AESNI */
 #if defined(WOLFSSL_SCE) && !defined(WOLFSSL_SCE_NO_AES)
     return AES_ECB_decrypt(aes, inBlock, outBlock, AES_BLOCK_SIZE);
 #endif
@@ -2436,7 +2133,6 @@ static WARN_UNUSED_RESULT int wc_AesDecrypt(
 #endif /* HAVE_AES_CBC || WOLFSSL_AES_DIRECT */
 #endif /* HAVE_AES_DECRYPT */
 
-#endif /* NEED_AES_TABLES */
 
 
 
@@ -2804,8 +2500,7 @@ static WARN_UNUSED_RESULT int wc_AesDecrypt(
         }
     #endif
 
-#elif defined(WOLFSSL_IMX6_CAAM) && !defined(NO_IMX6_CAAM_AES) \
-    && !defined(WOLFSSL_QNX_CAAM)
+#elif defined(WOLFSSL_IMX6_CAAM) && !defined(NO_IMX6_CAAM_AES)
       /* implemented in wolfcrypt/src/port/caam/caam_aes.c */
 
 #elif defined(WOLFSSL_AFALG)
@@ -2826,10 +2521,8 @@ static WARN_UNUSED_RESULT int wc_AesDecrypt(
     {
         int ret;
         word32 *rk;
-    #ifdef NEED_AES_TABLES
         word32 temp;
         unsigned int i = 0;
-    #endif
     #ifdef WOLFSSL_IMX6_CAAM_BLOB
         byte   local[32];
         word32 localSz = 32;
@@ -2887,12 +2580,7 @@ static WARN_UNUSED_RESULT int wc_AesDecrypt(
         }
     #endif
 
-    #if defined(WOLF_CRYPTO_CB) || (defined(WOLFSSL_DEVCRYPTO) && \
-        (defined(WOLFSSL_DEVCRYPTO_AES) || defined(WOLFSSL_DEVCRYPTO_CBC))) || \
-        (defined(WOLFSSL_ASYNC_CRYPT) && defined(WC_ASYNC_ENABLE_AES))
-        #ifdef WOLF_CRYPTO_CB
-        if (aes->devId != INVALID_DEVID)
-        #endif
+    #if defined(WOLFSSL_DEVCRYPTO) &&  (defined(WOLFSSL_DEVCRYPTO_AES) || defined(WOLFSSL_DEVCRYPTO_CBC))
         {
             if (keylen > sizeof(aes->devKey)) {
                 return BAD_FUNC_ARG;
@@ -2922,7 +2610,6 @@ static WARN_UNUSED_RESULT int wc_AesDecrypt(
         aes->keylen = keylen;
         aes->rounds = (keylen/4) + 6;
 
-    #ifdef WOLFSSL_AESNI
         aes->use_aesni = 0;
         if (checkAESNI == 0) {
             haveAESNI  = Check_CPU_support_AES();
@@ -2941,7 +2628,6 @@ static WARN_UNUSED_RESULT int wc_AesDecrypt(
                 return AES_set_decrypt_key(userKey, keylen * 8, aes);
         #endif
         }
-    #endif /* WOLFSSL_AESNI */
 
     #ifdef WOLFSSL_KCAPI_AES
         XMEMCPY(aes->devKey, userKey, keylen);
@@ -2978,7 +2664,6 @@ static WARN_UNUSED_RESULT int wc_AesDecrypt(
             return WC_HW_E;
     #endif
 
-#ifdef NEED_AES_TABLES
         switch (keylen) {
     #if defined(AES_MAX_KEY_SIZE) && AES_MAX_KEY_SIZE >= 128 && \
             defined(WOLFSSL_AES_128)
@@ -3137,7 +2822,6 @@ static WARN_UNUSED_RESULT int wc_AesDecrypt(
         (void)dir;
     #endif /* HAVE_AES_DECRYPT */
         (void)temp;
-#endif /* NEED_AES_TABLES */
 
 #if defined(WOLFSSL_SCE) && !defined(WOLFSSL_SCE_NO_AES)
         XMEMCPY((byte*)aes->key, userKey, keylen);
@@ -3208,8 +2892,7 @@ int wc_AesSetIV(Aes* aes, const byte* iv)
     #if defined(HAVE_COLDFIRE_SEC)
         #error "Coldfire SEC doesn't yet support AES direct"
 
-    #elif defined(WOLFSSL_IMX6_CAAM) && !defined(NO_IMX6_CAAM_AES) && \
-        !defined(WOLFSSL_QNX_CAAM)
+    #elif defined(WOLFSSL_IMX6_CAAM) && !defined(NO_IMX6_CAAM_AES)
         /* implemented in wolfcrypt/src/port/caam/caam_aes.c */
 
     #elif defined(WOLFSSL_AFALG)
@@ -3217,40 +2900,6 @@ int wc_AesSetIV(Aes* aes, const byte* iv)
 
     #elif defined(WOLFSSL_DEVCRYPTO_AES)
         /* implemented in wolfcrypt/src/port/devcrypt/devcrypto_aes.c */
-
-    #elif defined(WOLFSSL_LINUXKM) && defined(WOLFSSL_AESNI)
-
-        WARN_UNUSED_RESULT int wc_AesEncryptDirect(
-            Aes* aes, byte* out, const byte* in)
-        {
-            int ret;
-            if (haveAESNI && aes->use_aesni)
-                SAVE_VECTOR_REGISTERS(return _svr_ret;);
-            ret = wc_AesEncrypt(aes, in, out);
-            if (haveAESNI && aes->use_aesni)
-                RESTORE_VECTOR_REGISTERS();
-            return ret;
-        }
-        /* vector reg save/restore is explicit in all below calls to
-         * wc_Aes{En,De}cryptDirect(), so bypass the public version with a
-         * macro.
-         */
-        #define wc_AesEncryptDirect(aes, out, in) wc_AesEncrypt(aes, in, out)
-        #ifdef HAVE_AES_DECRYPT
-        /* Allow direct access to one block decrypt */
-        WARN_UNUSED_RESULT int wc_AesDecryptDirect(
-            Aes* aes, byte* out, const byte* in)
-        {
-            int ret;
-            if (haveAESNI && aes->use_aesni)
-                SAVE_VECTOR_REGISTERS(return _svr_ret;);
-            ret = wc_AesDecrypt(aes, in, out);
-            if (haveAESNI && aes->use_aesni)
-                RESTORE_VECTOR_REGISTERS();
-            return ret;
-        }
-        #define wc_AesDecryptDirect(aes, out, in) wc_AesDecrypt(aes, in, out)
-        #endif /* HAVE_AES_DECRYPT */
 
     #else
 
@@ -3580,9 +3229,7 @@ int wc_AesSetIV(Aes* aes, const byte* iv)
     static WARN_UNUSED_RESULT int wc_AesCbcCrypt(
         Aes* aes, byte* po, const byte* pi, word32 sz, word32 descHeader)
     {
-        #ifdef DEBUG_WOLFSSL
             int i; int stat1, stat2; int ret;
-        #endif
 
         int size;
         volatile int v;
@@ -3657,7 +3304,6 @@ int wc_AesSetIV(Aes* aes, const byte* iv)
 
             while ((secDesc->header>> 24) != 0xff) v++;
 
-            #ifdef DEBUG_WOLFSSL
                 ret = MCF_SEC_SISRH;
                 stat1 = MCF_SEC_AESSR;
                 stat2 = MCF_SEC_AESISR;
@@ -3665,7 +3311,6 @@ int wc_AesSetIV(Aes* aes, const byte* iv)
                     db_printf("Aes_Cbc(i=%d):ISRH=%08x, AESSR=%08x, "
                               "AESISR=%08x\n", i, ret, stat1, stat2);
                 }
-            #endif
 
             XMEMCPY(po, AESBuffOut, size);
 
@@ -3938,8 +3583,7 @@ int wc_AesSetIV(Aes* aes, const byte* iv)
     {
         return SaSi_AesBlock(&aes->ctx.user_ctx, (uint8_t*)in, sz, out);
     }
-#elif defined(WOLFSSL_IMX6_CAAM) && !defined(NO_IMX6_CAAM_AES) && \
-        !defined(WOLFSSL_QNX_CAAM)
+#elif defined(WOLFSSL_IMX6_CAAM) && !defined(NO_IMX6_CAAM_AES)
       /* implemented in wolfcrypt/src/port/caam/caam_aes.c */
 
 #elif defined(WOLFSSL_AFALG)
@@ -3997,38 +3641,7 @@ int wc_AesSetIV(Aes* aes, const byte* iv)
             return DCPAesCbcEncrypt(aes, out, in, sz);
     #endif
 
-    #ifdef WOLF_CRYPTO_CB
-        if (aes->devId != INVALID_DEVID) {
-            int crypto_cb_ret = wc_CryptoCb_AesCbcEncrypt(aes, out, in, sz);
-            if (crypto_cb_ret != CRYPTOCB_UNAVAILABLE)
-                return crypto_cb_ret;
-            /* fall-through when unavailable */
-        }
-    #endif
-    #if defined(WOLFSSL_ASYNC_CRYPT) && defined(WC_ASYNC_ENABLE_AES)
-        /* if async and byte count above threshold */
-        if (aes->asyncDev.marker == WOLFSSL_ASYNC_MARKER_AES &&
-                                                sz >= WC_ASYNC_THRESH_AES_CBC) {
-        #if defined(HAVE_CAVIUM)
-            return NitroxAesCbcEncrypt(aes, out, in, sz);
-        #elif defined(HAVE_INTEL_QA)
-            return IntelQaSymAesCbcEncrypt(&aes->asyncDev, out, in, sz,
-                (const byte*)aes->devKey, aes->keylen,
-                (byte*)aes->reg, AES_BLOCK_SIZE);
-        #else /* WOLFSSL_ASYNC_CRYPT_TEST */
-            if (wc_AsyncTestInit(&aes->asyncDev, ASYNC_TEST_AES_CBC_ENCRYPT)) {
-                WC_ASYNC_TEST* testDev = &aes->asyncDev.test;
-                testDev->aes.aes = aes;
-                testDev->aes.out = out;
-                testDev->aes.in = in;
-                testDev->aes.sz = sz;
-                return WC_PENDING_E;
-            }
-        #endif
-        }
-    #endif /* WOLFSSL_ASYNC_CRYPT */
 
-    #ifdef WOLFSSL_AESNI
         if (haveAESNI) {
             #ifdef DEBUG_AESNI
                 printf("about to aes cbc encrypt\n");
@@ -4075,7 +3688,6 @@ int wc_AesSetIV(Aes* aes, const byte* iv)
 
             return 0;
         }
-    #endif
 
         while (blocks--) {
             int ret;
@@ -4121,38 +3733,7 @@ int wc_AesSetIV(Aes* aes, const byte* iv)
             return DCPAesCbcDecrypt(aes, out, in, sz);
     #endif
 
-    #ifdef WOLF_CRYPTO_CB
-        if (aes->devId != INVALID_DEVID) {
-            int crypto_cb_ret = wc_CryptoCb_AesCbcDecrypt(aes, out, in, sz);
-            if (crypto_cb_ret != CRYPTOCB_UNAVAILABLE)
-                return crypto_cb_ret;
-            /* fall-through when unavailable */
-        }
-    #endif
-    #if defined(WOLFSSL_ASYNC_CRYPT) && defined(WC_ASYNC_ENABLE_AES)
-        /* if async and byte count above threshold */
-        if (aes->asyncDev.marker == WOLFSSL_ASYNC_MARKER_AES &&
-                                                sz >= WC_ASYNC_THRESH_AES_CBC) {
-        #if defined(HAVE_CAVIUM)
-            return NitroxAesCbcDecrypt(aes, out, in, sz);
-        #elif defined(HAVE_INTEL_QA)
-            return IntelQaSymAesCbcDecrypt(&aes->asyncDev, out, in, sz,
-                (const byte*)aes->devKey, aes->keylen,
-                (byte*)aes->reg, AES_BLOCK_SIZE);
-        #else /* WOLFSSL_ASYNC_CRYPT_TEST */
-            if (wc_AsyncTestInit(&aes->asyncDev, ASYNC_TEST_AES_CBC_DECRYPT)) {
-                WC_ASYNC_TEST* testDev = &aes->asyncDev.test;
-                testDev->aes.aes = aes;
-                testDev->aes.out = out;
-                testDev->aes.in = in;
-                testDev->aes.sz = sz;
-                return WC_PENDING_E;
-            }
-        #endif
-        }
-    #endif
 
-    #ifdef WOLFSSL_AESNI
         if (haveAESNI) {
             #ifdef DEBUG_AESNI
                 printf("about to aes cbc decrypt\n");
@@ -4182,7 +3763,6 @@ int wc_AesSetIV(Aes* aes, const byte* iv)
             XMEMCPY(aes->reg, aes->tmp, AES_BLOCK_SIZE);
             return 0;
         }
-    #endif
 
         while (blocks--) {
             int ret;
@@ -4384,8 +3964,7 @@ int wc_AesSetIV(Aes* aes, const byte* iv)
             return ret;
         }
 
-    #elif defined(WOLFSSL_IMX6_CAAM) && !defined(NO_IMX6_CAAM_AES) && \
-        !defined(WOLFSSL_QNX_CAAM)
+    #elif defined(WOLFSSL_IMX6_CAAM) && !defined(NO_IMX6_CAAM_AES)
         /* implemented in wolfcrypt/src/port/caam/caam_aes.c */
 
     #elif defined(WOLFSSL_AFALG)
@@ -4496,7 +4075,7 @@ int wc_AesSetIV(Aes* aes, const byte* iv)
  * block counter during the encryption.
  */
 
-#if (defined(HAVE_AESGCM) && !defined(WC_NO_RNG)) || defined(HAVE_AESCCM)
+#if !defined(WC_NO_RNG)
 static WC_INLINE void IncCtr(byte* ctr, word32 ctrSz)
 {
     int i;
@@ -4508,7 +4087,6 @@ static WC_INLINE void IncCtr(byte* ctr, word32 ctrSz)
 #endif /* HAVE_AESGCM || HAVE_AESCCM */
 
 
-#ifdef HAVE_AESGCM
 
 #ifdef WOLFSSL_AESGCM_STREAM
     /* Access initialization counter data. */
@@ -4555,7 +4133,6 @@ static WC_INLINE void IncrementGcmCounter(byte* inOutCtr)
 }
 #endif /* !FREESCALE_LTC_AES_GCM */
 
-#if defined(GCM_SMALL) || defined(GCM_TABLE) || defined(GCM_TABLE_4BIT)
 
 static WC_INLINE void FlattenSzInBits(byte* buf, word32 sz)
 {
@@ -4589,7 +4166,6 @@ static WC_INLINE void RIGHTSHIFTX(byte* x)
     x[0] ^= borrow;
 }
 
-#endif /* defined(GCM_SMALL) || defined(GCM_TABLE) || defined(GCM_TABLE_4BIT) */
 
 
 #ifdef GCM_TABLE
@@ -4616,7 +4192,7 @@ static void GenerateM0(Aes* aes)
     XMEMSET(m[0], 0, AES_BLOCK_SIZE);
 }
 
-#elif defined(GCM_TABLE_4BIT)
+#else
 
 static WC_INLINE void Shift4_M0(byte *r8, byte* z8)
 {
@@ -4712,21 +4288,15 @@ int wc_AesGcmSetKey(Aes* aes, const byte* key, word32 len)
     if (aes == NULL)
         return BAD_FUNC_ARG;
 
-#ifdef OPENSSL_EXTRA
-    XMEMSET(aes->aadH, 0, sizeof(aes->aadH));
-    aes->aadLen = 0;
-#endif
     XMEMSET(iv, 0, AES_BLOCK_SIZE);
     ret = wc_AesSetKey(aes, key, len, iv, AES_ENCRYPTION);
 #ifdef WOLFSSL_AESGCM_STREAM
     aes->gcmKeySet = 1;
 #endif
 
-    #ifdef WOLFSSL_AESNI
         /* AES-NI code generates its own H value. */
         if (haveAESNI)
             return ret;
-    #endif /* WOLFSSL_AESNI */
     #if defined(WOLFSSL_SECO_CAAM)
         if (aes->devId == WOLFSSL_SECO_DEVID) {
             return ret;
@@ -4737,9 +4307,7 @@ int wc_AesGcmSetKey(Aes* aes, const byte* key, word32 len)
     if (ret == 0)
         ret = wc_AesEncrypt(aes, iv, aes->H);
     if (ret == 0) {
-    #if defined(GCM_TABLE) || defined(GCM_TABLE_4BIT)
         GenerateM0(aes);
-    #endif /* GCM_TABLE */
     }
 #endif /* FREESCALE_LTC_AES_GCM */
 
@@ -4749,11 +4317,6 @@ int wc_AesGcmSetKey(Aes* aes, const byte* key, word32 len)
     wc_AesGcmSetKey_ex(aes, key, len, 0);
 #endif
 
-#ifdef WOLF_CRYPTO_CB
-    if (aes->devId != INVALID_DEVID) {
-        XMEMCPY(aes->devKey, key, len);
-    }
-#endif
 
 #ifdef WOLFSSL_IMX6_CAAM_BLOB
     ForceZero(local, sizeof(local));
@@ -4762,14 +4325,10 @@ int wc_AesGcmSetKey(Aes* aes, const byte* key, word32 len)
 }
 
 
-#ifdef WOLFSSL_AESNI
 
-#if defined(USE_INTEL_SPEEDUP)
     #define HAVE_INTEL_AVX1
     #define HAVE_INTEL_AVX2
-#endif /* USE_INTEL_SPEEDUP */
 
-#ifndef _MSC_VER
 
 void AES_GCM_encrypt(const unsigned char *in, unsigned char *out,
                      const unsigned char* addt, const unsigned char* ivec,
@@ -4777,7 +4336,6 @@ void AES_GCM_encrypt(const unsigned char *in, unsigned char *out,
                      word32 abytes, word32 ibytes,
                      word32 tbytes, const unsigned char* key, int nr)
                      XASM_LINK("AES_GCM_encrypt");
-#ifdef HAVE_INTEL_AVX1
 void AES_GCM_encrypt_avx1(const unsigned char *in, unsigned char *out,
                           const unsigned char* addt, const unsigned char* ivec,
                           unsigned char *tag, word32 nbytes,
@@ -4785,7 +4343,6 @@ void AES_GCM_encrypt_avx1(const unsigned char *in, unsigned char *out,
                           word32 tbytes, const unsigned char* key,
                           int nr)
                           XASM_LINK("AES_GCM_encrypt_avx1");
-#ifdef HAVE_INTEL_AVX2
 void AES_GCM_encrypt_avx2(const unsigned char *in, unsigned char *out,
                           const unsigned char* addt, const unsigned char* ivec,
                           unsigned char *tag, word32 nbytes,
@@ -4793,8 +4350,6 @@ void AES_GCM_encrypt_avx2(const unsigned char *in, unsigned char *out,
                           word32 tbytes, const unsigned char* key,
                           int nr)
                           XASM_LINK("AES_GCM_encrypt_avx2");
-#endif /* HAVE_INTEL_AVX2 */
-#endif /* HAVE_INTEL_AVX1 */
 
 #ifdef HAVE_AES_DECRYPT
 void AES_GCM_decrypt(const unsigned char *in, unsigned char *out,
@@ -4803,1165 +4358,20 @@ void AES_GCM_decrypt(const unsigned char *in, unsigned char *out,
                      word32 ibytes, word32 tbytes, const unsigned char* key,
                      int nr, int* res)
                      XASM_LINK("AES_GCM_decrypt");
-#ifdef HAVE_INTEL_AVX1
 void AES_GCM_decrypt_avx1(const unsigned char *in, unsigned char *out,
                           const unsigned char* addt, const unsigned char* ivec,
                           const unsigned char *tag, word32 nbytes,
                           word32 abytes, word32 ibytes, word32 tbytes,
                           const unsigned char* key, int nr, int* res)
                           XASM_LINK("AES_GCM_decrypt_avx1");
-#ifdef HAVE_INTEL_AVX2
 void AES_GCM_decrypt_avx2(const unsigned char *in, unsigned char *out,
                           const unsigned char* addt, const unsigned char* ivec,
                           const unsigned char *tag, word32 nbytes,
                           word32 abytes, word32 ibytes, word32 tbytes,
                           const unsigned char* key, int nr, int* res)
                           XASM_LINK("AES_GCM_decrypt_avx2");
-#endif /* HAVE_INTEL_AVX2 */
-#endif /* HAVE_INTEL_AVX1 */
 #endif /* HAVE_AES_DECRYPT */
 
-#else /* _MSC_VER */
-
-/* AESNI with Microsoft */
-#ifdef __clang__
-    /* With Clang the __m128i in emmintrin.h is union using:
-     *     "unsigned __int64 m128i_u64[2];"
-     * Notes: Must add "-maes -msse4.1 -mpclmul" to compiler flags.
-     *        Must mark "aes_asm.asm" as included/compiled C file.
-     */
-    #define M128_INIT(x,y) { (long long)x, (long long)y }
-#else
-    /* Typically this is array of 16 int8's */
-    #define S(w,z) ((char)((unsigned long long)(w) >> (8*(7-(z))) & 0xFF))
-    #define M128_INIT(x,y) { S((x),7), S((x),6), S((x),5), S((x),4), \
-                             S((x),3), S((x),2), S((x),1), S((x),0), \
-                             S((y),7), S((y),6), S((y),5), S((y),4), \
-                             S((y),3), S((y),2), S((y),1), S((y),0) }
-#endif
-
-static const __m128i MOD2_128 =
-        M128_INIT(0x1, (long long int)0xc200000000000000UL);
-
-
-/* See Intel Carry-Less Multiplication Instruction
- * and its Usage for Computing the GCM Mode White Paper
- * by Shay Gueron, Intel Mobility Group, Israel Development Center;
- * and Michael E. Kounavis, Intel Labs, Circuits and Systems Research */
-
-
-/* Figure 9. AES-GCM - Encrypt With Single Block Ghash at a Time */
-
-static const __m128i ONE   = M128_INIT(0x0, 0x1);
-#ifndef AES_GCM_AESNI_NO_UNROLL
-static const __m128i TWO   = M128_INIT(0x0, 0x2);
-static const __m128i THREE = M128_INIT(0x0, 0x3);
-static const __m128i FOUR  = M128_INIT(0x0, 0x4);
-static const __m128i FIVE  = M128_INIT(0x0, 0x5);
-static const __m128i SIX   = M128_INIT(0x0, 0x6);
-static const __m128i SEVEN = M128_INIT(0x0, 0x7);
-static const __m128i EIGHT = M128_INIT(0x0, 0x8);
-#endif
-static const __m128i BSWAP_EPI64 =
-        M128_INIT(0x0001020304050607, 0x08090a0b0c0d0e0f);
-static const __m128i BSWAP_MASK =
-        M128_INIT(0x08090a0b0c0d0e0f, 0x0001020304050607);
-
-
-/* The following are for MSC based builds which do not allow
- * inline assembly. Intrinsic functions are used instead. */
-
-#define aes_gcm_calc_iv_12(KEY, ivec, nr, H, Y, T)         \
-do                                                         \
-{                                                          \
-    word32 iv12[4];                                        \
-    iv12[0] = *(word32*)&ivec[0];                          \
-    iv12[1] = *(word32*)&ivec[4];                          \
-    iv12[2] = *(word32*)&ivec[8];                          \
-    iv12[3] = 0x01000000;                                  \
-    Y = _mm_loadu_si128((__m128i*)iv12);                   \
-                                                           \
-    /* (Compute E[ZERO, KS] and E[Y0, KS] together */      \
-    tmp1 = _mm_load_si128(&KEY[0]);                        \
-    tmp2 = _mm_xor_si128(Y, KEY[0]);                       \
-    tmp1 = _mm_aesenc_si128(tmp1, KEY[1]);                 \
-    tmp2 = _mm_aesenc_si128(tmp2, KEY[1]);                 \
-    tmp1 = _mm_aesenc_si128(tmp1, KEY[2]);                 \
-    tmp2 = _mm_aesenc_si128(tmp2, KEY[2]);                 \
-    tmp1 = _mm_aesenc_si128(tmp1, KEY[3]);                 \
-    tmp2 = _mm_aesenc_si128(tmp2, KEY[3]);                 \
-    tmp1 = _mm_aesenc_si128(tmp1, KEY[4]);                 \
-    tmp2 = _mm_aesenc_si128(tmp2, KEY[4]);                 \
-    tmp1 = _mm_aesenc_si128(tmp1, KEY[5]);                 \
-    tmp2 = _mm_aesenc_si128(tmp2, KEY[5]);                 \
-    tmp1 = _mm_aesenc_si128(tmp1, KEY[6]);                 \
-    tmp2 = _mm_aesenc_si128(tmp2, KEY[6]);                 \
-    tmp1 = _mm_aesenc_si128(tmp1, KEY[7]);                 \
-    tmp2 = _mm_aesenc_si128(tmp2, KEY[7]);                 \
-    tmp1 = _mm_aesenc_si128(tmp1, KEY[8]);                 \
-    tmp2 = _mm_aesenc_si128(tmp2, KEY[8]);                 \
-    tmp1 = _mm_aesenc_si128(tmp1, KEY[9]);                 \
-    tmp2 = _mm_aesenc_si128(tmp2, KEY[9]);                 \
-    lastKey = KEY[10];                                     \
-    if (nr > 10) {                                         \
-        tmp1 = _mm_aesenc_si128(tmp1, lastKey);            \
-        tmp2 = _mm_aesenc_si128(tmp2, lastKey);            \
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[11]);            \
-        tmp2 = _mm_aesenc_si128(tmp2, KEY[11]);            \
-        lastKey = KEY[12];                                 \
-        if (nr > 12) {                                     \
-            tmp1 = _mm_aesenc_si128(tmp1, lastKey);        \
-            tmp2 = _mm_aesenc_si128(tmp2, lastKey);        \
-            tmp1 = _mm_aesenc_si128(tmp1, KEY[13]);        \
-            tmp2 = _mm_aesenc_si128(tmp2, KEY[13]);        \
-            lastKey = KEY[14];                             \
-        }                                                  \
-    }                                                      \
-    H = _mm_aesenclast_si128(tmp1, lastKey);               \
-    T = _mm_aesenclast_si128(tmp2, lastKey);               \
-    H = _mm_shuffle_epi8(H, BSWAP_MASK);                   \
-}                                                          \
-while (0)
-
-
-#ifdef _M_X64
-    /* 64-bit */
-    #define AES_GCM_INSERT_EPI(tmp1, a, b) \
-        tmp1 = _mm_insert_epi64(tmp1, ((word64)(a))*8, 0); \
-        tmp1 = _mm_insert_epi64(tmp1, ((word64)(b))*8, 1);
-#else
-    /* 32-bit */
-    #define AES_GCM_INSERT_EPI(tmp1, a, b) \
-        tmp1 = _mm_insert_epi32(tmp1, ((int)(a))*8, 0); \
-        tmp1 = _mm_insert_epi32(tmp1, 0,            1); \
-        tmp1 = _mm_insert_epi32(tmp1, ((int)(b))*8, 2); \
-        tmp1 = _mm_insert_epi32(tmp1, 0,            3);
-#endif
-
-#define aes_gcm_calc_iv(KEY, ivec, ibytes, nr, H, Y, T)         \
-do                                                              \
-{                                                               \
-    if (ibytes % 16) {                                          \
-        i = ibytes / 16;                                        \
-        for (j=0; j < (int)(ibytes%16); j++)                    \
-            ((unsigned char*)&last_block)[j] = ivec[i*16+j];    \
-    }                                                           \
-    tmp1 = _mm_load_si128(&KEY[0]);                             \
-    tmp1 = _mm_aesenc_si128(tmp1, KEY[1]);                      \
-    tmp1 = _mm_aesenc_si128(tmp1, KEY[2]);                      \
-    tmp1 = _mm_aesenc_si128(tmp1, KEY[3]);                      \
-    tmp1 = _mm_aesenc_si128(tmp1, KEY[4]);                      \
-    tmp1 = _mm_aesenc_si128(tmp1, KEY[5]);                      \
-    tmp1 = _mm_aesenc_si128(tmp1, KEY[6]);                      \
-    tmp1 = _mm_aesenc_si128(tmp1, KEY[7]);                      \
-    tmp1 = _mm_aesenc_si128(tmp1, KEY[8]);                      \
-    tmp1 = _mm_aesenc_si128(tmp1, KEY[9]);                      \
-    lastKey = KEY[10];                                          \
-    if (nr > 10) {                                              \
-        tmp1 = _mm_aesenc_si128(tmp1, lastKey);                 \
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[11]);                 \
-        lastKey = KEY[12];                                      \
-        if (nr > 12) {                                          \
-            tmp1 = _mm_aesenc_si128(tmp1, lastKey);             \
-            tmp1 = _mm_aesenc_si128(tmp1, KEY[13]);             \
-            lastKey = KEY[14];                                  \
-        }                                                       \
-    }                                                           \
-    H = _mm_aesenclast_si128(tmp1, lastKey);                    \
-    H = _mm_shuffle_epi8(H, BSWAP_MASK);                        \
-    Y = _mm_setzero_si128();                                    \
-    for (i=0; i < (int)(ibytes/16); i++) {                      \
-        tmp1 = _mm_loadu_si128(&((__m128i*)ivec)[i]);           \
-        tmp1 = _mm_shuffle_epi8(tmp1, BSWAP_MASK);              \
-        Y = _mm_xor_si128(Y, tmp1);                             \
-        Y = gfmul_sw(Y, H);                                     \
-    }                                                           \
-    if (ibytes % 16) {                                          \
-        tmp1 = last_block;                                      \
-        tmp1 = _mm_shuffle_epi8(tmp1, BSWAP_MASK);              \
-        Y = _mm_xor_si128(Y, tmp1);                             \
-        Y = gfmul_sw(Y, H);                                     \
-    }                                                           \
-    AES_GCM_INSERT_EPI(tmp1, ibytes, 0);                        \
-    Y = _mm_xor_si128(Y, tmp1);                                 \
-    Y = gfmul_sw(Y, H);                                         \
-    Y = _mm_shuffle_epi8(Y, BSWAP_MASK); /* Compute E(K, Y0) */ \
-    tmp1 = _mm_xor_si128(Y, KEY[0]);                            \
-    tmp1 = _mm_aesenc_si128(tmp1, KEY[1]);                      \
-    tmp1 = _mm_aesenc_si128(tmp1, KEY[2]);                      \
-    tmp1 = _mm_aesenc_si128(tmp1, KEY[3]);                      \
-    tmp1 = _mm_aesenc_si128(tmp1, KEY[4]);                      \
-    tmp1 = _mm_aesenc_si128(tmp1, KEY[5]);                      \
-    tmp1 = _mm_aesenc_si128(tmp1, KEY[6]);                      \
-    tmp1 = _mm_aesenc_si128(tmp1, KEY[7]);                      \
-    tmp1 = _mm_aesenc_si128(tmp1, KEY[8]);                      \
-    tmp1 = _mm_aesenc_si128(tmp1, KEY[9]);                      \
-    lastKey = KEY[10];                                          \
-    if (nr > 10) {                                              \
-        tmp1 = _mm_aesenc_si128(tmp1, lastKey);                 \
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[11]);                 \
-        lastKey = KEY[12];                                      \
-        if (nr > 12) {                                          \
-            tmp1 = _mm_aesenc_si128(tmp1, lastKey);             \
-            tmp1 = _mm_aesenc_si128(tmp1, KEY[13]);             \
-            lastKey = KEY[14];                                  \
-        }                                                       \
-    }                                                           \
-    T = _mm_aesenclast_si128(tmp1, lastKey);                    \
-}                                                               \
-while (0)
-
-#define AES_ENC_8(j)                       \
-    tmp1 = _mm_aesenc_si128(tmp1, KEY[j]); \
-    tmp2 = _mm_aesenc_si128(tmp2, KEY[j]); \
-    tmp3 = _mm_aesenc_si128(tmp3, KEY[j]); \
-    tmp4 = _mm_aesenc_si128(tmp4, KEY[j]); \
-    tmp5 = _mm_aesenc_si128(tmp5, KEY[j]); \
-    tmp6 = _mm_aesenc_si128(tmp6, KEY[j]); \
-    tmp7 = _mm_aesenc_si128(tmp7, KEY[j]); \
-    tmp8 = _mm_aesenc_si128(tmp8, KEY[j]);
-
-#define AES_ENC_LAST_8()                                                  \
-    tmp1 =_mm_aesenclast_si128(tmp1, lastKey);                            \
-    tmp2 =_mm_aesenclast_si128(tmp2, lastKey);                            \
-    tmp1 = _mm_xor_si128(tmp1, _mm_loadu_si128(&((__m128i*)in)[i*8+0]));  \
-    tmp2 = _mm_xor_si128(tmp2, _mm_loadu_si128(&((__m128i*)in)[i*8+1]));  \
-    _mm_storeu_si128(&((__m128i*)out)[i*8+0], tmp1);                      \
-    _mm_storeu_si128(&((__m128i*)out)[i*8+1], tmp2);                      \
-    tmp3 =_mm_aesenclast_si128(tmp3, lastKey);                            \
-    tmp4 =_mm_aesenclast_si128(tmp4, lastKey);                            \
-    tmp3 = _mm_xor_si128(tmp3, _mm_loadu_si128(&((__m128i*)in)[i*8+2]));  \
-    tmp4 = _mm_xor_si128(tmp4, _mm_loadu_si128(&((__m128i*)in)[i*8+3]));  \
-    _mm_storeu_si128(&((__m128i*)out)[i*8+2], tmp3);                      \
-    _mm_storeu_si128(&((__m128i*)out)[i*8+3], tmp4);                      \
-    tmp5 =_mm_aesenclast_si128(tmp5, lastKey);                            \
-    tmp6 =_mm_aesenclast_si128(tmp6, lastKey);                            \
-    tmp5 = _mm_xor_si128(tmp5, _mm_loadu_si128(&((__m128i*)in)[i*8+4]));  \
-    tmp6 = _mm_xor_si128(tmp6, _mm_loadu_si128(&((__m128i*)in)[i*8+5]));  \
-    _mm_storeu_si128(&((__m128i*)out)[i*8+4], tmp5);                      \
-    _mm_storeu_si128(&((__m128i*)out)[i*8+5], tmp6);                      \
-    tmp7 =_mm_aesenclast_si128(tmp7, lastKey);                            \
-    tmp8 =_mm_aesenclast_si128(tmp8, lastKey);                            \
-    tmp7 = _mm_xor_si128(tmp7, _mm_loadu_si128(&((__m128i*)in)[i*8+6]));  \
-    tmp8 = _mm_xor_si128(tmp8, _mm_loadu_si128(&((__m128i*)in)[i*8+7]));  \
-    _mm_storeu_si128(&((__m128i*)out)[i*8+6], tmp7);                      \
-    _mm_storeu_si128(&((__m128i*)out)[i*8+7], tmp8);
-
-
-static WARN_UNUSED_RESULT __m128i gfmul_sw(__m128i a, __m128i b)
-{
-    __m128i r, t1, t2, t3, t4, t5, t6, t7;
-    t2 = _mm_shuffle_epi32(b, 78);
-    t3 = _mm_shuffle_epi32(a, 78);
-    t2 = _mm_xor_si128(t2, b);
-    t3 = _mm_xor_si128(t3, a);
-    t4 = _mm_clmulepi64_si128(b, a, 0x11);
-    t1 = _mm_clmulepi64_si128(b, a, 0x00);
-    t2 = _mm_clmulepi64_si128(t2, t3, 0x00);
-    t2 = _mm_xor_si128(t2, t1);
-    t2 = _mm_xor_si128(t2, t4);
-    t3 = _mm_slli_si128(t2, 8);
-    t2 = _mm_srli_si128(t2, 8);
-    t1 = _mm_xor_si128(t1, t3);
-    t4 = _mm_xor_si128(t4, t2);
-
-    t5 = _mm_srli_epi32(t1, 31);
-    t6 = _mm_srli_epi32(t4, 31);
-    t1 = _mm_slli_epi32(t1, 1);
-    t4 = _mm_slli_epi32(t4, 1);
-    t7 = _mm_srli_si128(t5, 12);
-    t5 = _mm_slli_si128(t5, 4);
-    t6 = _mm_slli_si128(t6, 4);
-    t4 = _mm_or_si128(t4, t7);
-    t1 = _mm_or_si128(t1, t5);
-    t4 = _mm_or_si128(t4, t6);
-
-    t5 = _mm_slli_epi32(t1, 31);
-    t6 = _mm_slli_epi32(t1, 30);
-    t7 = _mm_slli_epi32(t1, 25);
-    t5 = _mm_xor_si128(t5, t6);
-    t5 = _mm_xor_si128(t5, t7);
-
-    t6 = _mm_srli_si128(t5, 4);
-    t5 = _mm_slli_si128(t5, 12);
-    t1 = _mm_xor_si128(t1, t5);
-    t7 = _mm_srli_epi32(t1, 1);
-    t3 = _mm_srli_epi32(t1, 2);
-    t2 = _mm_srli_epi32(t1, 7);
-
-    t7 = _mm_xor_si128(t7, t3);
-    t7 = _mm_xor_si128(t7, t2);
-    t7 = _mm_xor_si128(t7, t6);
-    t7 = _mm_xor_si128(t7, t1);
-    r = _mm_xor_si128(t4, t7);
-
-    return r;
-}
-
-static void gfmul_only(__m128i a, __m128i b, __m128i* r0, __m128i* r1)
-{
-    __m128i t1, t2, t3, t4;
-
-    /* 128 x 128 Carryless Multiply */
-    t2 = _mm_shuffle_epi32(b, 78);
-    t3 = _mm_shuffle_epi32(a, 78);
-    t2 = _mm_xor_si128(t2, b);
-    t3 = _mm_xor_si128(t3, a);
-    t4 = _mm_clmulepi64_si128(b, a, 0x11);
-    t1 = _mm_clmulepi64_si128(b, a, 0x00);
-    t2 = _mm_clmulepi64_si128(t2, t3, 0x00);
-    t2 = _mm_xor_si128(t2, t1);
-    t2 = _mm_xor_si128(t2, t4);
-    t3 = _mm_slli_si128(t2, 8);
-    t2 = _mm_srli_si128(t2, 8);
-    t1 = _mm_xor_si128(t1, t3);
-    t4 = _mm_xor_si128(t4, t2);
-    *r0 = _mm_xor_si128(t1, *r0);
-    *r1 = _mm_xor_si128(t4, *r1);
-}
-
-static WARN_UNUSED_RESULT __m128i gfmul_shl1(__m128i a)
-{
-    __m128i t1 = a, t2;
-    t2 = _mm_srli_epi64(t1, 63);
-    t1 = _mm_slli_epi64(t1, 1);
-    t2 = _mm_slli_si128(t2, 8);
-    t1 = _mm_or_si128(t1, t2);
-    /* if (a[1] >> 63) t1 = _mm_xor_si128(t1, MOD2_128); */
-    a = _mm_shuffle_epi32(a, 0xff);
-    a = _mm_srai_epi32(a, 31);
-    a = _mm_and_si128(a, MOD2_128);
-    t1 = _mm_xor_si128(t1, a);
-    return t1;
-}
-
-static WARN_UNUSED_RESULT __m128i ghash_red(__m128i r0, __m128i r1)
-{
-    __m128i t2, t3;
-    __m128i t5, t6, t7;
-
-    t5 = _mm_slli_epi32(r0, 31);
-    t6 = _mm_slli_epi32(r0, 30);
-    t7 = _mm_slli_epi32(r0, 25);
-    t5 = _mm_xor_si128(t5, t6);
-    t5 = _mm_xor_si128(t5, t7);
-
-    t6 = _mm_srli_si128(t5, 4);
-    t5 = _mm_slli_si128(t5, 12);
-    r0 = _mm_xor_si128(r0, t5);
-    t7 = _mm_srli_epi32(r0, 1);
-    t3 = _mm_srli_epi32(r0, 2);
-    t2 = _mm_srli_epi32(r0, 7);
-
-    t7 = _mm_xor_si128(t7, t3);
-    t7 = _mm_xor_si128(t7, t2);
-    t7 = _mm_xor_si128(t7, t6);
-    t7 = _mm_xor_si128(t7, r0);
-    return _mm_xor_si128(r1, t7);
-}
-
-static WARN_UNUSED_RESULT __m128i gfmul_shifted(__m128i a, __m128i b)
-{
-    __m128i t0 = _mm_setzero_si128(), t1 = _mm_setzero_si128();
-    gfmul_only(a, b, &t0, &t1);
-    return ghash_red(t0, t1);
-}
-
-#ifndef AES_GCM_AESNI_NO_UNROLL
-static WARN_UNUSED_RESULT __m128i gfmul8(
-                      __m128i a1, __m128i a2, __m128i a3, __m128i a4,
-                      __m128i a5, __m128i a6, __m128i a7, __m128i a8,
-                      __m128i b1, __m128i b2, __m128i b3, __m128i b4,
-                      __m128i b5, __m128i b6, __m128i b7, __m128i b8)
-{
-    __m128i t0 = _mm_setzero_si128(), t1 = _mm_setzero_si128();
-    gfmul_only(a1, b8, &t0, &t1);
-    gfmul_only(a2, b7, &t0, &t1);
-    gfmul_only(a3, b6, &t0, &t1);
-    gfmul_only(a4, b5, &t0, &t1);
-    gfmul_only(a5, b4, &t0, &t1);
-    gfmul_only(a6, b3, &t0, &t1);
-    gfmul_only(a7, b2, &t0, &t1);
-    gfmul_only(a8, b1, &t0, &t1);
-    return ghash_red(t0, t1);
-}
-#endif
-
-
-static WARN_UNUSED_RESULT int AES_GCM_encrypt(
-                            const unsigned char *in, unsigned char *out,
-                            const unsigned char* addt,
-                            const unsigned char* ivec, unsigned char *tag,
-                            word32 nbytes, word32 abytes, word32 ibytes,
-                            word32 tbytes, const unsigned char* key, int nr)
-{
-    int i, j ,k;
-    __m128i ctr1;
-    __m128i H, Y, T;
-    __m128i X = _mm_setzero_si128();
-    __m128i *KEY = (__m128i*)key, lastKey;
-    __m128i last_block = _mm_setzero_si128();
-    __m128i tmp1, tmp2;
-#ifndef AES_GCM_AESNI_NO_UNROLL
-    __m128i HT[8];
-    __m128i r0, r1;
-    __m128i XV;
-    __m128i tmp3, tmp4, tmp5, tmp6, tmp7, tmp8;
-#endif
-
-    if (ibytes == GCM_NONCE_MID_SZ)
-        aes_gcm_calc_iv_12(KEY, ivec, nr, H, Y, T);
-    else
-        aes_gcm_calc_iv(KEY, ivec, ibytes, nr, H, Y, T);
-
-    for (i=0; i < (int)(abytes/16); i++) {
-        tmp1 = _mm_loadu_si128(&((__m128i*)addt)[i]);
-        tmp1 = _mm_shuffle_epi8(tmp1, BSWAP_MASK);
-        X = _mm_xor_si128(X, tmp1);
-        X = gfmul_sw(X, H);
-    }
-    if (abytes%16) {
-        last_block = _mm_setzero_si128();
-        for (j=0; j < (int)(abytes%16); j++)
-            ((unsigned char*)&last_block)[j] = addt[i*16+j];
-        tmp1 = last_block;
-        tmp1 = _mm_shuffle_epi8(tmp1, BSWAP_MASK);
-        X = _mm_xor_si128(X, tmp1);
-        X = gfmul_sw(X, H);
-    }
-    tmp1 = _mm_shuffle_epi8(Y, BSWAP_EPI64);
-    ctr1 = _mm_add_epi32(tmp1, ONE);
-    H = gfmul_shl1(H);
-
-#ifndef AES_GCM_AESNI_NO_UNROLL
-    i = 0;
-    if (nbytes >= 16*8) {
-        HT[0] = H;
-        HT[1] = gfmul_shifted(H, H);
-        HT[2] = gfmul_shifted(H, HT[1]);
-        HT[3] = gfmul_shifted(HT[1], HT[1]);
-        HT[4] = gfmul_shifted(HT[1], HT[2]);
-        HT[5] = gfmul_shifted(HT[2], HT[2]);
-        HT[6] = gfmul_shifted(HT[2], HT[3]);
-        HT[7] = gfmul_shifted(HT[3], HT[3]);
-
-        tmp1 = _mm_shuffle_epi8(ctr1, BSWAP_EPI64);
-        tmp2 = _mm_add_epi32(ctr1, ONE);
-        tmp2 = _mm_shuffle_epi8(tmp2, BSWAP_EPI64);
-        tmp3 = _mm_add_epi32(ctr1, TWO);
-        tmp3 = _mm_shuffle_epi8(tmp3, BSWAP_EPI64);
-        tmp4 = _mm_add_epi32(ctr1, THREE);
-        tmp4 = _mm_shuffle_epi8(tmp4, BSWAP_EPI64);
-        tmp5 = _mm_add_epi32(ctr1, FOUR);
-        tmp5 = _mm_shuffle_epi8(tmp5, BSWAP_EPI64);
-        tmp6 = _mm_add_epi32(ctr1, FIVE);
-        tmp6 = _mm_shuffle_epi8(tmp6, BSWAP_EPI64);
-        tmp7 = _mm_add_epi32(ctr1, SIX);
-        tmp7 = _mm_shuffle_epi8(tmp7, BSWAP_EPI64);
-        tmp8 = _mm_add_epi32(ctr1, SEVEN);
-        tmp8 = _mm_shuffle_epi8(tmp8, BSWAP_EPI64);
-        ctr1 = _mm_add_epi32(ctr1, EIGHT);
-        tmp1 =_mm_xor_si128(tmp1, KEY[0]);
-        tmp2 =_mm_xor_si128(tmp2, KEY[0]);
-        tmp3 =_mm_xor_si128(tmp3, KEY[0]);
-        tmp4 =_mm_xor_si128(tmp4, KEY[0]);
-        tmp5 =_mm_xor_si128(tmp5, KEY[0]);
-        tmp6 =_mm_xor_si128(tmp6, KEY[0]);
-        tmp7 =_mm_xor_si128(tmp7, KEY[0]);
-        tmp8 =_mm_xor_si128(tmp8, KEY[0]);
-        AES_ENC_8(1);
-        AES_ENC_8(2);
-        AES_ENC_8(3);
-        AES_ENC_8(4);
-        AES_ENC_8(5);
-        AES_ENC_8(6);
-        AES_ENC_8(7);
-        AES_ENC_8(8);
-        AES_ENC_8(9);
-        lastKey = KEY[10];
-        if (nr > 10) {
-            AES_ENC_8(10);
-            AES_ENC_8(11);
-            lastKey = KEY[12];
-            if (nr > 12) {
-                AES_ENC_8(12);
-                AES_ENC_8(13);
-                lastKey = KEY[14];
-            }
-        }
-        AES_ENC_LAST_8();
-
-        for (i=1; i < (int)(nbytes/16/8); i++) {
-                r0 = _mm_setzero_si128();
-                r1 = _mm_setzero_si128();
-            tmp1 = _mm_shuffle_epi8(ctr1, BSWAP_EPI64);
-            tmp2 = _mm_add_epi32(ctr1, ONE);
-            tmp2 = _mm_shuffle_epi8(tmp2, BSWAP_EPI64);
-            tmp3 = _mm_add_epi32(ctr1, TWO);
-            tmp3 = _mm_shuffle_epi8(tmp3, BSWAP_EPI64);
-            tmp4 = _mm_add_epi32(ctr1, THREE);
-            tmp4 = _mm_shuffle_epi8(tmp4, BSWAP_EPI64);
-            tmp5 = _mm_add_epi32(ctr1, FOUR);
-            tmp5 = _mm_shuffle_epi8(tmp5, BSWAP_EPI64);
-            tmp6 = _mm_add_epi32(ctr1, FIVE);
-            tmp6 = _mm_shuffle_epi8(tmp6, BSWAP_EPI64);
-            tmp7 = _mm_add_epi32(ctr1, SIX);
-            tmp7 = _mm_shuffle_epi8(tmp7, BSWAP_EPI64);
-            tmp8 = _mm_add_epi32(ctr1, SEVEN);
-            tmp8 = _mm_shuffle_epi8(tmp8, BSWAP_EPI64);
-            ctr1 = _mm_add_epi32(ctr1, EIGHT);
-            tmp1 =_mm_xor_si128(tmp1, KEY[0]);
-            tmp2 =_mm_xor_si128(tmp2, KEY[0]);
-            tmp3 =_mm_xor_si128(tmp3, KEY[0]);
-            tmp4 =_mm_xor_si128(tmp4, KEY[0]);
-            tmp5 =_mm_xor_si128(tmp5, KEY[0]);
-            tmp6 =_mm_xor_si128(tmp6, KEY[0]);
-            tmp7 =_mm_xor_si128(tmp7, KEY[0]);
-            tmp8 =_mm_xor_si128(tmp8, KEY[0]);
-                /* 128 x 128 Carryless Multiply */
-                XV = _mm_loadu_si128(&((__m128i*)out)[(i-1)*8+0]);
-                XV = _mm_shuffle_epi8(XV, BSWAP_MASK);
-                XV = _mm_xor_si128(XV, X);
-                gfmul_only(XV, HT[7], &r0, &r1);
-            tmp1 = _mm_aesenc_si128(tmp1, KEY[1]);
-            tmp2 = _mm_aesenc_si128(tmp2, KEY[1]);
-            tmp3 = _mm_aesenc_si128(tmp3, KEY[1]);
-            tmp4 = _mm_aesenc_si128(tmp4, KEY[1]);
-            tmp5 = _mm_aesenc_si128(tmp5, KEY[1]);
-            tmp6 = _mm_aesenc_si128(tmp6, KEY[1]);
-            tmp7 = _mm_aesenc_si128(tmp7, KEY[1]);
-            tmp8 = _mm_aesenc_si128(tmp8, KEY[1]);
-                /* 128 x 128 Carryless Multiply */
-                XV = _mm_loadu_si128(&((__m128i*)out)[(i-1)*8+1]);
-                XV = _mm_shuffle_epi8(XV, BSWAP_MASK);
-                gfmul_only(XV, HT[6], &r0, &r1);
-            tmp1 = _mm_aesenc_si128(tmp1, KEY[2]);
-            tmp2 = _mm_aesenc_si128(tmp2, KEY[2]);
-            tmp3 = _mm_aesenc_si128(tmp3, KEY[2]);
-            tmp4 = _mm_aesenc_si128(tmp4, KEY[2]);
-            tmp5 = _mm_aesenc_si128(tmp5, KEY[2]);
-            tmp6 = _mm_aesenc_si128(tmp6, KEY[2]);
-            tmp7 = _mm_aesenc_si128(tmp7, KEY[2]);
-            tmp8 = _mm_aesenc_si128(tmp8, KEY[2]);
-                /* 128 x 128 Carryless Multiply */
-                XV = _mm_loadu_si128(&((__m128i*)out)[(i-1)*8+2]);
-                XV = _mm_shuffle_epi8(XV, BSWAP_MASK);
-                gfmul_only(XV, HT[5], &r0, &r1);
-            tmp1 = _mm_aesenc_si128(tmp1, KEY[3]);
-            tmp2 = _mm_aesenc_si128(tmp2, KEY[3]);
-            tmp3 = _mm_aesenc_si128(tmp3, KEY[3]);
-            tmp4 = _mm_aesenc_si128(tmp4, KEY[3]);
-            tmp5 = _mm_aesenc_si128(tmp5, KEY[3]);
-            tmp6 = _mm_aesenc_si128(tmp6, KEY[3]);
-            tmp7 = _mm_aesenc_si128(tmp7, KEY[3]);
-            tmp8 = _mm_aesenc_si128(tmp8, KEY[3]);
-                /* 128 x 128 Carryless Multiply */
-                XV = _mm_loadu_si128(&((__m128i*)out)[(i-1)*8+3]);
-                XV = _mm_shuffle_epi8(XV, BSWAP_MASK);
-                gfmul_only(XV, HT[4], &r0, &r1);
-            tmp1 = _mm_aesenc_si128(tmp1, KEY[4]);
-            tmp2 = _mm_aesenc_si128(tmp2, KEY[4]);
-            tmp3 = _mm_aesenc_si128(tmp3, KEY[4]);
-            tmp4 = _mm_aesenc_si128(tmp4, KEY[4]);
-            tmp5 = _mm_aesenc_si128(tmp5, KEY[4]);
-            tmp6 = _mm_aesenc_si128(tmp6, KEY[4]);
-            tmp7 = _mm_aesenc_si128(tmp7, KEY[4]);
-            tmp8 = _mm_aesenc_si128(tmp8, KEY[4]);
-                /* 128 x 128 Carryless Multiply */
-                XV = _mm_loadu_si128(&((__m128i*)out)[(i-1)*8+4]);
-                XV = _mm_shuffle_epi8(XV, BSWAP_MASK);
-                gfmul_only(XV, HT[3], &r0, &r1);
-            tmp1 = _mm_aesenc_si128(tmp1, KEY[5]);
-            tmp2 = _mm_aesenc_si128(tmp2, KEY[5]);
-            tmp3 = _mm_aesenc_si128(tmp3, KEY[5]);
-            tmp4 = _mm_aesenc_si128(tmp4, KEY[5]);
-            tmp5 = _mm_aesenc_si128(tmp5, KEY[5]);
-            tmp6 = _mm_aesenc_si128(tmp6, KEY[5]);
-            tmp7 = _mm_aesenc_si128(tmp7, KEY[5]);
-            tmp8 = _mm_aesenc_si128(tmp8, KEY[5]);
-                /* 128 x 128 Carryless Multiply */
-                XV = _mm_loadu_si128(&((__m128i*)out)[(i-1)*8+5]);
-                XV = _mm_shuffle_epi8(XV, BSWAP_MASK);
-                gfmul_only(XV, HT[2], &r0, &r1);
-            tmp1 = _mm_aesenc_si128(tmp1, KEY[6]);
-            tmp2 = _mm_aesenc_si128(tmp2, KEY[6]);
-            tmp3 = _mm_aesenc_si128(tmp3, KEY[6]);
-            tmp4 = _mm_aesenc_si128(tmp4, KEY[6]);
-            tmp5 = _mm_aesenc_si128(tmp5, KEY[6]);
-            tmp6 = _mm_aesenc_si128(tmp6, KEY[6]);
-            tmp7 = _mm_aesenc_si128(tmp7, KEY[6]);
-            tmp8 = _mm_aesenc_si128(tmp8, KEY[6]);
-                /* 128 x 128 Carryless Multiply */
-                XV = _mm_loadu_si128(&((__m128i*)out)[(i-1)*8+6]);
-                XV = _mm_shuffle_epi8(XV, BSWAP_MASK);
-                gfmul_only(XV, HT[1], &r0, &r1);
-            tmp1 = _mm_aesenc_si128(tmp1, KEY[7]);
-            tmp2 = _mm_aesenc_si128(tmp2, KEY[7]);
-            tmp3 = _mm_aesenc_si128(tmp3, KEY[7]);
-            tmp4 = _mm_aesenc_si128(tmp4, KEY[7]);
-            tmp5 = _mm_aesenc_si128(tmp5, KEY[7]);
-            tmp6 = _mm_aesenc_si128(tmp6, KEY[7]);
-            tmp7 = _mm_aesenc_si128(tmp7, KEY[7]);
-            tmp8 = _mm_aesenc_si128(tmp8, KEY[7]);
-                /* 128 x 128 Carryless Multiply */
-                XV = _mm_loadu_si128(&((__m128i*)out)[(i-1)*8+7]);
-                XV = _mm_shuffle_epi8(XV, BSWAP_MASK);
-                gfmul_only(XV, HT[0], &r0, &r1);
-            tmp1 = _mm_aesenc_si128(tmp1, KEY[8]);
-            tmp2 = _mm_aesenc_si128(tmp2, KEY[8]);
-            tmp3 = _mm_aesenc_si128(tmp3, KEY[8]);
-            tmp4 = _mm_aesenc_si128(tmp4, KEY[8]);
-            tmp5 = _mm_aesenc_si128(tmp5, KEY[8]);
-            tmp6 = _mm_aesenc_si128(tmp6, KEY[8]);
-            tmp7 = _mm_aesenc_si128(tmp7, KEY[8]);
-            tmp8 = _mm_aesenc_si128(tmp8, KEY[8]);
-                /* Reduction */
-                X = ghash_red(r0, r1);
-            tmp1 = _mm_aesenc_si128(tmp1, KEY[9]);
-            tmp2 = _mm_aesenc_si128(tmp2, KEY[9]);
-            tmp3 = _mm_aesenc_si128(tmp3, KEY[9]);
-            tmp4 = _mm_aesenc_si128(tmp4, KEY[9]);
-            tmp5 = _mm_aesenc_si128(tmp5, KEY[9]);
-            tmp6 = _mm_aesenc_si128(tmp6, KEY[9]);
-            tmp7 = _mm_aesenc_si128(tmp7, KEY[9]);
-            tmp8 = _mm_aesenc_si128(tmp8, KEY[9]);
-            lastKey = KEY[10];
-            if (nr > 10) {
-                tmp1 = _mm_aesenc_si128(tmp1, KEY[10]);
-                tmp2 = _mm_aesenc_si128(tmp2, KEY[10]);
-                tmp3 = _mm_aesenc_si128(tmp3, KEY[10]);
-                tmp4 = _mm_aesenc_si128(tmp4, KEY[10]);
-                tmp5 = _mm_aesenc_si128(tmp5, KEY[10]);
-                tmp6 = _mm_aesenc_si128(tmp6, KEY[10]);
-                tmp7 = _mm_aesenc_si128(tmp7, KEY[10]);
-                tmp8 = _mm_aesenc_si128(tmp8, KEY[10]);
-                tmp1 = _mm_aesenc_si128(tmp1, KEY[11]);
-                tmp2 = _mm_aesenc_si128(tmp2, KEY[11]);
-                tmp3 = _mm_aesenc_si128(tmp3, KEY[11]);
-                tmp4 = _mm_aesenc_si128(tmp4, KEY[11]);
-                tmp5 = _mm_aesenc_si128(tmp5, KEY[11]);
-                tmp6 = _mm_aesenc_si128(tmp6, KEY[11]);
-                tmp7 = _mm_aesenc_si128(tmp7, KEY[11]);
-                tmp8 = _mm_aesenc_si128(tmp8, KEY[11]);
-                lastKey = KEY[12];
-                if (nr > 12) {
-                    tmp1 = _mm_aesenc_si128(tmp1, KEY[12]);
-                    tmp2 = _mm_aesenc_si128(tmp2, KEY[12]);
-                    tmp3 = _mm_aesenc_si128(tmp3, KEY[12]);
-                    tmp4 = _mm_aesenc_si128(tmp4, KEY[12]);
-                    tmp5 = _mm_aesenc_si128(tmp5, KEY[12]);
-                    tmp6 = _mm_aesenc_si128(tmp6, KEY[12]);
-                    tmp7 = _mm_aesenc_si128(tmp7, KEY[12]);
-                    tmp8 = _mm_aesenc_si128(tmp8, KEY[12]);
-                    tmp1 = _mm_aesenc_si128(tmp1, KEY[13]);
-                    tmp2 = _mm_aesenc_si128(tmp2, KEY[13]);
-                    tmp3 = _mm_aesenc_si128(tmp3, KEY[13]);
-                    tmp4 = _mm_aesenc_si128(tmp4, KEY[13]);
-                    tmp5 = _mm_aesenc_si128(tmp5, KEY[13]);
-                    tmp6 = _mm_aesenc_si128(tmp6, KEY[13]);
-                    tmp7 = _mm_aesenc_si128(tmp7, KEY[13]);
-                    tmp8 = _mm_aesenc_si128(tmp8, KEY[13]);
-                    lastKey = KEY[14];
-                }
-            }
-            AES_ENC_LAST_8();
-        }
-
-        tmp1 = _mm_shuffle_epi8(tmp1, BSWAP_MASK);
-        tmp2 = _mm_shuffle_epi8(tmp2, BSWAP_MASK);
-        tmp3 = _mm_shuffle_epi8(tmp3, BSWAP_MASK);
-        tmp4 = _mm_shuffle_epi8(tmp4, BSWAP_MASK);
-        tmp5 = _mm_shuffle_epi8(tmp5, BSWAP_MASK);
-        tmp6 = _mm_shuffle_epi8(tmp6, BSWAP_MASK);
-        tmp7 = _mm_shuffle_epi8(tmp7, BSWAP_MASK);
-        tmp8 = _mm_shuffle_epi8(tmp8, BSWAP_MASK);
-        tmp1 = _mm_xor_si128(X, tmp1);
-        X = gfmul8(tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8,
-                   HT[0], HT[1], HT[2], HT[3], HT[4], HT[5], HT[6], HT[7]);
-    }
-    for (k = i*8; k < (int)(nbytes/16); k++) {
-        tmp1 = _mm_shuffle_epi8(ctr1, BSWAP_EPI64);
-        ctr1 = _mm_add_epi32(ctr1, ONE);
-        tmp1 = _mm_xor_si128(tmp1, KEY[0]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[1]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[2]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[3]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[4]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[5]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[6]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[7]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[8]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[9]);
-        lastKey = KEY[10];
-        if (nr > 10) {
-            tmp1 = _mm_aesenc_si128(tmp1, lastKey);
-            tmp1 = _mm_aesenc_si128(tmp1, KEY[11]);
-            lastKey = KEY[12];
-            if (nr > 12) {
-                tmp1 = _mm_aesenc_si128(tmp1, lastKey);
-                tmp1 = _mm_aesenc_si128(tmp1, KEY[13]);
-                lastKey = KEY[14];
-            }
-        }
-        tmp1 = _mm_aesenclast_si128(tmp1, lastKey);
-        tmp1 = _mm_xor_si128(tmp1, _mm_loadu_si128(&((__m128i*)in)[k]));
-        _mm_storeu_si128(&((__m128i*)out)[k], tmp1);
-        tmp1 = _mm_shuffle_epi8(tmp1, BSWAP_MASK);
-        X =_mm_xor_si128(X, tmp1);
-        X = gfmul_shifted(X, H);
-    }
-#else /* AES_GCM_AESNI_NO_UNROLL */
-    for (k = 0; k < (int)(nbytes/16) && k < 1; k++) {
-        tmp1 = _mm_shuffle_epi8(ctr1, BSWAP_EPI64);
-        ctr1 = _mm_add_epi32(ctr1, ONE);
-        tmp1 = _mm_xor_si128(tmp1, KEY[0]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[1]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[2]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[3]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[4]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[5]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[6]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[7]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[8]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[9]);
-        lastKey = KEY[10];
-        if (nr > 10) {
-            tmp1 = _mm_aesenc_si128(tmp1, lastKey);
-            tmp1 = _mm_aesenc_si128(tmp1, KEY[11]);
-            lastKey = KEY[12];
-            if (nr > 12) {
-                tmp1 = _mm_aesenc_si128(tmp1, lastKey);
-                tmp1 = _mm_aesenc_si128(tmp1, KEY[13]);
-                lastKey = KEY[14];
-            }
-        }
-        tmp1 = _mm_aesenclast_si128(tmp1, lastKey);
-        tmp1 = _mm_xor_si128(tmp1, _mm_loadu_si128(&((__m128i*)in)[k]));
-        _mm_storeu_si128(&((__m128i*)out)[k], tmp1);
-        tmp1 = _mm_shuffle_epi8(tmp1, BSWAP_MASK);
-        X =_mm_xor_si128(X, tmp1);
-    }
-    for (; k < (int)(nbytes/16); k++) {
-        tmp1 = _mm_shuffle_epi8(ctr1, BSWAP_EPI64);
-        ctr1 = _mm_add_epi32(ctr1, ONE);
-        tmp1 = _mm_xor_si128(tmp1, KEY[0]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[1]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[2]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[3]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[4]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[5]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[6]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[7]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[8]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[9]);
-        X = gfmul_shifted(X, H);
-        lastKey = KEY[10];
-        if (nr > 10) {
-            tmp1 = _mm_aesenc_si128(tmp1, lastKey);
-            tmp1 = _mm_aesenc_si128(tmp1, KEY[11]);
-            lastKey = KEY[12];
-            if (nr > 12) {
-                tmp1 = _mm_aesenc_si128(tmp1, lastKey);
-                tmp1 = _mm_aesenc_si128(tmp1, KEY[13]);
-                lastKey = KEY[14];
-            }
-        }
-        tmp1 = _mm_aesenclast_si128(tmp1, lastKey);
-        tmp1 = _mm_xor_si128(tmp1, _mm_loadu_si128(&((__m128i*)in)[k]));
-        _mm_storeu_si128(&((__m128i*)out)[k], tmp1);
-        tmp1 = _mm_shuffle_epi8(tmp1, BSWAP_MASK);
-        X =_mm_xor_si128(X, tmp1);
-    }
-    if (k > 0) {
-        X = gfmul_shifted(X, H);
-    }
-#endif /* AES_GCM_AESNI_NO_UNROLL */
-
-    /* If one partial block remains */
-    if (nbytes % 16) {
-        tmp1 = _mm_shuffle_epi8(ctr1, BSWAP_EPI64);
-        tmp1 = _mm_xor_si128(tmp1, KEY[0]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[1]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[2]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[3]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[4]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[5]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[6]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[7]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[8]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[9]);
-        lastKey = KEY[10];
-        if (nr > 10) {
-            tmp1 = _mm_aesenc_si128(tmp1, lastKey);
-            tmp1 = _mm_aesenc_si128(tmp1, KEY[11]);
-            lastKey = KEY[12];
-            if (nr > 12) {
-                tmp1 = _mm_aesenc_si128(tmp1, lastKey);
-                tmp1 = _mm_aesenc_si128(tmp1, KEY[13]);
-                lastKey = KEY[14];
-            }
-        }
-        tmp1 = _mm_aesenclast_si128(tmp1, lastKey);
-        last_block = tmp1;
-        for (j=0; j < (int)(nbytes%16); j++)
-            ((unsigned char*)&last_block)[j] = in[k*16+j];
-        tmp1 = _mm_xor_si128(tmp1, last_block);
-        last_block = tmp1;
-        for (j=0; j < (int)(nbytes%16); j++)
-            out[k*16+j] = ((unsigned char*)&last_block)[j];
-        tmp1 = last_block;
-        tmp1 = _mm_shuffle_epi8(tmp1, BSWAP_MASK);
-        X =_mm_xor_si128(X, tmp1);
-        X = gfmul_shifted(X, H);
-    }
-    AES_GCM_INSERT_EPI(tmp1, nbytes, abytes);
-    X = _mm_xor_si128(X, tmp1);
-    X = gfmul_shifted(X, H);
-    X = _mm_shuffle_epi8(X, BSWAP_MASK);
-    T = _mm_xor_si128(X, T);
-    /*_mm_storeu_si128((__m128i*)tag, T);*/
-    XMEMCPY(tag, &T, tbytes);
-    ForceZero(&lastKey, sizeof(lastKey));
-
-    return 0;
-}
-
-#ifdef HAVE_AES_DECRYPT
-
-static WARN_UNUSED_RESULT int AES_GCM_decrypt(
-                            const unsigned char *in, unsigned char *out,
-                            const unsigned char* addt,
-                            const unsigned char* ivec, const unsigned char *tag,
-                            word32 nbytes, word32 abytes, word32 ibytes,
-                            word32 tbytes, const unsigned char* key, int nr,
-                            int* res)
-{
-    int i, j ,k;
-    __m128i H, Y, T;
-    __m128i *KEY = (__m128i*)key, lastKey;
-    __m128i ctr1;
-    __m128i last_block = _mm_setzero_si128();
-    __m128i X = _mm_setzero_si128();
-    __m128i tmp1, tmp2, XV;
-#ifndef AES_GCM_AESNI_NO_UNROLL
-    __m128i HT[8];
-    __m128i r0, r1;
-    __m128i tmp3, tmp4, tmp5, tmp6, tmp7, tmp8;
-#endif /* AES_GCM_AESNI_NO_UNROLL */
-
-    if (ibytes == GCM_NONCE_MID_SZ)
-        aes_gcm_calc_iv_12(KEY, ivec, nr, H, Y, T);
-    else
-        aes_gcm_calc_iv(KEY, ivec, ibytes, nr, H, Y, T);
-
-    for (i=0; i<(int)(abytes/16); i++) {
-        tmp1 = _mm_loadu_si128(&((__m128i*)addt)[i]);
-        tmp1 = _mm_shuffle_epi8(tmp1, BSWAP_MASK);
-        X = _mm_xor_si128(X, tmp1);
-        X = gfmul_sw(X, H);
-    }
-    if (abytes%16) {
-        last_block = _mm_setzero_si128();
-        for (j=0; j<(int)(abytes%16); j++)
-            ((unsigned char*)&last_block)[j] = addt[i*16+j];
-        tmp1 = last_block;
-        tmp1 = _mm_shuffle_epi8(tmp1, BSWAP_MASK);
-        X = _mm_xor_si128(X, tmp1);
-        X = gfmul_sw(X, H);
-    }
-
-    tmp1 = _mm_shuffle_epi8(Y, BSWAP_EPI64);
-    ctr1 = _mm_add_epi32(tmp1, ONE);
-    H = gfmul_shl1(H);
-    i = 0;
-
-#ifndef AES_GCM_AESNI_NO_UNROLL
-
-    if (0 < nbytes/16/8) {
-        HT[0] = H;
-        HT[1] = gfmul_shifted(H, H);
-        HT[2] = gfmul_shifted(H, HT[1]);
-        HT[3] = gfmul_shifted(HT[1], HT[1]);
-        HT[4] = gfmul_shifted(HT[1], HT[2]);
-        HT[5] = gfmul_shifted(HT[2], HT[2]);
-        HT[6] = gfmul_shifted(HT[2], HT[3]);
-        HT[7] = gfmul_shifted(HT[3], HT[3]);
-
-        for (; i < (int)(nbytes/16/8); i++) {
-                r0 = _mm_setzero_si128();
-                r1 = _mm_setzero_si128();
-
-            tmp1 = _mm_shuffle_epi8(ctr1, BSWAP_EPI64);
-            tmp2 = _mm_add_epi32(ctr1, ONE);
-            tmp2 = _mm_shuffle_epi8(tmp2, BSWAP_EPI64);
-            tmp3 = _mm_add_epi32(ctr1, TWO);
-            tmp3 = _mm_shuffle_epi8(tmp3, BSWAP_EPI64);
-            tmp4 = _mm_add_epi32(ctr1, THREE);
-            tmp4 = _mm_shuffle_epi8(tmp4, BSWAP_EPI64);
-            tmp5 = _mm_add_epi32(ctr1, FOUR);
-            tmp5 = _mm_shuffle_epi8(tmp5, BSWAP_EPI64);
-            tmp6 = _mm_add_epi32(ctr1, FIVE);
-            tmp6 = _mm_shuffle_epi8(tmp6, BSWAP_EPI64);
-            tmp7 = _mm_add_epi32(ctr1, SIX);
-            tmp7 = _mm_shuffle_epi8(tmp7, BSWAP_EPI64);
-            tmp8 = _mm_add_epi32(ctr1, SEVEN);
-            tmp8 = _mm_shuffle_epi8(tmp8, BSWAP_EPI64);
-            ctr1 = _mm_add_epi32(ctr1, EIGHT);
-            tmp1 =_mm_xor_si128(tmp1, KEY[0]);
-            tmp2 =_mm_xor_si128(tmp2, KEY[0]);
-            tmp3 =_mm_xor_si128(tmp3, KEY[0]);
-            tmp4 =_mm_xor_si128(tmp4, KEY[0]);
-            tmp5 =_mm_xor_si128(tmp5, KEY[0]);
-            tmp6 =_mm_xor_si128(tmp6, KEY[0]);
-            tmp7 =_mm_xor_si128(tmp7, KEY[0]);
-            tmp8 =_mm_xor_si128(tmp8, KEY[0]);
-                /* 128 x 128 Carryless Multiply */
-                XV = _mm_loadu_si128(&((__m128i*)in)[i*8+0]);
-                XV = _mm_shuffle_epi8(XV, BSWAP_MASK);
-                XV = _mm_xor_si128(XV, X);
-                gfmul_only(XV, HT[7], &r0, &r1);
-            tmp1 = _mm_aesenc_si128(tmp1, KEY[1]);
-            tmp2 = _mm_aesenc_si128(tmp2, KEY[1]);
-            tmp3 = _mm_aesenc_si128(tmp3, KEY[1]);
-            tmp4 = _mm_aesenc_si128(tmp4, KEY[1]);
-            tmp5 = _mm_aesenc_si128(tmp5, KEY[1]);
-            tmp6 = _mm_aesenc_si128(tmp6, KEY[1]);
-            tmp7 = _mm_aesenc_si128(tmp7, KEY[1]);
-            tmp8 = _mm_aesenc_si128(tmp8, KEY[1]);
-                /* 128 x 128 Carryless Multiply */
-                XV = _mm_loadu_si128(&((__m128i*)in)[i*8+1]);
-                XV = _mm_shuffle_epi8(XV, BSWAP_MASK);
-                gfmul_only(XV, HT[6], &r0, &r1);
-            tmp1 = _mm_aesenc_si128(tmp1, KEY[2]);
-            tmp2 = _mm_aesenc_si128(tmp2, KEY[2]);
-            tmp3 = _mm_aesenc_si128(tmp3, KEY[2]);
-            tmp4 = _mm_aesenc_si128(tmp4, KEY[2]);
-            tmp5 = _mm_aesenc_si128(tmp5, KEY[2]);
-            tmp6 = _mm_aesenc_si128(tmp6, KEY[2]);
-            tmp7 = _mm_aesenc_si128(tmp7, KEY[2]);
-            tmp8 = _mm_aesenc_si128(tmp8, KEY[2]);
-                /* 128 x 128 Carryless Multiply */
-                XV = _mm_loadu_si128(&((__m128i*)in)[i*8+2]);
-                XV = _mm_shuffle_epi8(XV, BSWAP_MASK);
-                gfmul_only(XV, HT[5], &r0, &r1);
-            tmp1 = _mm_aesenc_si128(tmp1, KEY[3]);
-            tmp2 = _mm_aesenc_si128(tmp2, KEY[3]);
-            tmp3 = _mm_aesenc_si128(tmp3, KEY[3]);
-            tmp4 = _mm_aesenc_si128(tmp4, KEY[3]);
-            tmp5 = _mm_aesenc_si128(tmp5, KEY[3]);
-            tmp6 = _mm_aesenc_si128(tmp6, KEY[3]);
-            tmp7 = _mm_aesenc_si128(tmp7, KEY[3]);
-            tmp8 = _mm_aesenc_si128(tmp8, KEY[3]);
-                /* 128 x 128 Carryless Multiply */
-                XV = _mm_loadu_si128(&((__m128i*)in)[i*8+3]);
-                XV = _mm_shuffle_epi8(XV, BSWAP_MASK);
-                gfmul_only(XV, HT[4], &r0, &r1);
-            tmp1 = _mm_aesenc_si128(tmp1, KEY[4]);
-            tmp2 = _mm_aesenc_si128(tmp2, KEY[4]);
-            tmp3 = _mm_aesenc_si128(tmp3, KEY[4]);
-            tmp4 = _mm_aesenc_si128(tmp4, KEY[4]);
-            tmp5 = _mm_aesenc_si128(tmp5, KEY[4]);
-            tmp6 = _mm_aesenc_si128(tmp6, KEY[4]);
-            tmp7 = _mm_aesenc_si128(tmp7, KEY[4]);
-            tmp8 = _mm_aesenc_si128(tmp8, KEY[4]);
-                /* 128 x 128 Carryless Multiply */
-                XV = _mm_loadu_si128(&((__m128i*)in)[i*8+4]);
-                XV = _mm_shuffle_epi8(XV, BSWAP_MASK);
-                gfmul_only(XV, HT[3], &r0, &r1);
-            tmp1 = _mm_aesenc_si128(tmp1, KEY[5]);
-            tmp2 = _mm_aesenc_si128(tmp2, KEY[5]);
-            tmp3 = _mm_aesenc_si128(tmp3, KEY[5]);
-            tmp4 = _mm_aesenc_si128(tmp4, KEY[5]);
-            tmp5 = _mm_aesenc_si128(tmp5, KEY[5]);
-            tmp6 = _mm_aesenc_si128(tmp6, KEY[5]);
-            tmp7 = _mm_aesenc_si128(tmp7, KEY[5]);
-            tmp8 = _mm_aesenc_si128(tmp8, KEY[5]);
-                /* 128 x 128 Carryless Multiply */
-                XV = _mm_loadu_si128(&((__m128i*)in)[i*8+5]);
-                XV = _mm_shuffle_epi8(XV, BSWAP_MASK);
-                gfmul_only(XV, HT[2], &r0, &r1);
-            tmp1 = _mm_aesenc_si128(tmp1, KEY[6]);
-            tmp2 = _mm_aesenc_si128(tmp2, KEY[6]);
-            tmp3 = _mm_aesenc_si128(tmp3, KEY[6]);
-            tmp4 = _mm_aesenc_si128(tmp4, KEY[6]);
-            tmp5 = _mm_aesenc_si128(tmp5, KEY[6]);
-            tmp6 = _mm_aesenc_si128(tmp6, KEY[6]);
-            tmp7 = _mm_aesenc_si128(tmp7, KEY[6]);
-            tmp8 = _mm_aesenc_si128(tmp8, KEY[6]);
-                /* 128 x 128 Carryless Multiply */
-                XV = _mm_loadu_si128(&((__m128i*)in)[i*8+6]);
-                XV = _mm_shuffle_epi8(XV, BSWAP_MASK);
-                gfmul_only(XV, HT[1], &r0, &r1);
-            tmp1 = _mm_aesenc_si128(tmp1, KEY[7]);
-            tmp2 = _mm_aesenc_si128(tmp2, KEY[7]);
-            tmp3 = _mm_aesenc_si128(tmp3, KEY[7]);
-            tmp4 = _mm_aesenc_si128(tmp4, KEY[7]);
-            tmp5 = _mm_aesenc_si128(tmp5, KEY[7]);
-            tmp6 = _mm_aesenc_si128(tmp6, KEY[7]);
-            tmp7 = _mm_aesenc_si128(tmp7, KEY[7]);
-            tmp8 = _mm_aesenc_si128(tmp8, KEY[7]);
-                /* 128 x 128 Carryless Multiply */
-                XV = _mm_loadu_si128(&((__m128i*)in)[i*8+7]);
-                XV = _mm_shuffle_epi8(XV, BSWAP_MASK);
-                gfmul_only(XV, HT[0], &r0, &r1);
-            tmp1 = _mm_aesenc_si128(tmp1, KEY[8]);
-            tmp2 = _mm_aesenc_si128(tmp2, KEY[8]);
-            tmp3 = _mm_aesenc_si128(tmp3, KEY[8]);
-            tmp4 = _mm_aesenc_si128(tmp4, KEY[8]);
-            tmp5 = _mm_aesenc_si128(tmp5, KEY[8]);
-            tmp6 = _mm_aesenc_si128(tmp6, KEY[8]);
-            tmp7 = _mm_aesenc_si128(tmp7, KEY[8]);
-            tmp8 = _mm_aesenc_si128(tmp8, KEY[8]);
-                /* Reduction */
-                X = ghash_red(r0, r1);
-            tmp1 = _mm_aesenc_si128(tmp1, KEY[9]);
-            tmp2 = _mm_aesenc_si128(tmp2, KEY[9]);
-            tmp3 = _mm_aesenc_si128(tmp3, KEY[9]);
-            tmp4 = _mm_aesenc_si128(tmp4, KEY[9]);
-            tmp5 = _mm_aesenc_si128(tmp5, KEY[9]);
-            tmp6 = _mm_aesenc_si128(tmp6, KEY[9]);
-            tmp7 = _mm_aesenc_si128(tmp7, KEY[9]);
-            tmp8 = _mm_aesenc_si128(tmp8, KEY[9]);
-            lastKey = KEY[10];
-            if (nr > 10) {
-                tmp1 = _mm_aesenc_si128(tmp1, KEY[10]);
-                tmp2 = _mm_aesenc_si128(tmp2, KEY[10]);
-                tmp3 = _mm_aesenc_si128(tmp3, KEY[10]);
-                tmp4 = _mm_aesenc_si128(tmp4, KEY[10]);
-                tmp5 = _mm_aesenc_si128(tmp5, KEY[10]);
-                tmp6 = _mm_aesenc_si128(tmp6, KEY[10]);
-                tmp7 = _mm_aesenc_si128(tmp7, KEY[10]);
-                tmp8 = _mm_aesenc_si128(tmp8, KEY[10]);
-                tmp1 = _mm_aesenc_si128(tmp1, KEY[11]);
-                tmp2 = _mm_aesenc_si128(tmp2, KEY[11]);
-                tmp3 = _mm_aesenc_si128(tmp3, KEY[11]);
-                tmp4 = _mm_aesenc_si128(tmp4, KEY[11]);
-                tmp5 = _mm_aesenc_si128(tmp5, KEY[11]);
-                tmp6 = _mm_aesenc_si128(tmp6, KEY[11]);
-                tmp7 = _mm_aesenc_si128(tmp7, KEY[11]);
-                tmp8 = _mm_aesenc_si128(tmp8, KEY[11]);
-                lastKey = KEY[12];
-                if (nr > 12) {
-                    tmp1 = _mm_aesenc_si128(tmp1, KEY[12]);
-                    tmp2 = _mm_aesenc_si128(tmp2, KEY[12]);
-                    tmp3 = _mm_aesenc_si128(tmp3, KEY[12]);
-                    tmp4 = _mm_aesenc_si128(tmp4, KEY[12]);
-                    tmp5 = _mm_aesenc_si128(tmp5, KEY[12]);
-                    tmp6 = _mm_aesenc_si128(tmp6, KEY[12]);
-                    tmp7 = _mm_aesenc_si128(tmp7, KEY[12]);
-                    tmp8 = _mm_aesenc_si128(tmp8, KEY[12]);
-                    tmp1 = _mm_aesenc_si128(tmp1, KEY[13]);
-                    tmp2 = _mm_aesenc_si128(tmp2, KEY[13]);
-                    tmp3 = _mm_aesenc_si128(tmp3, KEY[13]);
-                    tmp4 = _mm_aesenc_si128(tmp4, KEY[13]);
-                    tmp5 = _mm_aesenc_si128(tmp5, KEY[13]);
-                    tmp6 = _mm_aesenc_si128(tmp6, KEY[13]);
-                    tmp7 = _mm_aesenc_si128(tmp7, KEY[13]);
-                    tmp8 = _mm_aesenc_si128(tmp8, KEY[13]);
-                    lastKey = KEY[14];
-                }
-            }
-            AES_ENC_LAST_8();
-        }
-    }
-
-#endif /* AES_GCM_AESNI_NO_UNROLL */
-
-    for (k = i*8; k < (int)(nbytes/16); k++) {
-        tmp1 = _mm_shuffle_epi8(ctr1, BSWAP_EPI64);
-        ctr1 = _mm_add_epi32(ctr1, ONE);
-        tmp1 = _mm_xor_si128(tmp1, KEY[0]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[1]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[2]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[3]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[4]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[5]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[6]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[7]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[8]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[9]);
-        /* 128 x 128 Carryless Multiply */
-        XV = _mm_loadu_si128(&((__m128i*)in)[k]);
-        XV = _mm_shuffle_epi8(XV, BSWAP_MASK);
-        XV = _mm_xor_si128(XV, X);
-        X = gfmul_shifted(XV, H);
-        lastKey = KEY[10];
-        if (nr > 10) {
-            tmp1 = _mm_aesenc_si128(tmp1, lastKey);
-            tmp1 = _mm_aesenc_si128(tmp1, KEY[11]);
-            lastKey = KEY[12];
-            if (nr > 12) {
-                tmp1 = _mm_aesenc_si128(tmp1, lastKey);
-                tmp1 = _mm_aesenc_si128(tmp1, KEY[13]);
-                lastKey = KEY[14];
-            }
-        }
-        tmp1 = _mm_aesenclast_si128(tmp1, lastKey);
-        tmp2 = _mm_loadu_si128(&((__m128i*)in)[k]);
-        tmp1 = _mm_xor_si128(tmp1, tmp2);
-        _mm_storeu_si128(&((__m128i*)out)[k], tmp1);
-    }
-
-    /* If one partial block remains */
-    if (nbytes % 16) {
-        tmp1 = _mm_shuffle_epi8(ctr1, BSWAP_EPI64);
-        tmp1 = _mm_xor_si128(tmp1, KEY[0]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[1]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[2]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[3]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[4]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[5]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[6]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[7]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[8]);
-        tmp1 = _mm_aesenc_si128(tmp1, KEY[9]);
-        lastKey = KEY[10];
-        if (nr > 10) {
-            tmp1 = _mm_aesenc_si128(tmp1, lastKey);
-            tmp1 = _mm_aesenc_si128(tmp1, KEY[11]);
-            lastKey = KEY[12];
-            if (nr > 12) {
-                tmp1 = _mm_aesenc_si128(tmp1, lastKey);
-                tmp1 = _mm_aesenc_si128(tmp1, KEY[13]);
-                lastKey = KEY[14];
-            }
-        }
-        tmp1 = _mm_aesenclast_si128(tmp1, lastKey);
-        last_block = _mm_setzero_si128();
-        for (j=0; j < (int)(nbytes%16); j++)
-            ((unsigned char*)&last_block)[j] = in[k*16+j];
-        XV = last_block;
-        tmp1 = _mm_xor_si128(tmp1, last_block);
-        last_block = tmp1;
-        for (j=0; j < (int)(nbytes%16); j++)
-            out[k*16+j] = ((unsigned char*)&last_block)[j];
-        XV = _mm_shuffle_epi8(XV, BSWAP_MASK);
-        XV = _mm_xor_si128(XV, X);
-        X = gfmul_shifted(XV, H);
-    }
-
-    AES_GCM_INSERT_EPI(tmp1, nbytes, abytes);
-
-    /* 128 x 128 Carryless Multiply */
-    X = _mm_xor_si128(X, tmp1);
-    X = gfmul_shifted(X, H);
-    X = _mm_shuffle_epi8(X, BSWAP_MASK);
-    T = _mm_xor_si128(X, T);
-
-/*    if (0xffff !=
-           _mm_movemask_epi8(_mm_cmpeq_epi8(T, _mm_loadu_si128((__m128i*)tag)))) */
-    if (XMEMCMP(tag, &T, tbytes) != 0)
-        *res = 0; /* in case the authentication failed */
-    else
-        *res = 1; /* when successful returns 1 */
-    ForceZero(&lastKey, sizeof(lastKey));
-
-    return 0;
-}
-
-#endif /* HAVE_AES_DECRYPT */
-#endif /* _MSC_VER */
-#endif /* WOLFSSL_AESNI */
 
 #if defined(GCM_SMALL)
 static void GMULT(byte* X, byte* Y)
@@ -6271,7 +4681,7 @@ void GHASH(Aes* aes, const byte* a, word32 aSz, const byte* c,
     while (0)
 #endif /* WOLFSSL_AESGCM_STREAM */
 /* end GCM_TABLE */
-#elif defined(GCM_TABLE_4BIT)
+#else
 
 /* remainder = x^7 + x^2 + x^1 + 1 => 0xe1
  *  R shifts right a reverse bit pair of bytes such that:
@@ -6570,588 +4980,7 @@ void GHASH(Aes* aes, const byte* a, word32 aSz, const byte* c,
     }                                                   \
     while (0)
 #endif /* WOLFSSL_AESGCM_STREAM */
-#elif defined(WORD64_AVAILABLE) && !defined(GCM_WORD32)
-
-#if !defined(FREESCALE_LTC_AES_GCM)
-static void GMULT(word64* X, word64* Y)
-{
-    word64 Z[2] = {0,0};
-    word64 V[2];
-    int i, j;
-#ifdef AES_GCM_GMULT_CT
-    word64 v1;
 #endif
-    V[0] = X[0];  V[1] = X[1];
-
-    for (i = 0; i < 2; i++)
-    {
-        word64 y = Y[i];
-        for (j = 0; j < 64; j++)
-        {
-#ifdef AES_GCM_GMULT_CT
-            word64 mask = 0 - (y >> 63);
-            Z[0] ^= V[0] & mask;
-            Z[1] ^= V[1] & mask;
-#else
-            if (y & 0x8000000000000000ULL) {
-                Z[0] ^= V[0];
-                Z[1] ^= V[1];
-            }
-#endif
-
-#ifdef AES_GCM_GMULT_CT
-            v1 = (0 - (V[1] & 1)) & 0xE100000000000000ULL;
-            V[1] >>= 1;
-            V[1] |= V[0] << 63;
-            V[0] >>= 1;
-            V[0] ^= v1;
-#else
-            if (V[1] & 0x0000000000000001) {
-                V[1] >>= 1;
-                V[1] |= ((V[0] & 0x0000000000000001) ?
-                    0x8000000000000000ULL : 0);
-                V[0] >>= 1;
-                V[0] ^= 0xE100000000000000ULL;
-            }
-            else {
-                V[1] >>= 1;
-                V[1] |= ((V[0] & 0x0000000000000001) ?
-                    0x8000000000000000ULL : 0);
-                V[0] >>= 1;
-            }
-#endif
-            y <<= 1;
-        }
-    }
-    X[0] = Z[0];
-    X[1] = Z[1];
-}
-
-
-void GHASH(Aes* aes, const byte* a, word32 aSz, const byte* c,
-    word32 cSz, byte* s, word32 sSz)
-{
-    word64 x[2] = {0,0};
-    word32 blocks, partial;
-    word64 bigH[2];
-
-    if (aes == NULL) {
-        return;
-    }
-
-    XMEMCPY(bigH, aes->H, AES_BLOCK_SIZE);
-    #ifdef LITTLE_ENDIAN_ORDER
-        ByteReverseWords64(bigH, bigH, AES_BLOCK_SIZE);
-    #endif
-
-    /* Hash in A, the Additional Authentication Data */
-    if (aSz != 0 && a != NULL) {
-        word64 bigA[2];
-        blocks = aSz / AES_BLOCK_SIZE;
-        partial = aSz % AES_BLOCK_SIZE;
-        while (blocks--) {
-            XMEMCPY(bigA, a, AES_BLOCK_SIZE);
-            #ifdef LITTLE_ENDIAN_ORDER
-                ByteReverseWords64(bigA, bigA, AES_BLOCK_SIZE);
-            #endif
-            x[0] ^= bigA[0];
-            x[1] ^= bigA[1];
-            GMULT(x, bigH);
-            a += AES_BLOCK_SIZE;
-        }
-        if (partial != 0) {
-            XMEMSET(bigA, 0, AES_BLOCK_SIZE);
-            XMEMCPY(bigA, a, partial);
-            #ifdef LITTLE_ENDIAN_ORDER
-                ByteReverseWords64(bigA, bigA, AES_BLOCK_SIZE);
-            #endif
-            x[0] ^= bigA[0];
-            x[1] ^= bigA[1];
-            GMULT(x, bigH);
-        }
-#ifdef OPENSSL_EXTRA
-        /* store AAD partial tag for next call */
-        aes->aadH[0] = (word32)((x[0] & 0xFFFFFFFF00000000) >> 32);
-        aes->aadH[1] = (word32)(x[0] & 0xFFFFFFFF);
-        aes->aadH[2] = (word32)((x[1] & 0xFFFFFFFF00000000) >> 32);
-        aes->aadH[3] = (word32)(x[1] & 0xFFFFFFFF);
-#endif
-    }
-
-    /* Hash in C, the Ciphertext */
-    if (cSz != 0 && c != NULL) {
-        word64 bigC[2];
-        blocks = cSz / AES_BLOCK_SIZE;
-        partial = cSz % AES_BLOCK_SIZE;
-#ifdef OPENSSL_EXTRA
-        /* Start from last AAD partial tag */
-        if(aes->aadLen) {
-            x[0] = ((word64)aes->aadH[0]) << 32 | aes->aadH[1];
-            x[1] = ((word64)aes->aadH[2]) << 32 | aes->aadH[3];
-         }
-#endif
-        while (blocks--) {
-            XMEMCPY(bigC, c, AES_BLOCK_SIZE);
-            #ifdef LITTLE_ENDIAN_ORDER
-                ByteReverseWords64(bigC, bigC, AES_BLOCK_SIZE);
-            #endif
-            x[0] ^= bigC[0];
-            x[1] ^= bigC[1];
-            GMULT(x, bigH);
-            c += AES_BLOCK_SIZE;
-        }
-        if (partial != 0) {
-            XMEMSET(bigC, 0, AES_BLOCK_SIZE);
-            XMEMCPY(bigC, c, partial);
-            #ifdef LITTLE_ENDIAN_ORDER
-                ByteReverseWords64(bigC, bigC, AES_BLOCK_SIZE);
-            #endif
-            x[0] ^= bigC[0];
-            x[1] ^= bigC[1];
-            GMULT(x, bigH);
-        }
-    }
-
-    /* Hash in the lengths in bits of A and C */
-    {
-        word64 len[2];
-        len[0] = aSz; len[1] = cSz;
-#ifdef OPENSSL_EXTRA
-        if (aes->aadLen)
-            len[0] = (word64)aes->aadLen;
-#endif
-        /* Lengths are in bytes. Convert to bits. */
-        len[0] *= 8;
-        len[1] *= 8;
-
-        x[0] ^= len[0];
-        x[1] ^= len[1];
-        GMULT(x, bigH);
-    }
-    #ifdef LITTLE_ENDIAN_ORDER
-        ByteReverseWords64(x, x, AES_BLOCK_SIZE);
-    #endif
-    XMEMCPY(s, x, sSz);
-}
-#endif /* !FREESCALE_LTC_AES_GCM */
-
-#ifdef WOLFSSL_AESGCM_STREAM
-
-#ifdef LITTLE_ENDIAN_ORDER
-
-/* No extra initialization for small implementation.
- *
- * @param [in] aes  AES GCM object.
- */
-#define GHASH_INIT_EXTRA(aes)                                               \
-    ByteReverseWords64((word64*)aes->H, (word64*)aes->H, AES_BLOCK_SIZE)
-
-/* GHASH one block of data..
- *
- * XOR block into tag and GMULT with H.
- *
- * @param [in, out] aes    AES GCM object.
- * @param [in]      block  Block of AAD or cipher text.
- */
-#define GHASH_ONE_BLOCK(aes, block)                             \
-    do {                                                        \
-        word64* x = (word64*)AES_TAG(aes);                      \
-        word64* h = (word64*)aes->H;                            \
-        word64 block64[2];                                      \
-        XMEMCPY(block64, block, AES_BLOCK_SIZE);                \
-        ByteReverseWords64(block64, block64, AES_BLOCK_SIZE);   \
-        x[0] ^= block64[0];                                     \
-        x[1] ^= block64[1];                                     \
-        GMULT(x, h);                                            \
-    }                                                           \
-    while (0)
-
-#ifdef OPENSSL_EXTRA
-/* GHASH in AAD and cipher text lengths in bits.
- *
- * Convert tag back to little-endian.
- *
- * @param [in, out] aes  AES GCM object.
- */
-#define GHASH_LEN_BLOCK(aes)                            \
-    do {                                                \
-        word64* x = (word64*)AES_TAG(aes);              \
-        word64* h = (word64*)aes->H;                    \
-        word64 len[2];                                  \
-        len[0] = aes->aSz; len[1] = aes->cSz;           \
-        if (aes->aadLen)                                \
-            len[0] = (word64)aes->aadLen;               \
-        /* Lengths are in bytes. Convert to bits. */    \
-        len[0] *= 8;                                    \
-        len[1] *= 8;                                    \
-                                                        \
-        x[0] ^= len[0];                                 \
-        x[1] ^= len[1];                                 \
-        GMULT(x, h);                                    \
-        ByteReverseWords64(x, x, AES_BLOCK_SIZE);       \
-    }                                                   \
-    while (0)
-#else
-/* GHASH in AAD and cipher text lengths in bits.
- *
- * Convert tag back to little-endian.
- *
- * @param [in, out] aes  AES GCM object.
- */
-#define GHASH_LEN_BLOCK(aes)                            \
-    do {                                                \
-        word64* x = (word64*)AES_TAG(aes);              \
-        word64* h = (word64*)aes->H;                    \
-        word64 len[2];                                  \
-        len[0] = aes->aSz; len[1] = aes->cSz;           \
-        /* Lengths are in bytes. Convert to bits. */    \
-        len[0] *= 8;                                    \
-        len[1] *= 8;                                    \
-                                                        \
-        x[0] ^= len[0];                                 \
-        x[1] ^= len[1];                                 \
-        GMULT(x, h);                                    \
-        ByteReverseWords64(x, x, AES_BLOCK_SIZE);       \
-    }                                                   \
-    while (0)
-#endif
-
-#else
-
-/* No extra initialization for small implementation.
- *
- * @param [in] aes  AES GCM object.
- */
-#define GHASH_INIT_EXTRA(aes)
-
-/* GHASH one block of data..
- *
- * XOR block into tag and GMULT with H.
- *
- * @param [in, out] aes    AES GCM object.
- * @param [in]      block  Block of AAD or cipher text.
- */
-#define GHASH_ONE_BLOCK(aes, block)                     \
-    do {                                                \
-        word64* x = (word64*)AES_TAG(aes);              \
-        word64* h = (word64*)aes->H;                    \
-        word64 block64[2];                              \
-        XMEMCPY(block64, block, AES_BLOCK_SIZE);        \
-        x[0] ^= block64[0];                             \
-        x[1] ^= block64[1];                             \
-        GMULT(x, h);                                    \
-    }                                                   \
-    while (0)
-
-#ifdef OPENSSL_EXTRA
-/* GHASH in AAD and cipher text lengths in bits.
- *
- * Convert tag back to little-endian.
- *
- * @param [in, out] aes  AES GCM object.
- */
-#define GHASH_LEN_BLOCK(aes)                            \
-    do {                                                \
-        word64* x = (word64*)AES_TAG(aes);              \
-        word64* h = (word64*)aes->H;                    \
-        word64 len[2];                                  \
-        len[0] = aes->aSz; len[1] = aes->cSz;           \
-        if (aes->aadLen)                                \
-            len[0] = (word64)aes->aadLen;               \
-        /* Lengths are in bytes. Convert to bits. */    \
-        len[0] *= 8;                                    \
-        len[1] *= 8;                                    \
-                                                        \
-        x[0] ^= len[0];                                 \
-        x[1] ^= len[1];                                 \
-        GMULT(x, h);                                    \
-    }                                                   \
-    while (0)
-#else
-/* GHASH in AAD and cipher text lengths in bits.
- *
- * Convert tag back to little-endian.
- *
- * @param [in, out] aes  AES GCM object.
- */
-#define GHASH_LEN_BLOCK(aes)                            \
-    do {                                                \
-        word64* x = (word64*)AES_TAG(aes);              \
-        word64* h = (word64*)aes->H;                    \
-        word64 len[2];                                  \
-        len[0] = aes->aSz; len[1] = aes->cSz;           \
-        /* Lengths are in bytes. Convert to bits. */    \
-        len[0] *= 8;                                    \
-        len[1] *= 8;                                    \
-                                                        \
-        x[0] ^= len[0];                                 \
-        x[1] ^= len[1];                                 \
-        GMULT(x, h);                                    \
-    }                                                   \
-    while (0)
-#endif
-
-#endif /* !LITTLE_ENDIAN_ORDER */
-
-#endif /* WOLFSSL_AESGCM_STREAM */
-/* end defined(WORD64_AVAILABLE) && !defined(GCM_WORD32) */
-#else /* GCM_WORD32 */
-
-static void GMULT(word32* X, word32* Y)
-{
-    word32 Z[4] = {0,0,0,0};
-    word32 V[4];
-    int i, j;
-
-    V[0] = X[0];  V[1] = X[1]; V[2] =  X[2]; V[3] =  X[3];
-
-    for (i = 0; i < 4; i++)
-    {
-        word32 y = Y[i];
-        for (j = 0; j < 32; j++)
-        {
-            if (y & 0x80000000) {
-                Z[0] ^= V[0];
-                Z[1] ^= V[1];
-                Z[2] ^= V[2];
-                Z[3] ^= V[3];
-            }
-
-            if (V[3] & 0x00000001) {
-                V[3] >>= 1;
-                V[3] |= ((V[2] & 0x00000001) ? 0x80000000 : 0);
-                V[2] >>= 1;
-                V[2] |= ((V[1] & 0x00000001) ? 0x80000000 : 0);
-                V[1] >>= 1;
-                V[1] |= ((V[0] & 0x00000001) ? 0x80000000 : 0);
-                V[0] >>= 1;
-                V[0] ^= 0xE1000000;
-            } else {
-                V[3] >>= 1;
-                V[3] |= ((V[2] & 0x00000001) ? 0x80000000 : 0);
-                V[2] >>= 1;
-                V[2] |= ((V[1] & 0x00000001) ? 0x80000000 : 0);
-                V[1] >>= 1;
-                V[1] |= ((V[0] & 0x00000001) ? 0x80000000 : 0);
-                V[0] >>= 1;
-            }
-            y <<= 1;
-        }
-    }
-    X[0] = Z[0];
-    X[1] = Z[1];
-    X[2] = Z[2];
-    X[3] = Z[3];
-}
-
-
-void GHASH(Aes* aes, const byte* a, word32 aSz, const byte* c,
-    word32 cSz, byte* s, word32 sSz)
-{
-    word32 x[4] = {0,0,0,0};
-    word32 blocks, partial;
-    word32 bigH[4];
-
-    if (aes == NULL) {
-        return;
-    }
-
-    XMEMCPY(bigH, aes->H, AES_BLOCK_SIZE);
-    #ifdef LITTLE_ENDIAN_ORDER
-        ByteReverseWords(bigH, bigH, AES_BLOCK_SIZE);
-    #endif
-
-    /* Hash in A, the Additional Authentication Data */
-    if (aSz != 0 && a != NULL) {
-        word32 bigA[4];
-        blocks = aSz / AES_BLOCK_SIZE;
-        partial = aSz % AES_BLOCK_SIZE;
-        while (blocks--) {
-            XMEMCPY(bigA, a, AES_BLOCK_SIZE);
-            #ifdef LITTLE_ENDIAN_ORDER
-                ByteReverseWords(bigA, bigA, AES_BLOCK_SIZE);
-            #endif
-            x[0] ^= bigA[0];
-            x[1] ^= bigA[1];
-            x[2] ^= bigA[2];
-            x[3] ^= bigA[3];
-            GMULT(x, bigH);
-            a += AES_BLOCK_SIZE;
-        }
-        if (partial != 0) {
-            XMEMSET(bigA, 0, AES_BLOCK_SIZE);
-            XMEMCPY(bigA, a, partial);
-            #ifdef LITTLE_ENDIAN_ORDER
-                ByteReverseWords(bigA, bigA, AES_BLOCK_SIZE);
-            #endif
-            x[0] ^= bigA[0];
-            x[1] ^= bigA[1];
-            x[2] ^= bigA[2];
-            x[3] ^= bigA[3];
-            GMULT(x, bigH);
-        }
-    }
-
-    /* Hash in C, the Ciphertext */
-    if (cSz != 0 && c != NULL) {
-        word32 bigC[4];
-        blocks = cSz / AES_BLOCK_SIZE;
-        partial = cSz % AES_BLOCK_SIZE;
-        while (blocks--) {
-            XMEMCPY(bigC, c, AES_BLOCK_SIZE);
-            #ifdef LITTLE_ENDIAN_ORDER
-                ByteReverseWords(bigC, bigC, AES_BLOCK_SIZE);
-            #endif
-            x[0] ^= bigC[0];
-            x[1] ^= bigC[1];
-            x[2] ^= bigC[2];
-            x[3] ^= bigC[3];
-            GMULT(x, bigH);
-            c += AES_BLOCK_SIZE;
-        }
-        if (partial != 0) {
-            XMEMSET(bigC, 0, AES_BLOCK_SIZE);
-            XMEMCPY(bigC, c, partial);
-            #ifdef LITTLE_ENDIAN_ORDER
-                ByteReverseWords(bigC, bigC, AES_BLOCK_SIZE);
-            #endif
-            x[0] ^= bigC[0];
-            x[1] ^= bigC[1];
-            x[2] ^= bigC[2];
-            x[3] ^= bigC[3];
-            GMULT(x, bigH);
-        }
-    }
-
-    /* Hash in the lengths in bits of A and C */
-    {
-        word32 len[4];
-
-        /* Lengths are in bytes. Convert to bits. */
-        len[0] = (aSz >> (8*sizeof(aSz) - 3));
-        len[1] = aSz << 3;
-        len[2] = (cSz >> (8*sizeof(cSz) - 3));
-        len[3] = cSz << 3;
-
-        x[0] ^= len[0];
-        x[1] ^= len[1];
-        x[2] ^= len[2];
-        x[3] ^= len[3];
-        GMULT(x, bigH);
-    }
-    #ifdef LITTLE_ENDIAN_ORDER
-        ByteReverseWords(x, x, AES_BLOCK_SIZE);
-    #endif
-    XMEMCPY(s, x, sSz);
-}
-
-#ifdef WOLFSSL_AESGCM_STREAM
-#ifdef LITTLE_ENDIAN_ORDER
-/* Little-endian 32-bit word implementation requires byte reversal of H.
- *
- * H is all-zeros block encrypted with key.
- *
- * @param [in, out] aes  AES GCM object.
- */
-#define GHASH_INIT_EXTRA(aes) \
-    ByteReverseWords((word32*)aes->H, (word32*)aes->H, AES_BLOCK_SIZE)
-
-/* GHASH one block of data..
- *
- * XOR block, in big-endian form, into tag and GMULT with H.
- *
- * @param [in, out] aes    AES GCM object.
- * @param [in]      block  Block of AAD or cipher text.
- */
-#define GHASH_ONE_BLOCK(aes, block)                         \
-    do {                                                    \
-        word32* x = (word32*)AES_TAG(aes);                  \
-        word32* h = (word32*)aes->H;                        \
-        word32 bigEnd[4];                                   \
-        XMEMCPY(bigEnd, block, AES_BLOCK_SIZE);             \
-        ByteReverseWords(bigEnd, bigEnd, AES_BLOCK_SIZE);   \
-        x[0] ^= bigEnd[0];                                  \
-        x[1] ^= bigEnd[1];                                  \
-        x[2] ^= bigEnd[2];                                  \
-        x[3] ^= bigEnd[3];                                  \
-        GMULT(x, h);                                        \
-    }                                                       \
-    while (0)
-
-/* GHASH in AAD and cipher text lengths in bits.
- *
- * Convert tag back to little-endian.
- *
- * @param [in, out] aes  AES GCM object.
- */
-#define GHASH_LEN_BLOCK(aes)                                \
-    do {                                                    \
-        word32 len[4];                                      \
-        word32* x = (word32*)AES_TAG(aes);                  \
-        word32* h = (word32*)aes->H;                        \
-        len[0] = (aes->aSz >> (8*sizeof(aes->aSz) - 3));    \
-        len[1] = aes->aSz << 3;                             \
-        len[2] = (aes->cSz >> (8*sizeof(aes->cSz) - 3));    \
-        len[3] = aes->cSz << 3;                             \
-        x[0] ^= len[0];                                     \
-        x[1] ^= len[1];                                     \
-        x[2] ^= len[2];                                     \
-        x[3] ^= len[3];                                     \
-        GMULT(x, h);                                        \
-        ByteReverseWords(x, x, AES_BLOCK_SIZE);             \
-    }                                                       \
-    while (0)
-#else
-/* No extra initialization for 32-bit word implementation.
- *
- * @param [in] aes  AES GCM object.
- */
-#define GHASH_INIT_EXTRA(aes)
-
-/* GHASH one block of data..
- *
- * XOR block into tag and GMULT with H.
- *
- * @param [in, out] aes    AES GCM object.
- * @param [in]      block  Block of AAD or cipher text.
- */
-#define GHASH_ONE_BLOCK(aes, block)                         \
-    do {                                                    \
-        word32* x = (word32*)AES_TAG(aes);                  \
-        word32* h = (word32*)aes->H;                        \
-        word32 block32[4];                                  \
-        XMEMCPY(block32, block, AES_BLOCK_SIZE);            \
-        x[0] ^= block32[0];                                 \
-        x[1] ^= block32[1];                                 \
-        x[2] ^= block32[2];                                 \
-        x[3] ^= block32[3];                                 \
-        GMULT(x, h);                                        \
-    }                                                       \
-    while (0)
-
-/* GHASH in AAD and cipher text lengths in bits.
- *
- * @param [in, out] aes  AES GCM object.
- */
-#define GHASH_LEN_BLOCK(aes)                                \
-    do {                                                    \
-        word32 len[4];                                      \
-        word32* x = (word32*)AES_TAG(aes);                  \
-        word32* h = (word32*)aes->H;                        \
-        len[0] = (aes->aSz >> (8*sizeof(aes->aSz) - 3));    \
-        len[1] = aes->aSz << 3;                             \
-        len[2] = (aes->cSz >> (8*sizeof(aes->cSz) - 3));    \
-        len[3] = aes->cSz << 3;                             \
-        x[0] ^= len[0];                                     \
-        x[1] ^= len[1];                                     \
-        x[2] ^= len[2];                                     \
-        x[3] ^= len[3];                                     \
-        GMULT(x, h);                                        \
-    }                                                       \
-    while (0)
-#endif /* LITTLE_ENDIAN_ORDER */
-#endif /* WOLFSSL_AESGCM_STREAM */
-#endif /* end GCM_WORD32 */
 
 #if !defined(WOLFSSL_XILINX_CRYPT) && !defined(WOLFSSL_AFALG_XILINX_AES)
 #ifdef WOLFSSL_AESGCM_STREAM
@@ -7607,16 +5436,12 @@ static WARN_UNUSED_RESULT int wc_AesGcmEncrypt_STM32(
 
 #endif /* STM32_CRYPTO_AES_GCM */
 
-#ifdef WOLFSSL_AESNI
 /* For performance reasons, this code needs to be not inlined. */
 WARN_UNUSED_RESULT int AES_GCM_encrypt_C(
                       Aes* aes, byte* out, const byte* in, word32 sz,
                       const byte* iv, word32 ivSz,
                       byte* authTag, word32 authTagSz,
                       const byte* authIn, word32 authInSz);
-#else
-static
-#endif
 WARN_UNUSED_RESULT int AES_GCM_encrypt_C(
                       Aes* aes, byte* out, const byte* in, word32 sz,
                       const byte* iv, word32 ivSz,
@@ -7641,14 +5466,7 @@ WARN_UNUSED_RESULT int AES_GCM_encrypt_C(
     }
     else {
         /* Counter is GHASH of IV. */
-#ifdef OPENSSL_EXTRA
-        word32 aadTemp = aes->aadLen;
-        aes->aadLen = 0;
-#endif
         GHASH(aes, NULL, 0, iv, ivSz, counter, AES_BLOCK_SIZE);
-#ifdef OPENSSL_EXTRA
-        aes->aadLen = aadTemp;
-#endif
     }
     XMEMCPY(initialCounter, counter, AES_BLOCK_SIZE);
 
@@ -7712,11 +5530,6 @@ WARN_UNUSED_RESULT int AES_GCM_encrypt_C(
         if (ret != 0)
             return ret;
         xorbuf(authTag, scratch, authTagSz);
-#ifdef OPENSSL_EXTRA
-        if (!in && !sz)
-            /* store AAD size for next call */
-            aes->aadLen = authInSz;
-#endif
     }
 
     return ret;
@@ -7738,52 +5551,7 @@ int wc_AesGcmEncrypt(Aes* aes, byte* out, const byte* in, word32 sz,
         return BAD_FUNC_ARG;
     }
 
-#ifdef WOLF_CRYPTO_CB
-    if (aes->devId != INVALID_DEVID) {
-        int crypto_cb_ret =
-            wc_CryptoCb_AesGcmEncrypt(aes, out, in, sz, iv, ivSz, authTag,
-                                      authTagSz, authIn, authInSz);
-        if (crypto_cb_ret != CRYPTOCB_UNAVAILABLE)
-            return crypto_cb_ret;
-        /* fall-through when unavailable */
-    }
-#endif
 
-#if defined(WOLFSSL_ASYNC_CRYPT) && defined(WC_ASYNC_ENABLE_AES)
-    /* if async and byte count above threshold */
-    /* only 12-byte IV is supported in HW */
-    if (aes->asyncDev.marker == WOLFSSL_ASYNC_MARKER_AES &&
-                    sz >= WC_ASYNC_THRESH_AES_GCM && ivSz == GCM_NONCE_MID_SZ) {
-    #if defined(HAVE_CAVIUM)
-        #ifdef HAVE_CAVIUM_V
-        if (authInSz == 20) { /* Nitrox V GCM is only working with 20 byte AAD */
-            return NitroxAesGcmEncrypt(aes, out, in, sz,
-                (const byte*)aes->devKey, aes->keylen, iv, ivSz,
-                authTag, authTagSz, authIn, authInSz);
-        }
-        #endif
-    #elif defined(HAVE_INTEL_QA)
-        return IntelQaSymAesGcmEncrypt(&aes->asyncDev, out, in, sz,
-            (const byte*)aes->devKey, aes->keylen, iv, ivSz,
-            authTag, authTagSz, authIn, authInSz);
-    #else /* WOLFSSL_ASYNC_CRYPT_TEST */
-        if (wc_AsyncTestInit(&aes->asyncDev, ASYNC_TEST_AES_GCM_ENCRYPT)) {
-            WC_ASYNC_TEST* testDev = &aes->asyncDev.test;
-            testDev->aes.aes = aes;
-            testDev->aes.out = out;
-            testDev->aes.in = in;
-            testDev->aes.sz = sz;
-            testDev->aes.iv = iv;
-            testDev->aes.ivSz = ivSz;
-            testDev->aes.authTag = authTag;
-            testDev->aes.authTagSz = authTagSz;
-            testDev->aes.authIn = authIn;
-            testDev->aes.authInSz = authInSz;
-            return WC_PENDING_E;
-        }
-    #endif
-    }
-#endif /* WOLFSSL_ASYNC_CRYPT */
 
 #ifdef WOLFSSL_SILABS_SE_ACCEL
     return wc_AesGcmEncrypt_silabs(
@@ -7799,8 +5567,6 @@ int wc_AesGcmEncrypt(Aes* aes, byte* out, const byte* in, word32 sz,
         authTag, authTagSz, authIn, authInSz);
 #endif /* STM32_CRYPTO_AES_GCM */
 
-#ifdef WOLFSSL_AESNI
-    #ifdef HAVE_INTEL_AVX2
     if (IS_INTEL_AVX2(intel_flags)) {
         SAVE_VECTOR_REGISTERS(return _svr_ret;);
         AES_GCM_encrypt_avx2(in, out, authIn, iv, authTag, sz, authInSz, ivSz,
@@ -7809,8 +5575,6 @@ int wc_AesGcmEncrypt(Aes* aes, byte* out, const byte* in, word32 sz,
         return 0;
     }
     else
-    #endif
-    #ifdef HAVE_INTEL_AVX1
     if (IS_INTEL_AVX1(intel_flags)) {
         SAVE_VECTOR_REGISTERS(return _svr_ret;);
         AES_GCM_encrypt_avx1(in, out, authIn, iv, authTag, sz, authInSz, ivSz,
@@ -7819,14 +5583,12 @@ int wc_AesGcmEncrypt(Aes* aes, byte* out, const byte* in, word32 sz,
         return 0;
     }
     else
-    #endif
     if (haveAESNI) {
         AES_GCM_encrypt(in, out, authIn, iv, authTag, sz, authInSz, ivSz,
                                  authTagSz, (const byte*)aes->key, aes->rounds);
         return 0;
     }
     else
-#endif
     {
         return AES_GCM_encrypt_C(aes, out, in, sz, iv, ivSz, authTag, authTagSz,
                                                               authIn, authInSz);
@@ -8129,16 +5891,12 @@ static WARN_UNUSED_RESULT int wc_AesGcmDecrypt_STM32(
 
 #endif /* STM32_CRYPTO_AES_GCM */
 
-#ifdef WOLFSSL_AESNI
 /* For performance reasons, this code needs to be not inlined. */
 int WARN_UNUSED_RESULT AES_GCM_decrypt_C(
                       Aes* aes, byte* out, const byte* in, word32 sz,
                       const byte* iv, word32 ivSz,
                       const byte* authTag, word32 authTagSz,
                       const byte* authIn, word32 authInSz);
-#else
-static
-#endif
 int WARN_UNUSED_RESULT AES_GCM_decrypt_C(
                       Aes* aes, byte* out, const byte* in, word32 sz,
                       const byte* iv, word32 ivSz,
@@ -8165,14 +5923,7 @@ int WARN_UNUSED_RESULT AES_GCM_decrypt_C(
     }
     else {
         /* Counter is GHASH of IV. */
-#ifdef OPENSSL_EXTRA
-        word32 aadTemp = aes->aadLen;
-        aes->aadLen = 0;
-#endif
         GHASH(aes, NULL, 0, iv, ivSz, counter, AES_BLOCK_SIZE);
-#ifdef OPENSSL_EXTRA
-        aes->aadLen = aadTemp;
-#endif
     }
 
     /* Calc the authTag again using received auth data and the cipher text */
@@ -8182,13 +5933,6 @@ int WARN_UNUSED_RESULT AES_GCM_decrypt_C(
         return ret;
     xorbuf(Tprime, EKY0, sizeof(Tprime));
 
-#ifdef OPENSSL_EXTRA
-    if (!out) {
-        /* authenticated, non-confidential data */
-        /* store AAD size for next call */
-        aes->aadLen = authInSz;
-    }
-#endif
 
 #if defined(WOLFSSL_PIC32MZ_CRYPT)
     if (blocks) {
@@ -8269,9 +6013,7 @@ int wc_AesGcmDecrypt(Aes* aes, byte* out, const byte* in, word32 sz,
                      const byte* authTag, word32 authTagSz,
                      const byte* authIn, word32 authInSz)
 {
-#ifdef WOLFSSL_AESNI
     int res = AES_GCM_AUTH_E;
-#endif
 
     /* argument checks */
     /* If the sz is non-zero, both in and out must be set. If sz is 0,
@@ -8283,52 +6025,7 @@ int wc_AesGcmDecrypt(Aes* aes, byte* out, const byte* in, word32 sz,
         return BAD_FUNC_ARG;
     }
 
-#ifdef WOLF_CRYPTO_CB
-    if (aes->devId != INVALID_DEVID) {
-        int crypto_cb_ret =
-            wc_CryptoCb_AesGcmDecrypt(aes, out, in, sz, iv, ivSz,
-                                      authTag, authTagSz, authIn, authInSz);
-        if (crypto_cb_ret != CRYPTOCB_UNAVAILABLE)
-            return crypto_cb_ret;
-        /* fall-through when unavailable */
-    }
-#endif
 
-#if defined(WOLFSSL_ASYNC_CRYPT) && defined(WC_ASYNC_ENABLE_AES)
-    /* if async and byte count above threshold */
-    /* only 12-byte IV is supported in HW */
-    if (aes->asyncDev.marker == WOLFSSL_ASYNC_MARKER_AES &&
-                    sz >= WC_ASYNC_THRESH_AES_GCM && ivSz == GCM_NONCE_MID_SZ) {
-    #if defined(HAVE_CAVIUM)
-        #ifdef HAVE_CAVIUM_V
-        if (authInSz == 20) { /* Nitrox V GCM is only working with 20 byte AAD */
-            return NitroxAesGcmDecrypt(aes, out, in, sz,
-                (const byte*)aes->devKey, aes->keylen, iv, ivSz,
-                authTag, authTagSz, authIn, authInSz);
-        }
-        #endif
-    #elif defined(HAVE_INTEL_QA)
-        return IntelQaSymAesGcmDecrypt(&aes->asyncDev, out, in, sz,
-            (const byte*)aes->devKey, aes->keylen, iv, ivSz,
-            authTag, authTagSz, authIn, authInSz);
-    #else /* WOLFSSL_ASYNC_CRYPT_TEST */
-        if (wc_AsyncTestInit(&aes->asyncDev, ASYNC_TEST_AES_GCM_DECRYPT)) {
-            WC_ASYNC_TEST* testDev = &aes->asyncDev.test;
-            testDev->aes.aes = aes;
-            testDev->aes.out = out;
-            testDev->aes.in = in;
-            testDev->aes.sz = sz;
-            testDev->aes.iv = iv;
-            testDev->aes.ivSz = ivSz;
-            testDev->aes.authTag = (byte*)authTag;
-            testDev->aes.authTagSz = authTagSz;
-            testDev->aes.authIn = authIn;
-            testDev->aes.authInSz = authInSz;
-            return WC_PENDING_E;
-        }
-    #endif
-    }
-#endif /* WOLFSSL_ASYNC_CRYPT */
 
 #ifdef WOLFSSL_SILABS_SE_ACCEL
     return wc_AesGcmDecrypt_silabs(
@@ -8344,8 +6041,6 @@ int wc_AesGcmDecrypt(Aes* aes, byte* out, const byte* in, word32 sz,
         authTag, authTagSz, authIn, authInSz);
 #endif /* STM32_CRYPTO_AES_GCM */
 
-#ifdef WOLFSSL_AESNI
-    #ifdef HAVE_INTEL_AVX2
     if (IS_INTEL_AVX2(intel_flags)) {
         SAVE_VECTOR_REGISTERS(return _svr_ret;);
         AES_GCM_decrypt_avx2(in, out, authIn, iv, authTag, sz, authInSz, ivSz,
@@ -8356,8 +6051,6 @@ int wc_AesGcmDecrypt(Aes* aes, byte* out, const byte* in, word32 sz,
         return 0;
     }
     else
-    #endif
-    #ifdef HAVE_INTEL_AVX1
     if (IS_INTEL_AVX1(intel_flags)) {
         SAVE_VECTOR_REGISTERS(return _svr_ret;);
         AES_GCM_decrypt_avx1(in, out, authIn, iv, authTag, sz, authInSz, ivSz,
@@ -8368,7 +6061,6 @@ int wc_AesGcmDecrypt(Aes* aes, byte* out, const byte* in, word32 sz,
         return 0;
     }
     else
-    #endif
     if (haveAESNI) {
         AES_GCM_decrypt(in, out, authIn, iv, authTag, sz, authInSz, ivSz,
                                  authTagSz, (byte*)aes->key, aes->rounds, &res);
@@ -8377,7 +6069,6 @@ int wc_AesGcmDecrypt(Aes* aes, byte* out, const byte* in, word32 sz,
         return 0;
     }
     else
-#endif
     {
         return AES_GCM_decrypt_C(aes, out, in, sz, iv, ivSz, authTag, authTagSz,
                                                               authIn, authInSz);
@@ -8407,14 +6098,7 @@ static WARN_UNUSED_RESULT int AesGcmInit_C(Aes* aes, const byte* iv, word32 ivSz
     }
     else {
         /* Counter is GHASH of IV. */
-    #ifdef OPENSSL_EXTRA
-        word32 aadTemp = aes->aadLen;
-        aes->aadLen = 0;
-    #endif
         GHASH(aes, NULL, 0, iv, ivSz, counter, AES_BLOCK_SIZE);
-    #ifdef OPENSSL_EXTRA
-        aes->aadLen = aadTemp;
-    #endif
     }
 
     /* Copy in the counter for use with cipher. */
@@ -8538,24 +6222,18 @@ static WARN_UNUSED_RESULT int AesGcmFinal_C(
     GHASH_FINAL(aes, authTag, authTagSz);
     /* XOR in as much of encrypted counter as is required. */
     xorbuf(authTag, AES_INITCTR(aes), authTagSz);
-#ifdef OPENSSL_EXTRA
-    /* store AAD size for next call */
-    aes->aadLen = aes->aSz;
-#endif
     /* Zeroize last block to protect sensitive data. */
     ForceZero(AES_LASTBLOCK(aes), AES_BLOCK_SIZE);
 
     return 0;
 }
 
-#ifdef WOLFSSL_AESNI
 
 #ifdef __cplusplus
     extern "C" {
 #endif
 
 /* Assembly code implementations in: aes_gcm_asm.S */
-#ifdef HAVE_INTEL_AVX2
 extern void AES_GCM_init_avx2(const unsigned char* key, int nr,
     const unsigned char* ivec, unsigned int ibytes, unsigned char* h,
     unsigned char* counter, unsigned char* initCtr);
@@ -8572,8 +6250,6 @@ extern void AES_GCM_encrypt_update_avx2(const unsigned char* key, int nr,
 extern void AES_GCM_encrypt_final_avx2(unsigned char* tag,
     unsigned char* authTag, unsigned int tbytes, unsigned int nbytes,
     unsigned int abytes, unsigned char* h, unsigned char* initCtr);
-#endif
-#ifdef HAVE_INTEL_AVX1
 extern void AES_GCM_init_avx1(const unsigned char* key, int nr,
     const unsigned char* ivec, unsigned int ibytes, unsigned char* h,
     unsigned char* counter, unsigned char* initCtr);
@@ -8590,7 +6266,6 @@ extern void AES_GCM_encrypt_update_avx1(const unsigned char* key, int nr,
 extern void AES_GCM_encrypt_final_avx1(unsigned char* tag,
     unsigned char* authTag, unsigned int tbytes, unsigned int nbytes,
     unsigned int abytes, unsigned char* h, unsigned char* initCtr);
-#endif
 extern void AES_GCM_init_aesni(const unsigned char* key, int nr,
     const unsigned char* ivec, unsigned int ibytes, unsigned char* h,
     unsigned char* counter, unsigned char* initCtr);
@@ -8630,7 +6305,6 @@ static WARN_UNUSED_RESULT int AesGcmInit_aesni(
     aes->aOver = 0;
     aes->cOver = 0;
 
-#ifdef HAVE_INTEL_AVX2
     if (IS_INTEL_AVX2(intel_flags)) {
         SAVE_VECTOR_REGISTERS(return _svr_ret;);
         AES_GCM_init_avx2((byte*)aes->key, aes->rounds, iv, ivSz, aes->H,
@@ -8638,8 +6312,6 @@ static WARN_UNUSED_RESULT int AesGcmInit_aesni(
         RESTORE_VECTOR_REGISTERS();
     }
     else
-#endif
-#ifdef HAVE_INTEL_AVX1
     if (IS_INTEL_AVX1(intel_flags)) {
         SAVE_VECTOR_REGISTERS(return _svr_ret;);
         AES_GCM_init_avx1((byte*)aes->key, aes->rounds, iv, ivSz, aes->H,
@@ -8647,7 +6319,6 @@ static WARN_UNUSED_RESULT int AesGcmInit_aesni(
         RESTORE_VECTOR_REGISTERS();
     }
     else
-#endif
     {
         SAVE_VECTOR_REGISTERS(return _svr_ret;);
         AES_GCM_init_aesni((byte*)aes->key, aes->rounds, iv, ivSz, aes->H,
@@ -8689,20 +6360,16 @@ static WARN_UNUSED_RESULT int AesGcmAadUpdate_aesni(
             aes->aOver += sz;
             if (aes->aOver == AES_BLOCK_SIZE) {
                 /* We have filled up the block and can process. */
-            #ifdef HAVE_INTEL_AVX2
                 if (IS_INTEL_AVX2(intel_flags)) {
                     AES_GCM_ghash_block_avx2(AES_LASTGBLOCK(aes), AES_TAG(aes),
                                              aes->H);
                 }
                 else
-            #endif
-            #ifdef HAVE_INTEL_AVX1
                 if (IS_INTEL_AVX1(intel_flags)) {
                     AES_GCM_ghash_block_avx1(AES_LASTGBLOCK(aes), AES_TAG(aes),
                                              aes->H);
                 }
                 else
-            #endif
                 {
                     AES_GCM_ghash_block_aesni(AES_LASTGBLOCK(aes), AES_TAG(aes),
                                               aes->H);
@@ -8720,20 +6387,16 @@ static WARN_UNUSED_RESULT int AesGcmAadUpdate_aesni(
         partial = aSz % AES_BLOCK_SIZE;
         if (blocks > 0) {
             /* GHASH full blocks now. */
-        #ifdef HAVE_INTEL_AVX2
             if (IS_INTEL_AVX2(intel_flags)) {
                 AES_GCM_aad_update_avx2(a, blocks * AES_BLOCK_SIZE,
                                         AES_TAG(aes), aes->H);
             }
             else
-        #endif
-        #ifdef HAVE_INTEL_AVX1
             if (IS_INTEL_AVX1(intel_flags)) {
                 AES_GCM_aad_update_avx1(a, blocks * AES_BLOCK_SIZE,
                                         AES_TAG(aes), aes->H);
             }
             else
-        #endif
             {
                 AES_GCM_aad_update_aesni(a, blocks * AES_BLOCK_SIZE,
                                          AES_TAG(aes), aes->H);
@@ -8753,18 +6416,14 @@ static WARN_UNUSED_RESULT int AesGcmAadUpdate_aesni(
         XMEMSET(AES_LASTGBLOCK(aes) + aes->aOver, 0,
                 AES_BLOCK_SIZE - aes->aOver);
         /* GHASH last AAD block. */
-    #ifdef HAVE_INTEL_AVX2
         if (IS_INTEL_AVX2(intel_flags)) {
             AES_GCM_ghash_block_avx2(AES_LASTGBLOCK(aes), AES_TAG(aes), aes->H);
         }
         else
-    #endif
-    #ifdef HAVE_INTEL_AVX1
         if (IS_INTEL_AVX1(intel_flags)) {
             AES_GCM_ghash_block_avx1(AES_LASTGBLOCK(aes), AES_TAG(aes), aes->H);
         }
         else
-    #endif
         {
             AES_GCM_ghash_block_aesni(AES_LASTGBLOCK(aes), AES_TAG(aes),
                                       aes->H);
@@ -8817,20 +6476,16 @@ static WARN_UNUSED_RESULT int AesGcmEncryptUpdate_aesni(
             aes->cOver += sz;
             if (aes->cOver == AES_BLOCK_SIZE) {
                 /* We have filled up the block and can process. */
-            #ifdef HAVE_INTEL_AVX2
                 if (IS_INTEL_AVX2(intel_flags)) {
                     AES_GCM_ghash_block_avx2(AES_LASTGBLOCK(aes), AES_TAG(aes),
                                              aes->H);
                 }
                 else
-            #endif
-            #ifdef HAVE_INTEL_AVX1
                 if (IS_INTEL_AVX1(intel_flags)) {
                     AES_GCM_ghash_block_avx1(AES_LASTGBLOCK(aes), AES_TAG(aes),
                                              aes->H);
                 }
                 else
-            #endif
                 {
                     AES_GCM_ghash_block_aesni(AES_LASTGBLOCK(aes), AES_TAG(aes),
                                               aes->H);
@@ -8849,22 +6504,18 @@ static WARN_UNUSED_RESULT int AesGcmEncryptUpdate_aesni(
         partial = cSz % AES_BLOCK_SIZE;
         if (blocks > 0) {
             /* Encrypt and GHASH full blocks now. */
-        #ifdef HAVE_INTEL_AVX2
             if (IS_INTEL_AVX2(intel_flags)) {
                 AES_GCM_encrypt_update_avx2((byte*)aes->key, aes->rounds, c, p,
                     blocks * AES_BLOCK_SIZE, AES_TAG(aes), aes->H,
                     AES_COUNTER(aes));
             }
             else
-        #endif
-        #ifdef HAVE_INTEL_AVX1
             if (IS_INTEL_AVX1(intel_flags)) {
                 AES_GCM_encrypt_update_avx1((byte*)aes->key, aes->rounds, c, p,
                     blocks * AES_BLOCK_SIZE, AES_TAG(aes), aes->H,
                     AES_COUNTER(aes));
             }
             else
-        #endif
             {
                 AES_GCM_encrypt_update_aesni((byte*)aes->key, aes->rounds, c, p,
                     blocks * AES_BLOCK_SIZE, AES_TAG(aes), aes->H,
@@ -8877,20 +6528,16 @@ static WARN_UNUSED_RESULT int AesGcmEncryptUpdate_aesni(
         if (partial != 0) {
             /* Encrypt the counter - XOR in zeros as proxy for plaintext. */
             XMEMSET(AES_LASTGBLOCK(aes), 0, AES_BLOCK_SIZE);
-        #ifdef HAVE_INTEL_AVX2
             if (IS_INTEL_AVX2(intel_flags)) {
                 AES_GCM_encrypt_block_avx2((byte*)aes->key, aes->rounds,
                     AES_LASTGBLOCK(aes), AES_LASTGBLOCK(aes), AES_COUNTER(aes));
             }
             else
-        #endif
-        #ifdef HAVE_INTEL_AVX1
             if (IS_INTEL_AVX1(intel_flags)) {
                 AES_GCM_encrypt_block_avx1((byte*)aes->key, aes->rounds,
                     AES_LASTGBLOCK(aes), AES_LASTGBLOCK(aes), AES_COUNTER(aes));
             }
             else
-        #endif
             {
                 AES_GCM_encrypt_block_aesni((byte*)aes->key, aes->rounds,
                     AES_LASTGBLOCK(aes), AES_LASTGBLOCK(aes), AES_COUNTER(aes));
@@ -8932,38 +6579,30 @@ static WARN_UNUSED_RESULT int AesGcmEncryptFinal_aesni(
         /* Fill the rest of the block with zeros. */
         XMEMSET(AES_LASTGBLOCK(aes) + over, 0, AES_BLOCK_SIZE - over);
         /* GHASH last cipher block. */
-    #ifdef HAVE_INTEL_AVX2
         if (IS_INTEL_AVX2(intel_flags)) {
             AES_GCM_ghash_block_avx2(AES_LASTGBLOCK(aes), AES_TAG(aes), aes->H);
         }
         else
-    #endif
-    #ifdef HAVE_INTEL_AVX1
         if (IS_INTEL_AVX1(intel_flags)) {
             AES_GCM_ghash_block_avx1(AES_LASTGBLOCK(aes), AES_TAG(aes), aes->H);
         }
         else
-    #endif
         {
             AES_GCM_ghash_block_aesni(AES_LASTGBLOCK(aes), AES_TAG(aes),
                                       aes->H);
         }
     }
     /* Calculate the authentication tag. */
-#ifdef HAVE_INTEL_AVX2
     if (IS_INTEL_AVX2(intel_flags)) {
         AES_GCM_encrypt_final_avx2(AES_TAG(aes), authTag, authTagSz, aes->cSz,
             aes->aSz, aes->H, AES_INITCTR(aes));
     }
     else
-#endif
-#ifdef HAVE_INTEL_AVX1
     if (IS_INTEL_AVX1(intel_flags)) {
         AES_GCM_encrypt_final_avx1(AES_TAG(aes), authTag, authTagSz, aes->cSz,
             aes->aSz, aes->H, AES_INITCTR(aes));
     }
     else
-#endif
     {
         AES_GCM_encrypt_final_aesni(AES_TAG(aes), authTag, authTagSz, aes->cSz,
             aes->aSz, aes->H, AES_INITCTR(aes));
@@ -8979,22 +6618,18 @@ static WARN_UNUSED_RESULT int AesGcmEncryptFinal_aesni(
 #endif
 
 /* Assembly code implementations in: aes_gcm_asm.S */
-#ifdef HAVE_INTEL_AVX2
 extern void AES_GCM_decrypt_update_avx2(const unsigned char* key, int nr,
     unsigned char* out, const unsigned char* in, unsigned int nbytes,
     unsigned char* tag, unsigned char* h, unsigned char* counter);
 extern void AES_GCM_decrypt_final_avx2(unsigned char* tag,
     const unsigned char* authTag, unsigned int tbytes, unsigned int nbytes,
     unsigned int abytes, unsigned char* h, unsigned char* initCtr, int* res);
-#endif
-#ifdef HAVE_INTEL_AVX1
 extern void AES_GCM_decrypt_update_avx1(const unsigned char* key, int nr,
     unsigned char* out, const unsigned char* in, unsigned int nbytes,
     unsigned char* tag, unsigned char* h, unsigned char* counter);
 extern void AES_GCM_decrypt_final_avx1(unsigned char* tag,
     const unsigned char* authTag, unsigned int tbytes, unsigned int nbytes,
     unsigned int abytes, unsigned char* h, unsigned char* initCtr, int* res);
-#endif
 extern void AES_GCM_decrypt_update_aesni(const unsigned char* key, int nr,
     unsigned char* out, const unsigned char* in, unsigned int nbytes,
     unsigned char* tag, unsigned char* h, unsigned char* counter);
@@ -9047,20 +6682,16 @@ static WARN_UNUSED_RESULT int AesGcmDecryptUpdate_aesni(
             aes->cOver += sz;
             if (aes->cOver == AES_BLOCK_SIZE) {
                 /* We have filled up the block and can process. */
-            #ifdef HAVE_INTEL_AVX2
                 if (IS_INTEL_AVX2(intel_flags)) {
                     AES_GCM_ghash_block_avx2(AES_LASTBLOCK(aes), AES_TAG(aes),
                                              aes->H);
                 }
                 else
-            #endif
-            #ifdef HAVE_INTEL_AVX1
                 if (IS_INTEL_AVX1(intel_flags)) {
                     AES_GCM_ghash_block_avx1(AES_LASTBLOCK(aes), AES_TAG(aes),
                                              aes->H);
                 }
                 else
-            #endif
                 {
                     AES_GCM_ghash_block_aesni(AES_LASTBLOCK(aes), AES_TAG(aes),
                                               aes->H);
@@ -9079,22 +6710,18 @@ static WARN_UNUSED_RESULT int AesGcmDecryptUpdate_aesni(
         partial = cSz % AES_BLOCK_SIZE;
         if (blocks > 0) {
             /* Decrypt and GHASH full blocks now. */
-        #ifdef HAVE_INTEL_AVX2
             if (IS_INTEL_AVX2(intel_flags)) {
                 AES_GCM_decrypt_update_avx2((byte*)aes->key, aes->rounds, p, c,
                     blocks * AES_BLOCK_SIZE, AES_TAG(aes), aes->H,
                     AES_COUNTER(aes));
             }
             else
-        #endif
-        #ifdef HAVE_INTEL_AVX1
             if (IS_INTEL_AVX1(intel_flags)) {
                 AES_GCM_decrypt_update_avx1((byte*)aes->key, aes->rounds, p, c,
                     blocks * AES_BLOCK_SIZE, AES_TAG(aes), aes->H,
                     AES_COUNTER(aes));
             }
             else
-        #endif
             {
                 AES_GCM_decrypt_update_aesni((byte*)aes->key, aes->rounds, p, c,
                     blocks * AES_BLOCK_SIZE, AES_TAG(aes), aes->H,
@@ -9107,20 +6734,16 @@ static WARN_UNUSED_RESULT int AesGcmDecryptUpdate_aesni(
         if (partial != 0) {
             /* Encrypt the counter - XOR in zeros as proxy for cipher text. */
             XMEMSET(AES_LASTGBLOCK(aes), 0, AES_BLOCK_SIZE);
-        #ifdef HAVE_INTEL_AVX2
             if (IS_INTEL_AVX2(intel_flags)) {
                 AES_GCM_encrypt_block_avx2((byte*)aes->key, aes->rounds,
                     AES_LASTGBLOCK(aes), AES_LASTGBLOCK(aes), AES_COUNTER(aes));
             }
             else
-        #endif
-        #ifdef HAVE_INTEL_AVX1
             if (IS_INTEL_AVX1(intel_flags)) {
                 AES_GCM_encrypt_block_avx1((byte*)aes->key, aes->rounds,
                     AES_LASTGBLOCK(aes), AES_LASTGBLOCK(aes), AES_COUNTER(aes));
             }
             else
-        #endif
             {
                 AES_GCM_encrypt_block_aesni((byte*)aes->key, aes->rounds,
                     AES_LASTGBLOCK(aes), AES_LASTGBLOCK(aes), AES_COUNTER(aes));
@@ -9168,37 +6791,29 @@ static WARN_UNUSED_RESULT int AesGcmDecryptFinal_aesni(
         /* Zeroize the unused part of the block. */
         XMEMSET(lastBlock + over, 0, AES_BLOCK_SIZE - over);
         /* Hash the last block of cipher text. */
-    #ifdef HAVE_INTEL_AVX2
         if (IS_INTEL_AVX2(intel_flags)) {
             AES_GCM_ghash_block_avx2(lastBlock, AES_TAG(aes), aes->H);
         }
         else
-    #endif
-    #ifdef HAVE_INTEL_AVX1
         if (IS_INTEL_AVX1(intel_flags)) {
             AES_GCM_ghash_block_avx1(lastBlock, AES_TAG(aes), aes->H);
         }
         else
-    #endif
         {
             AES_GCM_ghash_block_aesni(lastBlock, AES_TAG(aes), aes->H);
         }
     }
     /* Calculate and compare the authentication tag. */
-#ifdef HAVE_INTEL_AVX2
     if (IS_INTEL_AVX2(intel_flags)) {
         AES_GCM_decrypt_final_avx2(AES_TAG(aes), authTag, authTagSz, aes->cSz,
             aes->aSz, aes->H, AES_INITCTR(aes), &res);
     }
     else
-#endif
-#ifdef HAVE_INTEL_AVX1
     if (IS_INTEL_AVX1(intel_flags)) {
         AES_GCM_decrypt_final_avx1(AES_TAG(aes), authTag, authTagSz, aes->cSz,
             aes->aSz, aes->H, AES_INITCTR(aes), &res);
     }
     else
-#endif
     {
         AES_GCM_decrypt_final_aesni(AES_TAG(aes), authTag, authTagSz, aes->cSz,
             aes->aSz, aes->H, AES_INITCTR(aes), &res);
@@ -9211,7 +6826,6 @@ static WARN_UNUSED_RESULT int AesGcmDecryptFinal_aesni(
     return ret;
 }
 #endif /* HAVE_AES_DECRYPT || HAVE_AESGCM_DECRYPT */
-#endif /* WOLFSSL_AESNI */
 
 /* Initialize an AES GCM cipher for encryption or decryption.
  *
@@ -9239,16 +6853,6 @@ int wc_AesGcmInit(Aes* aes, const byte* key, word32 len, const byte* iv,
         ret = BAD_FUNC_ARG;
     }
 
-#if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_AESNI)
-    if ((ret == 0) && (aes->streamData == NULL)) {
-        /* Allocate buffers for streaming. */
-        aes->streamData = (byte*)XMALLOC(5 * AES_BLOCK_SIZE, aes->heap,
-                                                              DYNAMIC_TYPE_AES);
-        if (aes->streamData == NULL) {
-            ret = MEMORY_E;
-        }
-    }
-#endif
 
     /* Set the key if passed in. */
     if ((ret == 0) && (key != NULL)) {
@@ -9270,19 +6874,13 @@ int wc_AesGcmInit(Aes* aes, const byte* key, word32 len, const byte* iv,
 
         if (iv != NULL) {
             /* Initialize with the IV. */
-        #ifdef WOLFSSL_AESNI
             if (haveAESNI
-            #ifdef HAVE_INTEL_AVX2
                 || IS_INTEL_AVX2(intel_flags)
-            #endif
-            #ifdef HAVE_INTEL_AVX1
                 || IS_INTEL_AVX1(intel_flags)
-            #endif
                 ) {
                 ret = AesGcmInit_aesni(aes, iv, ivSz);
             }
             else
-        #endif
             {
                 ret = AesGcmInit_C(aes, iv, ivSz);
             }
@@ -9382,19 +6980,13 @@ int wc_AesGcmEncryptUpdate(Aes* aes, byte* out, const byte* in, word32 sz,
 
     if (ret == 0) {
         /* Encrypt with AAD and/or plaintext. */
-    #if defined(WOLFSSL_AESNI)
         if (haveAESNI
-        #ifdef HAVE_INTEL_AVX2
             || IS_INTEL_AVX2(intel_flags)
-        #endif
-        #ifdef HAVE_INTEL_AVX1
             || IS_INTEL_AVX1(intel_flags)
-        #endif
             ) {
             ret = AesGcmEncryptUpdate_aesni(aes, out, in, sz, authIn, authInSz);
         }
         else
-    #endif
         {
             /* Encrypt the plaintext. */
             ret = AesGcmCryptUpdate_C(aes, out, in, sz);
@@ -9440,19 +7032,13 @@ int wc_AesGcmEncryptFinal(Aes* aes, byte* authTag, word32 authTagSz)
 
     if (ret == 0) {
         /* Calculate authentication tag. */
-    #ifdef WOLFSSL_AESNI
         if (haveAESNI
-        #ifdef HAVE_INTEL_AVX2
             || IS_INTEL_AVX2(intel_flags)
-        #endif
-        #ifdef HAVE_INTEL_AVX1
             || IS_INTEL_AVX1(intel_flags)
-        #endif
             ) {
             ret = AesGcmEncryptFinal_aesni(aes, authTag, authTagSz);
         }
         else
-    #endif
         {
             ret = AesGcmFinal_C(aes, authTag, authTagSz);
         }
@@ -9525,19 +7111,13 @@ int wc_AesGcmDecryptUpdate(Aes* aes, byte* out, const byte* in, word32 sz,
 
     if (ret == 0) {
         /* Decrypt with AAD and/or cipher text. */
-    #if defined(WOLFSSL_AESNI)
         if (haveAESNI
-        #ifdef HAVE_INTEL_AVX2
             || IS_INTEL_AVX2(intel_flags)
-        #endif
-        #ifdef HAVE_INTEL_AVX1
             || IS_INTEL_AVX1(intel_flags)
-        #endif
             ) {
             ret = AesGcmDecryptUpdate_aesni(aes, out, in, sz, authIn, authInSz);
         }
         else
-    #endif
         {
             /* Update the authenication tag with any authentication data and
              * cipher text. */
@@ -9581,19 +7161,13 @@ int wc_AesGcmDecryptFinal(Aes* aes, const byte* authTag, word32 authTagSz)
 
     if (ret == 0) {
         /* Calculate authentication tag and compare with one passed in.. */
-    #ifdef WOLFSSL_AESNI
         if (haveAESNI
-        #ifdef HAVE_INTEL_AVX2
             || IS_INTEL_AVX2(intel_flags)
-        #endif
-        #ifdef HAVE_INTEL_AVX1
             || IS_INTEL_AVX1(intel_flags)
-        #endif
             ) {
             ret = AesGcmDecryptFinal_aesni(aes, authTag, authTagSz);
         }
         else
-    #endif
         {
             ALIGN32 byte calcTag[AES_BLOCK_SIZE];
             /* Calculate authentication tag. */
@@ -9734,11 +7308,7 @@ int wc_Gmac(const byte* key, word32 keySz, byte* iv, word32 ivSz,
             const byte* authIn, word32 authInSz,
             byte* authTag, word32 authTagSz, WC_RNG* rng)
 {
-#ifdef WOLFSSL_SMALL_STACK
-    Aes *aes = NULL;
-#else
     Aes aes[1];
-#endif
     int ret;
 
     if (key == NULL || iv == NULL || (authIn == NULL && authInSz != 0) ||
@@ -9747,11 +7317,6 @@ int wc_Gmac(const byte* key, word32 keySz, byte* iv, word32 ivSz,
         return BAD_FUNC_ARG;
     }
 
-#ifdef WOLFSSL_SMALL_STACK
-    if ((aes = (Aes *)XMALLOC(sizeof *aes, NULL,
-                              DYNAMIC_TYPE_AES)) == NULL)
-        return MEMORY_E;
-#endif
 
     ret = wc_AesInit(aes, NULL, INVALID_DEVID);
     if (ret == 0) {
@@ -9764,9 +7329,6 @@ int wc_Gmac(const byte* key, word32 keySz, byte* iv, word32 ivSz,
         wc_AesFree(aes);
     }
     ForceZero(aes, sizeof *aes);
-#ifdef WOLFSSL_SMALL_STACK
-    XFREE(aes, NULL, DYNAMIC_TYPE_AES);
-#endif
 
     return ret;
 }
@@ -9778,11 +7340,7 @@ int wc_GmacVerify(const byte* key, word32 keySz,
 {
     int ret;
 #ifdef HAVE_AES_DECRYPT
-#ifdef WOLFSSL_SMALL_STACK
-    Aes *aes = NULL;
-#else
     Aes aes[1];
-#endif
 
     if (key == NULL || iv == NULL || (authIn == NULL && authInSz != 0) ||
         authTag == NULL || authTagSz == 0 || authTagSz > AES_BLOCK_SIZE) {
@@ -9790,11 +7348,6 @@ int wc_GmacVerify(const byte* key, word32 keySz,
         return BAD_FUNC_ARG;
     }
 
-#ifdef WOLFSSL_SMALL_STACK
-    if ((aes = (Aes *)XMALLOC(sizeof *aes, NULL,
-                              DYNAMIC_TYPE_AES)) == NULL)
-        return MEMORY_E;
-#endif
 
     ret = wc_AesInit(aes, NULL, INVALID_DEVID);
     if (ret == 0) {
@@ -9805,9 +7358,6 @@ int wc_GmacVerify(const byte* key, word32 keySz,
         wc_AesFree(aes);
     }
     ForceZero(aes, sizeof *aes);
-#ifdef WOLFSSL_SMALL_STACK
-    XFREE(aes, NULL, DYNAMIC_TYPE_AES);
-#endif
 #else
     (void)key;
     (void)keySz;
@@ -9846,636 +7396,8 @@ WOLFSSL_API int wc_GmacUpdate(Gmac* gmac, const byte* iv, word32 ivSz,
                                          authTag, authTagSz, authIn, authInSz);
 }
 
-#endif /* HAVE_AESGCM */
 
 
-#ifdef HAVE_AESCCM
-
-int wc_AesCcmSetKey(Aes* aes, const byte* key, word32 keySz)
-{
-    if (!((keySz == 16) || (keySz == 24) || (keySz == 32)))
-        return BAD_FUNC_ARG;
-
-    return wc_AesSetKey(aes, key, keySz, NULL, AES_ENCRYPTION);
-}
-
-
-/* Checks if the tag size is an accepted value based on RFC 3610 section 2
- * returns 0 if tag size is ok
- */
-int wc_AesCcmCheckTagSize(int sz)
-{
-    /* values here are from RFC 3610 section 2 */
-    if (sz != 4 && sz != 6 && sz != 8 && sz != 10 && sz != 12 && sz != 14
-            && sz != 16) {
-        WOLFSSL_MSG("Bad auth tag size AES-CCM");
-        return BAD_FUNC_ARG;
-    }
-    return 0;
-}
-
-#ifdef WOLFSSL_ARMASM
-    /* implementation located in wolfcrypt/src/port/arm/armv8-aes.c */
-
-#elif defined(HAVE_COLDFIRE_SEC)
-    #error "Coldfire SEC doesn't currently support AES-CCM mode"
-
-#elif defined(WOLFSSL_IMX6_CAAM) && !defined(NO_IMX6_CAAM_AES) && \
-        !defined(WOLFSSL_QNX_CAAM)
-    /* implemented in wolfcrypt/src/port/caam_aes.c */
-
-#elif defined(WOLFSSL_SILABS_SE_ACCEL)
-    /* implemented in wolfcrypt/src/port/silabs/silabs_aes.c */
-int wc_AesCcmEncrypt(Aes* aes, byte* out, const byte* in, word32 inSz,
-                   const byte* nonce, word32 nonceSz,
-                   byte* authTag, word32 authTagSz,
-                   const byte* authIn, word32 authInSz)
-{
-    return wc_AesCcmEncrypt_silabs(
-        aes, out, in, inSz,
-        nonce, nonceSz,
-        authTag, authTagSz,
-        authIn, authInSz);
-}
-
-#ifdef HAVE_AES_DECRYPT
-int  wc_AesCcmDecrypt(Aes* aes, byte* out, const byte* in, word32 inSz,
-                   const byte* nonce, word32 nonceSz,
-                   const byte* authTag, word32 authTagSz,
-                   const byte* authIn, word32 authInSz)
-{
-    return wc_AesCcmDecrypt_silabs(
-        aes, out, in, inSz,
-        nonce, nonceSz,
-        authTag, authTagSz,
-        authIn, authInSz);
-}
-#endif
-#elif defined(FREESCALE_LTC)
-
-/* return 0 on success */
-int wc_AesCcmEncrypt(Aes* aes, byte* out, const byte* in, word32 inSz,
-                   const byte* nonce, word32 nonceSz,
-                   byte* authTag, word32 authTagSz,
-                   const byte* authIn, word32 authInSz)
-{
-    byte *key;
-    word32 keySize;
-    status_t status;
-
-    /* sanity check on arguments */
-    /* note, LTC_AES_EncryptTagCcm() doesn't allow null src or dst
-     * ptrs even if inSz is zero (ltc_aes_ccm_check_input_args()), so
-     * don't allow it here either.
-     */
-    if (aes == NULL || out == NULL || in == NULL || nonce == NULL
-            || authTag == NULL || nonceSz < 7 || nonceSz > 13) {
-        return BAD_FUNC_ARG;
-    }
-
-    if (wc_AesCcmCheckTagSize(authTagSz) != 0) {
-        return BAD_FUNC_ARG;
-    }
-
-    key = (byte*)aes->key;
-
-    status = wc_AesGetKeySize(aes, &keySize);
-    if (status != 0) {
-        return status;
-    }
-
-    status = wolfSSL_CryptHwMutexLock();
-    if (status != 0)
-        return status;
-
-    status = LTC_AES_EncryptTagCcm(LTC_BASE, in, out, inSz,
-        nonce, nonceSz, authIn, authInSz, key, keySize, authTag, authTagSz);
-    wolfSSL_CryptHwMutexUnLock();
-
-    return (kStatus_Success == status) ? 0 : BAD_FUNC_ARG;
-}
-
-#ifdef HAVE_AES_DECRYPT
-int  wc_AesCcmDecrypt(Aes* aes, byte* out, const byte* in, word32 inSz,
-                   const byte* nonce, word32 nonceSz,
-                   const byte* authTag, word32 authTagSz,
-                   const byte* authIn, word32 authInSz)
-{
-    byte *key;
-    word32 keySize;
-    status_t status;
-
-    /* sanity check on arguments */
-    if (aes == NULL || out == NULL || in == NULL || nonce == NULL
-            || authTag == NULL || nonceSz < 7 || nonceSz > 13) {
-        return BAD_FUNC_ARG;
-    }
-
-    key = (byte*)aes->key;
-
-    status = wc_AesGetKeySize(aes, &keySize);
-    if (status != 0) {
-        return status;
-    }
-
-    status = wolfSSL_CryptHwMutexLock();
-    if (status != 0)
-        return status;
-    status = LTC_AES_DecryptTagCcm(LTC_BASE, in, out, inSz,
-        nonce, nonceSz, authIn, authInSz, key, keySize, authTag, authTagSz);
-    wolfSSL_CryptHwMutexUnLock();
-
-    if (status != kStatus_Success) {
-        XMEMSET(out, 0, inSz);
-        return AES_CCM_AUTH_E;
-    }
-    return 0;
-}
-#endif /* HAVE_AES_DECRYPT */
-
-#else
-
-/* Software CCM */
-static WARN_UNUSED_RESULT int roll_x(
-    Aes* aes, const byte* in, word32 inSz, byte* out)
-{
-    int ret;
-
-    /* process the bulk of the data */
-    while (inSz >= AES_BLOCK_SIZE) {
-        xorbuf(out, in, AES_BLOCK_SIZE);
-        in += AES_BLOCK_SIZE;
-        inSz -= AES_BLOCK_SIZE;
-
-        ret = wc_AesEncrypt(aes, out, out);
-        if (ret != 0)
-            return ret;
-    }
-
-    /* process remainder of the data */
-    if (inSz > 0) {
-        xorbuf(out, in, inSz);
-        ret = wc_AesEncrypt(aes, out, out);
-        if (ret != 0)
-            return ret;
-    }
-
-    return 0;
-}
-
-static WARN_UNUSED_RESULT int roll_auth(
-    Aes* aes, const byte* in, word32 inSz, byte* out)
-{
-    word32 authLenSz;
-    word32 remainder;
-    int ret;
-
-    /* encode the length in */
-    if (inSz <= 0xFEFF) {
-        authLenSz = 2;
-        out[0] ^= ((inSz & 0xFF00) >> 8);
-        out[1] ^=  (inSz & 0x00FF);
-    }
-    else if (inSz <= 0xFFFFFFFF) {
-        authLenSz = 6;
-        out[0] ^= 0xFF; out[1] ^= 0xFE;
-        out[2] ^= ((inSz & 0xFF000000) >> 24);
-        out[3] ^= ((inSz & 0x00FF0000) >> 16);
-        out[4] ^= ((inSz & 0x0000FF00) >>  8);
-        out[5] ^=  (inSz & 0x000000FF);
-    }
-    /* Note, the protocol handles auth data up to 2^64, but we are
-     * using 32-bit sizes right now, so the bigger data isn't handled
-     * else if (inSz <= 0xFFFFFFFFFFFFFFFF) {} */
-    else
-        return BAD_LENGTH_E;
-
-    /* start fill out the rest of the first block */
-    remainder = AES_BLOCK_SIZE - authLenSz;
-    if (inSz >= remainder) {
-        /* plenty of bulk data to fill the remainder of this block */
-        xorbuf(out + authLenSz, in, remainder);
-        inSz -= remainder;
-        in += remainder;
-    }
-    else {
-        /* not enough bulk data, copy what is available, and pad zero */
-        xorbuf(out + authLenSz, in, inSz);
-        inSz = 0;
-    }
-    ret = wc_AesEncrypt(aes, out, out);
-
-    if ((ret == 0) && (inSz > 0)) {
-        ret = roll_x(aes, in, inSz, out);
-    }
-
-    return ret;
-}
-
-
-static WC_INLINE void AesCcmCtrInc(byte* B, word32 lenSz)
-{
-    word32 i;
-
-    for (i = 0; i < lenSz; i++) {
-        if (++B[AES_BLOCK_SIZE - 1 - i] != 0) return;
-    }
-}
-
-#ifdef WOLFSSL_AESNI
-static WC_INLINE void AesCcmCtrIncSet4(byte* B, word32 lenSz)
-{
-    word32 i;
-
-    /* B+1 = B */
-    XMEMCPY(B + AES_BLOCK_SIZE * 1, B, AES_BLOCK_SIZE);
-    /* B+2,B+3 = B,B+1 */
-    XMEMCPY(B + AES_BLOCK_SIZE * 2, B, AES_BLOCK_SIZE * 2);
-
-    for (i = 0; i < lenSz; i++) {
-        if (++B[AES_BLOCK_SIZE * 2 - 1 - i] != 0) break;
-    }
-    B[AES_BLOCK_SIZE * 3 - 1] += 2;
-    if (B[AES_BLOCK_SIZE * 3 - 1] < 2) {
-        for (i = 1; i < lenSz; i++) {
-            if (++B[AES_BLOCK_SIZE * 3 - 1 - i] != 0) break;
-        }
-    }
-    B[AES_BLOCK_SIZE * 4 - 1] += 3;
-    if (B[AES_BLOCK_SIZE * 4 - 1] < 3) {
-        for (i = 1; i < lenSz; i++) {
-            if (++B[AES_BLOCK_SIZE * 4 - 1 - i] != 0) break;
-        }
-    }
-}
-
-static WC_INLINE void AesCcmCtrInc4(byte* B, word32 lenSz)
-{
-    word32 i;
-
-    B[AES_BLOCK_SIZE - 1] += 4;
-    if (B[AES_BLOCK_SIZE - 1] < 4) {
-        for (i = 1; i < lenSz; i++) {
-            if (++B[AES_BLOCK_SIZE - 1 - i] != 0) break;
-        }
-    }
-}
-#endif
-
-/* Software AES - CCM Encrypt */
-/* return 0 on success */
-int wc_AesCcmEncrypt(Aes* aes, byte* out, const byte* in, word32 inSz,
-                   const byte* nonce, word32 nonceSz,
-                   byte* authTag, word32 authTagSz,
-                   const byte* authIn, word32 authInSz)
-{
-#ifndef WOLFSSL_AESNI
-    byte A[AES_BLOCK_SIZE];
-    byte B[AES_BLOCK_SIZE];
-#else
-    ALIGN128 byte A[AES_BLOCK_SIZE * 4];
-    ALIGN128 byte B[AES_BLOCK_SIZE * 4];
-#endif
-    byte lenSz;
-    word32 i;
-    byte mask = 0xFF;
-    const word32 wordSz = (word32)sizeof(word32);
-    int ret;
-
-    /* sanity check on arguments */
-    if (aes == NULL || (inSz != 0 && (in == NULL || out == NULL)) ||
-        nonce == NULL || authTag == NULL || nonceSz < 7 || nonceSz > 13 ||
-            authTagSz > AES_BLOCK_SIZE)
-        return BAD_FUNC_ARG;
-
-    /* sanity check on tag size */
-    if (wc_AesCcmCheckTagSize(authTagSz) != 0) {
-        return BAD_FUNC_ARG;
-    }
-
-#ifdef WOLF_CRYPTO_CB
-    if (aes->devId != INVALID_DEVID) {
-        int crypto_cb_ret =
-            wc_CryptoCb_AesCcmEncrypt(aes, out, in, inSz, nonce, nonceSz,
-                                      authTag, authTagSz, authIn, authInSz);
-        if (crypto_cb_ret != CRYPTOCB_UNAVAILABLE)
-            return crypto_cb_ret;
-        /* fall-through when unavailable */
-    }
-#endif
-
-    XMEMSET(A, 0, sizeof(A));
-    XMEMCPY(B+1, nonce, nonceSz);
-    lenSz = AES_BLOCK_SIZE - 1 - (byte)nonceSz;
-    B[0] = (authInSz > 0 ? 64 : 0)
-         + (8 * (((byte)authTagSz - 2) / 2))
-         + (lenSz - 1);
-    for (i = 0; i < lenSz; i++) {
-        if (mask && i >= wordSz)
-            mask = 0x00;
-        B[AES_BLOCK_SIZE - 1 - i] = (inSz >> ((8 * i) & mask)) & mask;
-    }
-
-    ret = wc_AesEncrypt(aes, B, A);
-    if (ret != 0)
-        return ret;
-
-    if (authInSz > 0) {
-        ret = roll_auth(aes, authIn, authInSz, A);
-        if (ret != 0)
-            return ret;
-    }
-    if (inSz > 0) {
-        ret = roll_x(aes, in, inSz, A);
-        if (ret != 0)
-            return ret;
-    }
-    XMEMCPY(authTag, A, authTagSz);
-
-    B[0] = lenSz - 1;
-    for (i = 0; i < lenSz; i++)
-        B[AES_BLOCK_SIZE - 1 - i] = 0;
-    ret = wc_AesEncrypt(aes, B, A);
-    if (ret != 0)
-        return ret;
-    xorbuf(authTag, A, authTagSz);
-
-    B[15] = 1;
-#ifdef WOLFSSL_AESNI
-    if (haveAESNI && aes->use_aesni) {
-        SAVE_VECTOR_REGISTERS(return _svr_ret;);
-        while (inSz >= AES_BLOCK_SIZE * 4) {
-            AesCcmCtrIncSet4(B, lenSz);
-
-            AES_ECB_encrypt(B, A, AES_BLOCK_SIZE * 4, (byte*)aes->key,
-                            aes->rounds);
-
-            xorbuf(A, in, AES_BLOCK_SIZE * 4);
-            XMEMCPY(out, A, AES_BLOCK_SIZE * 4);
-
-            inSz -= AES_BLOCK_SIZE * 4;
-            in += AES_BLOCK_SIZE * 4;
-            out += AES_BLOCK_SIZE * 4;
-
-            AesCcmCtrInc4(B, lenSz);
-        }
-        RESTORE_VECTOR_REGISTERS();
-    }
-#endif
-    while (inSz >= AES_BLOCK_SIZE) {
-        ret = wc_AesEncrypt(aes, B, A);
-        if (ret != 0)
-            return ret;
-        xorbuf(A, in, AES_BLOCK_SIZE);
-        XMEMCPY(out, A, AES_BLOCK_SIZE);
-
-        AesCcmCtrInc(B, lenSz);
-        inSz -= AES_BLOCK_SIZE;
-        in += AES_BLOCK_SIZE;
-        out += AES_BLOCK_SIZE;
-    }
-    if (inSz > 0) {
-        ret = wc_AesEncrypt(aes, B, A);
-        if (ret != 0)
-            return ret;
-        xorbuf(A, in, inSz);
-        XMEMCPY(out, A, inSz);
-    }
-
-    ForceZero(A, AES_BLOCK_SIZE);
-    ForceZero(B, AES_BLOCK_SIZE);
-
-    return 0;
-}
-
-#ifdef HAVE_AES_DECRYPT
-/* Software AES - CCM Decrypt */
-int  wc_AesCcmDecrypt(Aes* aes, byte* out, const byte* in, word32 inSz,
-                   const byte* nonce, word32 nonceSz,
-                   const byte* authTag, word32 authTagSz,
-                   const byte* authIn, word32 authInSz)
-{
-#ifndef WOLFSSL_AESNI
-    byte A[AES_BLOCK_SIZE];
-    byte B[AES_BLOCK_SIZE];
-#else
-    ALIGN128 byte B[AES_BLOCK_SIZE * 4];
-    ALIGN128 byte A[AES_BLOCK_SIZE * 4];
-#endif
-    byte* o;
-    byte lenSz;
-    word32 i, oSz;
-    byte mask = 0xFF;
-    const word32 wordSz = (word32)sizeof(word32);
-    int ret;
-
-    /* sanity check on arguments */
-    if (aes == NULL || (inSz != 0 && (in == NULL || out == NULL)) ||
-        nonce == NULL || authTag == NULL || nonceSz < 7 || nonceSz > 13 ||
-        authTagSz > AES_BLOCK_SIZE)
-        return BAD_FUNC_ARG;
-
-    /* sanity check on tag size */
-    if (wc_AesCcmCheckTagSize(authTagSz) != 0) {
-        return BAD_FUNC_ARG;
-    }
-
-#ifdef WOLF_CRYPTO_CB
-    if (aes->devId != INVALID_DEVID) {
-        int crypto_cb_ret =
-            wc_CryptoCb_AesCcmDecrypt(aes, out, in, inSz, nonce, nonceSz,
-            authTag, authTagSz, authIn, authInSz);
-        if (crypto_cb_ret != CRYPTOCB_UNAVAILABLE)
-            return crypto_cb_ret;
-        /* fall-through when unavailable */
-    }
-#endif
-
-    o = out;
-    oSz = inSz;
-    XMEMSET(A, 0, sizeof A);
-    XMEMCPY(B+1, nonce, nonceSz);
-    lenSz = AES_BLOCK_SIZE - 1 - (byte)nonceSz;
-
-    B[0] = lenSz - 1;
-    for (i = 0; i < lenSz; i++)
-        B[AES_BLOCK_SIZE - 1 - i] = 0;
-    B[15] = 1;
-
-#ifdef WOLFSSL_AESNI
-    if (haveAESNI && aes->use_aesni) {
-        SAVE_VECTOR_REGISTERS(return _svr_ret;);
-        while (oSz >= AES_BLOCK_SIZE * 4) {
-            AesCcmCtrIncSet4(B, lenSz);
-
-            AES_ECB_encrypt(B, A, AES_BLOCK_SIZE * 4, (byte*)aes->key,
-                            aes->rounds);
-
-            xorbuf(A, in, AES_BLOCK_SIZE * 4);
-            XMEMCPY(o, A, AES_BLOCK_SIZE * 4);
-
-            oSz -= AES_BLOCK_SIZE * 4;
-            in += AES_BLOCK_SIZE * 4;
-            o += AES_BLOCK_SIZE * 4;
-
-            AesCcmCtrInc4(B, lenSz);
-        }
-        RESTORE_VECTOR_REGISTERS();
-    }
-#endif
-    while (oSz >= AES_BLOCK_SIZE) {
-        ret = wc_AesEncrypt(aes, B, A);
-        if (ret != 0)
-            return ret;
-        xorbuf(A, in, AES_BLOCK_SIZE);
-        XMEMCPY(o, A, AES_BLOCK_SIZE);
-
-        AesCcmCtrInc(B, lenSz);
-        oSz -= AES_BLOCK_SIZE;
-        in += AES_BLOCK_SIZE;
-        o += AES_BLOCK_SIZE;
-    }
-    if (inSz > 0) {
-        ret = wc_AesEncrypt(aes, B, A);
-        if (ret != 0)
-            return ret;
-        xorbuf(A, in, oSz);
-        XMEMCPY(o, A, oSz);
-    }
-
-    for (i = 0; i < lenSz; i++)
-        B[AES_BLOCK_SIZE - 1 - i] = 0;
-    ret = wc_AesEncrypt(aes, B, A);
-    if (ret != 0)
-        return ret;
-
-    o = out;
-    oSz = inSz;
-
-    B[0] = (authInSz > 0 ? 64 : 0)
-         + (8 * (((byte)authTagSz - 2) / 2))
-         + (lenSz - 1);
-    for (i = 0; i < lenSz; i++) {
-        if (mask && i >= wordSz)
-            mask = 0x00;
-        B[AES_BLOCK_SIZE - 1 - i] = (inSz >> ((8 * i) & mask)) & mask;
-    }
-
-    ret = wc_AesEncrypt(aes, B, A);
-    if (ret != 0)
-        return ret;
-
-    if (authInSz > 0) {
-        ret = roll_auth(aes, authIn, authInSz, A);
-        if (ret != 0)
-            return ret;
-    }
-    if (inSz > 0) {
-        ret = roll_x(aes, o, oSz, A);
-        if (ret != 0)
-            return ret;
-    }
-
-    B[0] = lenSz - 1;
-    for (i = 0; i < lenSz; i++)
-        B[AES_BLOCK_SIZE - 1 - i] = 0;
-    ret = wc_AesEncrypt(aes, B, B);
-    if (ret != 0)
-        return ret;
-    xorbuf(A, B, authTagSz);
-
-    if (ConstantCompare(A, authTag, authTagSz) != 0) {
-        /* If the authTag check fails, don't keep the decrypted data.
-         * Unfortunately, you need the decrypted data to calculate the
-         * check value. */
-        #if defined(HAVE_FIPS_VERSION) && (HAVE_FIPS_VERSION >= 2) && \
-            defined(ACVP_VECTOR_TESTING)
-            WOLFSSL_MSG("Preserve output for vector responses");
-        #else
-            if (inSz > 0)
-                XMEMSET(out, 0, inSz);
-        #endif
-        ret = AES_CCM_AUTH_E;
-    }
-
-    ForceZero(A, AES_BLOCK_SIZE);
-    ForceZero(B, AES_BLOCK_SIZE);
-    o = NULL;
-
-    return ret;
-}
-
-#endif /* HAVE_AES_DECRYPT */
-#endif /* software CCM */
-
-/* abstract functions that call lower level AESCCM functions */
-#ifndef WC_NO_RNG
-
-int wc_AesCcmSetNonce(Aes* aes, const byte* nonce, word32 nonceSz)
-{
-    int ret = 0;
-
-    if (aes == NULL || nonce == NULL ||
-        nonceSz < CCM_NONCE_MIN_SZ || nonceSz > CCM_NONCE_MAX_SZ) {
-
-        ret = BAD_FUNC_ARG;
-    }
-
-    if (ret == 0) {
-        XMEMCPY(aes->reg, nonce, nonceSz);
-        aes->nonceSz = nonceSz;
-
-        /* Invocation counter should be 2^61 */
-        aes->invokeCtr[0] = 0;
-        aes->invokeCtr[1] = 0xE0000000;
-    }
-
-    return ret;
-}
-
-
-int wc_AesCcmEncrypt_ex(Aes* aes, byte* out, const byte* in, word32 sz,
-                        byte* ivOut, word32 ivOutSz,
-                        byte* authTag, word32 authTagSz,
-                        const byte* authIn, word32 authInSz)
-{
-    int ret = 0;
-
-    if (aes == NULL || out == NULL ||
-        (in == NULL && sz != 0) ||
-        ivOut == NULL ||
-        (authIn == NULL && authInSz != 0) ||
-        (ivOutSz != aes->nonceSz)) {
-
-        ret = BAD_FUNC_ARG;
-    }
-
-    if (ret == 0) {
-        aes->invokeCtr[0]++;
-        if (aes->invokeCtr[0] == 0) {
-            aes->invokeCtr[1]++;
-            if (aes->invokeCtr[1] == 0)
-                ret = AES_CCM_OVERFLOW_E;
-        }
-    }
-
-    if (ret == 0) {
-        ret = wc_AesCcmEncrypt(aes, out, in, sz,
-                               (byte*)aes->reg, aes->nonceSz,
-                               authTag, authTagSz,
-                               authIn, authInSz);
-        if (ret == 0) {
-            XMEMCPY(ivOut, aes->reg, aes->nonceSz);
-            IncCtr((byte*)aes->reg, aes->nonceSz);
-        }
-    }
-
-    return ret;
-}
-
-#endif /* WC_NO_RNG */
-
-#endif /* HAVE_AESCCM */
 
 
 /* Initialize Aes for use with async hardware */
@@ -10488,16 +7410,7 @@ int wc_AesInit(Aes* aes, void* heap, int devId)
 
     aes->heap = heap;
 
-#ifdef WOLF_CRYPTO_CB
-    aes->devId = devId;
-    aes->devCtx = NULL;
-#else
     (void)devId;
-#endif
-#if defined(WOLFSSL_ASYNC_CRYPT) && defined(WC_ASYNC_ENABLE_AES)
-    ret = wolfAsync_DevCtxInit(&aes->asyncDev, WOLFSSL_ASYNC_MARKER_AES,
-                                                        aes->heap, devId);
-#endif /* WOLFSSL_ASYNC_CRYPT */
 
 #ifdef WOLFSSL_AFALG
     aes->alFd = -1;
@@ -10519,17 +7432,8 @@ int wc_AesInit(Aes* aes, void* heap, int devId)
 #endif
 
 
-#ifdef HAVE_AESGCM
-#ifdef OPENSSL_EXTRA
-    XMEMSET(aes->aadH, 0, sizeof(aes->aadH));
-    aes->aadLen = 0;
-#endif
-#endif
 
 #ifdef WOLFSSL_AESGCM_STREAM
-#if defined(WOLFSSL_SMALL_STACK) && !defined(WOLFSSL_AESNI)
-    aes->streamData = NULL;
-#endif
     aes->keylen = 0;
     aes->nonceSz = 0;
     aes->gcmKeySet = 0;
@@ -10544,51 +7448,6 @@ int wc_AesInit(Aes* aes, void* heap, int devId)
     return ret;
 }
 
-#ifdef WOLF_PRIVATE_KEY_ID
-int  wc_AesInit_Id(Aes* aes, unsigned char* id, int len, void* heap, int devId)
-{
-    int ret = 0;
-
-    if (aes == NULL)
-        ret = BAD_FUNC_ARG;
-    if (ret == 0 && (len < 0 || len > AES_MAX_ID_LEN))
-        ret = BUFFER_E;
-
-    if (ret == 0)
-        ret = wc_AesInit(aes, heap, devId);
-    if (ret == 0) {
-        XMEMCPY(aes->id, id, len);
-        aes->idLen = len;
-        aes->labelLen = 0;
-    }
-
-    return ret;
-}
-
-int wc_AesInit_Label(Aes* aes, const char* label, void* heap, int devId)
-{
-    int ret = 0;
-    int labelLen = 0;
-
-    if (aes == NULL || label == NULL)
-        ret = BAD_FUNC_ARG;
-    if (ret == 0) {
-        labelLen = (int)XSTRLEN(label);
-        if (labelLen == 0 || labelLen > AES_MAX_LABEL_LEN)
-            ret = BUFFER_E;
-    }
-
-    if (ret == 0)
-        ret = wc_AesInit(aes, heap, devId);
-    if (ret == 0) {
-        XMEMCPY(aes->label, label, labelLen);
-        aes->labelLen = labelLen;
-        aes->idLen = 0;
-    }
-
-    return ret;
-}
-#endif
 
 /* Free Aes from use with async hardware */
 void wc_AesFree(Aes* aes)
@@ -10596,9 +7455,6 @@ void wc_AesFree(Aes* aes)
     if (aes == NULL)
         return;
 
-#if defined(WOLFSSL_ASYNC_CRYPT) && defined(WC_ASYNC_ENABLE_AES)
-    wolfAsync_DevCtxFree(&aes->asyncDev, WOLFSSL_ASYNC_MARKER_AES);
-#endif /* WOLFSSL_ASYNC_CRYPT */
 #if defined(WOLFSSL_AFALG) || defined(WOLFSSL_AFALG_XILINX_AES)
     if (aes->rdFd > 0) { /* negative is error case */
         close(aes->rdFd);
@@ -10619,20 +7475,11 @@ void wc_AesFree(Aes* aes)
     (defined(WOLFSSL_DEVCRYPTO_AES) || defined(WOLFSSL_DEVCRYPTO_CBC))
     wc_DevCryptoFree(&aes->ctx);
 #endif
-#if defined(WOLF_CRYPTO_CB) || (defined(WOLFSSL_DEVCRYPTO) && \
-    (defined(WOLFSSL_DEVCRYPTO_AES) || defined(WOLFSSL_DEVCRYPTO_CBC))) || \
-    (defined(WOLFSSL_ASYNC_CRYPT) && defined(WC_ASYNC_ENABLE_AES))
+#if defined(WOLFSSL_DEVCRYPTO) &&  (defined(WOLFSSL_DEVCRYPTO_AES) || defined(WOLFSSL_DEVCRYPTO_CBC))
     ForceZero((byte*)aes->devKey, AES_MAX_KEY_SIZE/WOLFSSL_BIT_SIZE);
 #endif
 #if defined(WOLFSSL_IMXRT_DCP)
     DCPAesFree(aes);
-#endif
-#if defined(WOLFSSL_AESGCM_STREAM) && defined(WOLFSSL_SMALL_STACK) && \
-    !defined(WOLFSSL_AESNI)
-    if (aes->streamData != NULL) {
-        XFREE(aes->streamData, aes->heap, DYNAMIC_TYPE_AES);
-        aes->streamData = NULL;
-    }
 #endif
 
 #if defined(WOLFSSL_SE050) && defined(WOLFSSL_SE050_CRYPT)
@@ -10688,8 +7535,7 @@ int wc_AesGetKeySize(Aes* aes, word32* keySize)
 #endif /* !WOLFSSL_TI_CRYPT */
 
 #ifdef HAVE_AES_ECB
-#if defined(WOLFSSL_IMX6_CAAM) && !defined(NO_IMX6_CAAM_AES) && \
-        !defined(WOLFSSL_QNX_CAAM)
+#if defined(WOLFSSL_IMX6_CAAM) && !defined(NO_IMX6_CAAM_AES)
     /* implemented in wolfcrypt/src/port/caam/caam_aes.c */
 
 #elif defined(WOLFSSL_AFALG)
@@ -10726,14 +7572,6 @@ static WARN_UNUSED_RESULT int _AesEcbEncrypt(
 {
     word32 blocks = sz / AES_BLOCK_SIZE;
 
-#ifdef WOLF_CRYPTO_CB
-    if (aes->devId != INVALID_DEVID) {
-        int ret = wc_CryptoCb_AesEcbEncrypt(aes, out, in, sz);
-        if (ret != CRYPTOCB_UNAVAILABLE)
-            return ret;
-        /* fall-through when unavailable */
-    }
-#endif
 #ifdef WOLFSSL_IMXRT_DCP
     if (aes->keylen == 16)
         return DCPAesEcbEncrypt(aes, out, in, sz);
@@ -10754,14 +7592,6 @@ static WARN_UNUSED_RESULT int _AesEcbDecrypt(
 {
     word32 blocks = sz / AES_BLOCK_SIZE;
 
-#ifdef WOLF_CRYPTO_CB
-    if (aes->devId != INVALID_DEVID) {
-        int ret = wc_CryptoCb_AesEcbDecrypt(aes, out, in, sz);
-        if (ret != CRYPTOCB_UNAVAILABLE)
-            return ret;
-        /* fall-through when unavailable */
-    }
-#endif
 #ifdef WOLFSSL_IMXRT_DCP
     if (aes->keylen == 16)
         return DCPAesEcbDecrypt(aes, out, in, sz);
@@ -11406,21 +8236,12 @@ int wc_AesKeyWrap_ex(Aes *aes, const byte* in, word32 inSz, byte* out,
 int wc_AesKeyWrap(const byte* key, word32 keySz, const byte* in, word32 inSz,
                   byte* out, word32 outSz, const byte* iv)
 {
-#ifdef WOLFSSL_SMALL_STACK
-    Aes *aes = NULL;
-#else
     Aes aes[1];
-#endif
     int ret;
 
     if (key == NULL)
         return BAD_FUNC_ARG;
 
-#ifdef WOLFSSL_SMALL_STACK
-    if ((aes = (Aes *)XMALLOC(sizeof *aes, NULL,
-                              DYNAMIC_TYPE_AES)) == NULL)
-        return MEMORY_E;
-#endif
 
     ret = wc_AesInit(aes, NULL, INVALID_DEVID);
     if (ret != 0)
@@ -11437,10 +8258,6 @@ int wc_AesKeyWrap(const byte* key, word32 keySz, const byte* in, word32 inSz,
     wc_AesFree(aes);
 
   out:
-#ifdef WOLFSSL_SMALL_STACK
-    if (aes != NULL)
-        XFREE(aes, NULL, DYNAMIC_TYPE_AES);
-#endif
 
     return ret;
 }
@@ -11521,11 +8338,7 @@ int wc_AesKeyUnWrap_ex(Aes *aes, const byte* in, word32 inSz, byte* out,
 int wc_AesKeyUnWrap(const byte* key, word32 keySz, const byte* in, word32 inSz,
                     byte* out, word32 outSz, const byte* iv)
 {
-#ifdef WOLFSSL_SMALL_STACK
-    Aes *aes = NULL;
-#else
     Aes aes[1];
-#endif
     int ret;
 
     (void)iv;
@@ -11533,11 +8346,6 @@ int wc_AesKeyUnWrap(const byte* key, word32 keySz, const byte* in, word32 inSz,
     if (key == NULL)
         return BAD_FUNC_ARG;
 
-#ifdef WOLFSSL_SMALL_STACK
-    if ((aes = (Aes *)XMALLOC(sizeof *aes, NULL,
-                              DYNAMIC_TYPE_AES)) == NULL)
-        return MEMORY_E;
-#endif
 
 
     ret = wc_AesInit(aes, NULL, INVALID_DEVID);
@@ -11555,10 +8363,6 @@ int wc_AesKeyUnWrap(const byte* key, word32 keySz, const byte* in, word32 inSz,
     wc_AesFree(aes);
 
   out:
-#ifdef WOLFSSL_SMALL_STACK
-    if (aes)
-        XFREE(aes, NULL, DYNAMIC_TYPE_AES);
-#endif
 
     return ret;
 }
@@ -12030,28 +8834,12 @@ static WARN_UNUSED_RESULT int S2V(
     const byte* nonce, word32 nonceSz, const byte* data,
     word32 dataSz, byte* out)
 {
-#ifdef WOLFSSL_SMALL_STACK
-    byte* tmp[3] = {NULL, NULL, NULL};
-    int i;
-    Cmac* cmac;
-#else
     byte tmp[3][AES_BLOCK_SIZE];
     Cmac cmac[1];
-#endif
     word32 macSz = AES_BLOCK_SIZE;
     int ret = 0;
     word32 zeroBytes;
 
-#ifdef WOLFSSL_SMALL_STACK
-    for (i = 0; i < 3; ++i) {
-        tmp[i] = (byte*)XMALLOC(AES_BLOCK_SIZE, NULL, DYNAMIC_TYPE_TMP_BUFFER);
-        if (tmp[i] == NULL) {
-            ret = MEMORY_E;
-            break;
-        }
-    }
-    if (ret == 0)
-#endif
     {
         XMEMSET(tmp[1], 0, AES_BLOCK_SIZE);
         XMEMSET(tmp[2], 0, AES_BLOCK_SIZE);
@@ -12085,13 +8873,6 @@ static WARN_UNUSED_RESULT int S2V(
     if (ret == 0) {
         if (dataSz >= AES_BLOCK_SIZE) {
 
-        #ifdef WOLFSSL_SMALL_STACK
-            cmac = (Cmac*)XMALLOC(sizeof(Cmac), NULL, DYNAMIC_TYPE_CMAC);
-            if (cmac == NULL) {
-                ret = MEMORY_E;
-            }
-            if (ret == 0)
-        #endif
             {
                 xorbuf(tmp[0], data + (dataSz - AES_BLOCK_SIZE),
                        AES_BLOCK_SIZE);
@@ -12106,11 +8887,6 @@ static WARN_UNUSED_RESULT int S2V(
                     ret = wc_CmacFinal(cmac, out, &macSz);
                 }
             }
-        #ifdef WOLFSSL_SMALL_STACK
-            if (cmac != NULL) {
-                XFREE(cmac, NULL, DYNAMIC_TYPE_CMAC);
-            }
-        #endif
         }
         else {
             XMEMCPY(tmp[2], data, dataSz);
@@ -12126,13 +8902,6 @@ static WARN_UNUSED_RESULT int S2V(
         }
     }
 
-#ifdef WOLFSSL_SMALL_STACK
-    for (i = 0; i < 3; ++i) {
-        if (tmp[i] != NULL) {
-            XFREE(tmp[i], NULL, DYNAMIC_TYPE_TMP_BUFFER);
-        }
-    }
-#endif
 
     return ret;
 }
@@ -12144,11 +8913,7 @@ static WARN_UNUSED_RESULT int AesSivCipher(
     int enc)
 {
     int ret = 0;
-#ifdef WOLFSSL_SMALL_STACK
-    Aes* aes = NULL;
-#else
     Aes aes[1];
-#endif
     byte sivTmp[AES_BLOCK_SIZE];
 
     if (key == NULL || siv == NULL || out == NULL) {
@@ -12161,14 +8926,6 @@ static WARN_UNUSED_RESULT int AesSivCipher(
         ret = BAD_FUNC_ARG;
     }
 
-#ifdef WOLFSSL_SMALL_STACK
-    if (ret == 0) {
-        aes = (Aes*)XMALLOC(sizeof(Aes), NULL, DYNAMIC_TYPE_AES);
-        if (aes == NULL) {
-            ret = MEMORY_E;
-        }
-    }
-#endif
 
     if (ret == 0) {
         if (enc == 1) {
@@ -12223,9 +8980,6 @@ static WARN_UNUSED_RESULT int AesSivCipher(
     }
 
     wc_AesFree(aes);
-#ifdef WOLFSSL_SMALL_STACK
-    XFREE(aes, NULL, DYNAMIC_TYPE_AES);
-#endif
 
     return ret;
 }
@@ -12255,4 +9009,3 @@ int wc_AesSivDecrypt(const byte* key, word32 keySz, const byte* assoc,
 #endif /* WOLFSSL_AES_SIV */
 
 #endif /* HAVE_FIPS */
-#endif /* !NO_AES */

@@ -33,30 +33,6 @@
     extern "C" {
 #endif
 
-#if defined(OPENSSL_EXTRA) || defined(OPENSSL_EXTRA_X509_SMALL)
-/* Padding types */
-#define RSA_PKCS1_PADDING      0
-#define RSA_PKCS1_OAEP_PADDING 1
-#define RSA_PKCS1_PSS_PADDING  2
-#define RSA_NO_PADDING         3
-
-/* Emulate OpenSSL flags */
-#define RSA_METHOD_FLAG_NO_CHECK        (1 << 1)
-#define RSA_FLAG_CACHE_PUBLIC           (1 << 2)
-#define RSA_FLAG_CACHE_PRIVATE          (1 << 3)
-#define RSA_FLAG_BLINDING               (1 << 4)
-#define RSA_FLAG_THREAD_SAFE            (1 << 5)
-#define RSA_FLAG_EXT_PKEY               (1 << 6)
-#define RSA_FLAG_NO_BLINDING            (1 << 7)
-#define RSA_FLAG_NO_CONSTTIME           (1 << 8)
-
-/* Salt length same as digest length */
-#define RSA_PSS_SALTLEN_DIGEST   (-1)
-/* Old max salt length */
-#define RSA_PSS_SALTLEN_MAX_SIGN (-2)
-/* Max salt length */
-#define RSA_PSS_SALTLEN_MAX      (-3)
-#endif /* OPENSSL_EXTRA || OPENSSL_EXTRA_X509_SMALL */
 
 typedef struct WOLFSSL_RSA_METHOD {
     int flags;
@@ -79,17 +55,8 @@ typedef struct WOLFSSL_RSA {
     WOLFSSL_BIGNUM* iqmp;      /* u */
     void*          heap;
     void*          internal;  /* our RSA */
-#if defined(OPENSSL_EXTRA)
-    WOLFSSL_RSA_METHOD* meth;
-#endif
 #ifdef HAVE_EX_DATA
     WOLFSSL_CRYPTO_EX_DATA ex_data;  /* external data */
-#endif
-#if defined(OPENSSL_EXTRA_X509_SMALL) || defined(OPENSSL_EXTRA)
-#ifndef SINGLE_THREADED
-    wolfSSL_Mutex    refMutex;                       /* ref count mutex */
-#endif
-    int              refCount;                       /* reference count */
 #endif
     word16 pkcs8HeaderSz;
 
@@ -100,10 +67,6 @@ typedef struct WOLFSSL_RSA {
 } WOLFSSL_RSA;
 #endif
 
-#if defined(OPENSSL_EXTRA) || defined(OPENSSL_EXTRA_X509_SMALL)
-typedef WOLFSSL_RSA                   RSA;
-typedef WOLFSSL_RSA_METHOD            RSA_METHOD;
-#endif /* OPENSSL_EXTRA || OPENSSL_EXTRA_X509_SMALL */
 
 WOLFSSL_API WOLFSSL_RSA* wolfSSL_RSA_new_ex(void* heap, int devId);
 WOLFSSL_API WOLFSSL_RSA* wolfSSL_RSA_new(void);
@@ -180,67 +143,7 @@ WOLFSSL_API WOLFSSL_RSA* wolfSSL_RSAPublicKey_dup(WOLFSSL_RSA *rsa);
 
 WOLFSSL_API void* wolfSSL_RSA_get_ex_data(const WOLFSSL_RSA *rsa, int idx);
 WOLFSSL_API int wolfSSL_RSA_set_ex_data(WOLFSSL_RSA *rsa, int idx, void *data);
-#ifdef HAVE_EX_DATA_CLEANUP_HOOKS
-WOLFSSL_API int wolfSSL_RSA_set_ex_data_with_cleanup(
-    WOLFSSL_RSA *rsa,
-    int idx,
-    void *data,
-    wolfSSL_ex_data_cleanup_routine_t cleanup_routine);
-#endif
 
-#if defined(OPENSSL_EXTRA) || defined(OPENSSL_EXTRA_X509_SMALL)
-#define WOLFSSL_RSA_LOAD_PRIVATE 1
-#define WOLFSSL_RSA_LOAD_PUBLIC  2
-#define WOLFSSL_RSA_F4           0x10001L
-
-#define RSA_new  wolfSSL_RSA_new
-#define RSA_free wolfSSL_RSA_free
-
-#define RSA_generate_key_ex wolfSSL_RSA_generate_key_ex
-
-#define RSA_blinding_on     wolfSSL_RSA_blinding_on
-#define RSA_check_key       wolfSSL_RSA_check_key
-#define RSA_public_encrypt  wolfSSL_RSA_public_encrypt
-#define RSA_private_decrypt wolfSSL_RSA_private_decrypt
-#define RSA_private_encrypt wolfSSL_RSA_private_encrypt
-
-#define RSA_size           wolfSSL_RSA_size
-#define RSA_sign           wolfSSL_RSA_sign
-#define RSA_verify         wolfSSL_RSA_verify
-#define RSA_public_decrypt wolfSSL_RSA_public_decrypt
-
-#define RSA_meth_new            wolfSSL_RSA_meth_new
-#define RSA_meth_free           wolfSSL_RSA_meth_free
-#define RSA_meth_set_pub_enc    wolfSSL_RSA_meth_set
-#define RSA_meth_set_pub_dec    wolfSSL_RSA_meth_set
-#define RSA_meth_set_priv_enc   wolfSSL_RSA_meth_set
-#define RSA_meth_set_priv_dec   wolfSSL_RSA_meth_set
-#define RSA_meth_set_init       wolfSSL_RSA_meth_set
-#define RSA_meth_set_finish     wolfSSL_RSA_meth_set
-#define RSA_meth_set0_app_data  wolfSSL_RSA_meth_set
-#define RSA_get_default_method  wolfSSL_RSA_get_default_method
-#define RSA_get_method          wolfSSL_RSA_get_method
-#define RSA_set_method          wolfSSL_RSA_set_method
-#define RSA_get0_crt_params     wolfSSL_RSA_get0_crt_params
-#define RSA_set0_crt_params     wolfSSL_RSA_set0_crt_params
-#define RSA_get0_factors        wolfSSL_RSA_get0_factors
-#define RSA_set0_factors        wolfSSL_RSA_set0_factors
-#define RSA_get0_key            wolfSSL_RSA_get0_key
-#define RSA_set0_key            wolfSSL_RSA_set0_key
-#define RSA_flags               wolfSSL_RSA_flags
-#define RSA_set_flags           wolfSSL_RSA_set_flags
-#define RSA_clear_flags         wolfSSL_RSA_clear_flags
-#define RSA_test_flags          wolfSSL_RSA_test_flags
-
-#define RSAPublicKey_dup        wolfSSL_RSAPublicKey_dup
-#define RSA_get_ex_data        wolfSSL_RSA_get_ex_data
-#define RSA_set_ex_data        wolfSSL_RSA_set_ex_data
-
-#define RSA_get0_key       wolfSSL_RSA_get0_key
-
-#define RSA_F4             WOLFSSL_RSA_F4
-
-#endif /* OPENSSL_EXTRA || OPENSSL_EXTRA_X509_SMALL */
 
 #ifdef __cplusplus
     }  /* extern "C" */

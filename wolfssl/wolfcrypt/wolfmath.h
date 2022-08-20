@@ -46,9 +46,7 @@ This library provides big integer math functions.
 #endif
 
 /* timing resistance array */
-#if !defined(WC_NO_CACHE_RESISTANT) && \
-    ((defined(HAVE_ECC) && defined(ECC_TIMING_RESISTANT)) || \
-     (defined(USE_FAST_MATH) && defined(TFM_TIMING_RESISTANT)))
+#if !defined(WC_NO_CACHE_RESISTANT) &&  ( defined(ECC_TIMING_RESISTANT) ||  defined(TFM_TIMING_RESISTANT))
 
     extern const wc_ptr_t wc_off_on_addr[2];
 #endif
@@ -64,9 +62,6 @@ WOLFSSL_API int mp_rand(mp_int* a, int digits, WC_RNG* rng);
 
 #define WC_TYPE_HEX_STR 1
 #define WC_TYPE_UNSIGNED_BIN 2
-#if defined(WOLFSSL_QNX_CAAM)
-    #define WC_TYPE_BLACK_KEY 3
-#endif
 
 WOLFSSL_API int wc_export_int(mp_int* mp, byte* buf, word32* len,
     word32 keySz, int encType);

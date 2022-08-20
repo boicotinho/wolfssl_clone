@@ -32,12 +32,8 @@
 #include <wolfssl/wolfcrypt/md2.h>
 #include <wolfssl/wolfcrypt/error-crypt.h>
 
-#ifdef NO_INLINE
-    #include <wolfssl/wolfcrypt/misc.h>
-#else
     #define WOLFSSL_MISC_INCLUDED
     #include <wolfcrypt/src/misc.c>
-#endif
 
 
 void wc_InitMd2(Md2* md2)
@@ -134,25 +130,13 @@ void wc_Md2Final(Md2* md2, byte* hash)
 
 int wc_Md2Hash(const byte* data, word32 len, byte* hash)
 {
-#ifdef WOLFSSL_SMALL_STACK
-    Md2* md2;
-#else
     Md2 md2[1];
-#endif
 
-#ifdef WOLFSSL_SMALL_STACK
-    md2 = (Md2*)XMALLOC(sizeof(Md2), NULL, DYNAMIC_TYPE_TMP_BUFFER);
-    if (md2 == NULL)
-        return MEMORY_E;
-#endif
 
     wc_InitMd2(md2);
     wc_Md2Update(md2, data, len);
     wc_Md2Final(md2, hash);
 
-#ifdef WOLFSSL_SMALL_STACK
-    XFREE(md2, NULL, DYNAMIC_TYPE_TMP_BUFFER);
-#endif
 
     return 0;
 }

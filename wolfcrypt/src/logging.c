@@ -28,12 +28,8 @@
 
 #include <wolfssl/wolfcrypt/logging.h>
 #include <wolfssl/wolfcrypt/error-crypt.h>
-#if defined(OPENSSL_EXTRA) && !defined(WOLFCRYPT_ONLY)
-/* avoid adding WANT_READ and WANT_WRITE to error queue */
-#include <wolfssl/error-ssl.h>
-#endif
 
-#if defined(OPENSSL_EXTRA) || defined(DEBUG_WOLFSSL_VERBOSE)
+#if defined(DEBUG_WOLFSSL_VERBOSE)
 static
 #ifdef ERROR_QUEUE_PER_THREAD
 THREAD_LS_T
@@ -141,7 +137,6 @@ static WC_INLINE double current_time(int reset)
 }
 #endif /* WOLFSSL_FUNC_TIME */
 
-#ifdef HAVE_WC_INTROSPECTION
 
 const char *wolfSSL_configure_args(void) {
 #ifdef LIBWOLFSSL_CONFIGURE_ARGS
@@ -161,7 +156,6 @@ PEDANTIC_EXTENSION const char *wolfSSL_global_cflags(void) {
 #endif
 }
 
-#endif /* HAVE_WC_INTROSPECTION */
 
 #ifdef HAVE_STACK_SIZE_VERBOSE
 
@@ -173,7 +167,6 @@ THREAD_LS_T void *StackSizeCheck_stackOffsetPointer = 0;
 
 #endif /* HAVE_STACK_SIZE_VERBOSE */
 
-#ifdef DEBUG_WOLFSSL
 
 /* Set these to default values initially. */
 static wolfSSL_Logging_cb log_function = NULL;
@@ -184,7 +177,6 @@ static int loggingEnabled = 0;
 static struct log mynewt_log;
 #endif /* WOLFSSL_APACHE_MYNEWT */
 
-#endif /* DEBUG_WOLFSSL */
 
 #ifdef DEBUG_VECTOR_REGISTER_ACCESS
 THREAD_LS_T int wc_svr_count = 0;
@@ -196,45 +188,30 @@ THREAD_LS_T int wc_svr_last_line = -1;
 /* allow this to be set to NULL, so logs can be redirected to default output */
 int wolfSSL_SetLoggingCb(wolfSSL_Logging_cb f)
 {
-#ifdef DEBUG_WOLFSSL
     log_function = f;
     return 0;
-#else
-    (void)f;
-    return NOT_COMPILED_IN;
-#endif
 }
 
 /* allow this to be set to NULL, so logs can be redirected to default output */
 wolfSSL_Logging_cb wolfSSL_GetLoggingCb(void)
 {
-#ifdef DEBUG_WOLFSSL
     return log_function;
-#else
-    return NULL;
-#endif
 }
 
 
 int wolfSSL_Debugging_ON(void)
 {
-#ifdef DEBUG_WOLFSSL
     loggingEnabled = 1;
 #if defined(WOLFSSL_APACHE_MYNEWT)
     log_register("wolfcrypt", &mynewt_log, &log_console_handler, NULL, LOG_SYSLEVEL);
 #endif /* WOLFSSL_APACHE_MYNEWT */
     return 0;
-#else
-    return NOT_COMPILED_IN;
-#endif
 }
 
 
 void wolfSSL_Debugging_OFF(void)
 {
-#ifdef DEBUG_WOLFSSL
     loggingEnabled = 0;
-#endif
 }
 
 #ifdef WOLFSSL_FUNC_TIME
@@ -280,11 +257,8 @@ void WOLFSSL_TIME(int count)
 }
 #endif
 
-#ifdef DEBUG_WOLFSSL
 
-#if defined(FREESCALE_MQX) || defined(FREESCALE_KSDK_MQX)
-    /* see wc_port.h for fio.h and nio.h includes */
-#elif defined(WOLFSSL_SGX)
+#if defined(WOLFSSL_SGX)
     /* Declare sprintf for ocall */
     int sprintf(char* buf, const char *fmt, ...);
 #elif defined(WOLFSSL_DEOS)
@@ -304,12 +278,6 @@ void WOLFSSL_TIME(int count)
     #include <android/log.h>
 #elif defined(WOLFSSL_XILINX)
     #include "xil_printf.h"
-#elif defined(WOLFSSL_LINUXKM)
-    /* the requisite linux/kernel.h is included in wc_port.h, with incompatible warnings masked out. */
-#elif defined(FUSION_RTOS)
-    #include <fclstdio.h>
-    #include <wolfssl/wolfcrypt/wc_port.h>
-    #define fprintf FCL_FPRINTF
 #else
     #include <stdio.h>  /* for default printf stuff */
 #endif
@@ -355,8 +323,6 @@ static void wolfssl_log(const int logLevel, const char *const logMessage)
         __android_log_print(ANDROID_LOG_VERBOSE, "[wolfSSL]", "%s", logMessage);
 #elif defined(WOLFSSL_XILINX)
         xil_printf("%s\r\n", logMessage);
-#elif defined(WOLFSSL_LINUXKM)
-        printk("%s\n", logMessage);
 #elif defined(WOLFSSL_RENESAS_RA6M4)
         myprintf("%s\n", logMessage);
 #else
@@ -472,16 +438,12 @@ WOLFSSL_API int WOLFSSL_IS_DEBUG_ON(void)
     return loggingEnabled;
 }
 #endif /* !WOLFSSL_DEBUG_ERRORS_ONLY */
-#endif /* DEBUG_WOLFSSL */
 
 /*
  * When using OPENSSL_EXTRA or DEBUG_WOLFSSL_VERBOSE macro then WOLFSSL_ERROR is
  * mapped to new function WOLFSSL_ERROR_LINE which gets the line # and function
  * name where WOLFSSL_ERROR is called at.
  */
-#if defined(DEBUG_WOLFSSL) || defined(OPENSSL_ALL) || \
-    defined(WOLFSSL_NGINX) || defined(WOLFSSL_HAPROXY) || \
-    defined(OPENSSL_EXTRA)
 
 #ifdef WOLFSSL_HAVE_ERROR_QUEUE
 void WOLFSSL_ERROR_LINE(int error, const char* func, unsigned int line,
@@ -490,9 +452,6 @@ void WOLFSSL_ERROR_LINE(int error, const char* func, unsigned int line,
 void WOLFSSL_ERROR(int error)
 #endif
 {
-#ifdef WOLFSSL_ASYNC_CRYPT
-    if (error != WC_PENDING_E)
-#endif
     {
         char buffer[WOLFSSL_MAX_ERROR_SZ];
 
@@ -506,11 +465,6 @@ void WOLFSSL_ERROR(int error)
                     "wolfSSL error occurred, error = %d", error);
         }
         else {
-            #if defined(OPENSSL_EXTRA) && !defined(WOLFCRYPT_ONLY)
-            /* If running in compatibility mode do not add want read and
-               want right to error queue */
-            if (error != WANT_READ && error != WANT_WRITE) {
-            #endif
             if (error < 0)
                 error = error - (2 * error); /* get absolute value */
             XSNPRINTF(buffer, sizeof(buffer),
@@ -522,13 +476,6 @@ void WOLFSSL_ERROR(int error)
                 /* with void function there is no return here, continue on
                  * to unlock mutex and log what buffer was created. */
             }
-            #if defined(OPENSSL_EXTRA) && !defined(WOLFCRYPT_ONLY)
-            }
-            else {
-                XSNPRINTF(buffer, sizeof(buffer),
-                    "wolfSSL error occurred, error = %d", error);
-            }
-            #endif
 
             wc_UnLockMutex(&debug_mutex);
         }
@@ -537,26 +484,19 @@ void WOLFSSL_ERROR(int error)
                 "wolfSSL error occurred, error = %d", error);
     #endif
 
-    #ifdef DEBUG_WOLFSSL
         if (loggingEnabled)
             wolfssl_log(ERROR_LOG , buffer);
-    #endif
     }
 }
 
 void WOLFSSL_ERROR_MSG(const char* msg)
 {
-#ifdef DEBUG_WOLFSSL
     if (loggingEnabled)
         wolfssl_log(ERROR_LOG , msg);
-#else
-    (void)msg;
-#endif
 }
 
-#endif  /* DEBUG_WOLFSSL || WOLFSSL_NGINX || WOLFSSL_HAPROXY */
 
-#if defined(OPENSSL_EXTRA) || defined(DEBUG_WOLFSSL_VERBOSE)
+#if defined(DEBUG_WOLFSSL_VERBOSE)
 /* Internal function that is called by wolfCrypt_Init() */
 int wc_LoggingInit(void)
 {

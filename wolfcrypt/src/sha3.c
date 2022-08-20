@@ -26,29 +26,15 @@
 
 #include <wolfssl/wolfcrypt/settings.h>
 
-#if defined(WOLFSSL_SHA3) && !defined(WOLFSSL_XILINX_CRYPT) && \
-   !defined(WOLFSSL_AFALG_XILINX_SHA3)
+#if !defined(WOLFSSL_XILINX_CRYPT) &&  !defined(WOLFSSL_AFALG_XILINX_SHA3)
 
-#if defined(HAVE_FIPS) && defined(HAVE_FIPS_VERSION) && (HAVE_FIPS_VERSION >= 2)
-    /* set NO_WRAPPERS before headers, use direct internal f()s not wrappers */
-    #define FIPS_NO_WRAPPERS
-
-    #ifdef USE_WINDOWS_API
-        #pragma code_seg(".fipsA$l")
-        #pragma const_seg(".fipsB$l")
-    #endif
-#endif
 
 #include <wolfssl/wolfcrypt/sha3.h>
 #include <wolfssl/wolfcrypt/error-crypt.h>
 #include <wolfssl/wolfcrypt/hash.h>
 
-#ifdef NO_INLINE
-    #include <wolfssl/wolfcrypt/misc.h>
-#else
     #define WOLFSSL_MISC_INCLUDED
     #include <wolfcrypt/src/misc.c>
-#endif
 
 
 #if !defined(WOLFSSL_ARMASM) || !defined(WOLFSSL_ARMASM_CRYPTO_SHA3)
@@ -548,28 +534,12 @@ static WC_INLINE word64 Load64Unaligned(const unsigned char *a)
  */
 static word64 Load64BitBigEndian(const byte* a)
 {
-#if defined(BIG_ENDIAN_ORDER) || (WOLFSSL_GENERAL_ALIGNMENT == 1)
+#if defined(BIG_ENDIAN_ORDER)
     word64 n = 0;
     int i;
 
     for (i = 0; i < 8; i++)
         n |= (word64)a[i] << (8 * i);
-
-    return n;
-#elif ((WOLFSSL_GENERAL_ALIGNMENT > 0) && (WOLFSSL_GENERAL_ALIGNMENT == 4))
-    word64 n;
-
-    n  =          *(word32*) a;
-    n |= ((word64)*(word32*)(a + 4)) << 32;
-
-    return n;
-#elif ((WOLFSSL_GENERAL_ALIGNMENT > 0) && (WOLFSSL_GENERAL_ALIGNMENT == 2))
-    word64 n;
-
-    n  =          *(word16*) a;
-    n |= ((word64)*(word16*)(a + 2)) << 16;
-    n |= ((word64)*(word16*)(a + 4)) << 32;
-    n |= ((word64)*(word16*)(a + 6)) << 48;
 
     return n;
 #else
@@ -706,12 +676,7 @@ static int wc_InitSha3(wc_Sha3* sha3, void* heap, int devId)
     if (ret != 0)
         return ret;
 
-#if defined(WOLFSSL_ASYNC_CRYPT) && defined(WC_ASYNC_ENABLE_SHA3)
-    ret = wolfAsync_DevCtxInit(&sha3->asyncDev,
-                        WOLFSSL_ASYNC_MARKER_SHA3, sha3->heap, devId);
-#else
     (void)devId;
-#endif /* WOLFSSL_ASYNC_CRYPT */
 
     return ret;
 }
@@ -737,19 +702,6 @@ static int wc_Sha3Update(wc_Sha3* sha3, const byte* data, word32 len, byte p)
         return 0;
     }
 
-#if defined(WOLFSSL_ASYNC_CRYPT) && defined(WC_ASYNC_ENABLE_SHA3)
-    if (sha3->asyncDev.marker == WOLFSSL_ASYNC_MARKER_SHA3) {
-    #if defined(HAVE_INTEL_QA) && defined(QAT_V2)
-        /* QAT only supports SHA3_256 */
-        if (p == WC_SHA3_256_COUNT) {
-            ret = IntelQaSymSha3(&sha3->asyncDev, NULL, data, len);
-            if (ret != NOT_COMPILED_IN)
-                return ret;
-            /* fall-through when unavailable */
-        }
-    #endif
-    }
-#endif /* WOLFSSL_ASYNC_CRYPT */
 
     ret = Sha3Update(sha3, data, len, p);
 
@@ -772,20 +724,6 @@ static int wc_Sha3Final(wc_Sha3* sha3, byte* hash, byte p, byte len)
         return BAD_FUNC_ARG;
     }
 
-#if defined(WOLFSSL_ASYNC_CRYPT) && defined(WC_ASYNC_ENABLE_SHA3)
-    if (sha3->asyncDev.marker == WOLFSSL_ASYNC_MARKER_SHA3) {
-    #if defined(HAVE_INTEL_QA) && defined(QAT_V2)
-        /* QAT only supports SHA3_256 */
-        /* QAT SHA-3 only supported on v2 (8970 or later cards) */
-        if (len == WC_SHA3_256_DIGEST_SIZE) {
-            ret = IntelQaSymSha3(&sha3->asyncDev, hash, NULL, len);
-            if (ret != NOT_COMPILED_IN)
-                return ret;
-            /* fall-through when unavailable */
-        }
-    #endif
-    }
-#endif /* WOLFSSL_ASYNC_CRYPT */
 
     ret = Sha3Final(sha3, 0x06, hash, p, (word32)len);
     if (ret != 0)
@@ -804,12 +742,6 @@ static void wc_Sha3Free(wc_Sha3* sha3)
 {
     (void)sha3;
 
-#if defined(WOLFSSL_ASYNC_CRYPT) && defined(WC_ASYNC_ENABLE_SHA3)
-    if (sha3 == NULL)
-        return;
-
-    wolfAsync_DevCtxFree(&sha3->asyncDev, WOLFSSL_ASYNC_MARKER_SHA3);
-#endif /* WOLFSSL_ASYNC_CRYPT */
 }
 
 
@@ -828,9 +760,6 @@ static int wc_Sha3Copy(wc_Sha3* src, wc_Sha3* dst)
 
     XMEMCPY(dst, src, sizeof(wc_Sha3));
 
-#if defined(WOLFSSL_ASYNC_CRYPT) && defined(WC_ASYNC_ENABLE_SHA3)
-    ret = wolfAsync_DevCopy(&src->asyncDev, &dst->asyncDev);
-#endif
 #ifdef WOLFSSL_HASH_FLAGS
      dst->flags |= WC_HASH_FLAG_ISCOPY;
 #endif

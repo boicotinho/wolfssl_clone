@@ -290,7 +290,7 @@ typedef struct WOLFSSL_ASN1_INTEGER {
 #endif
 #endif /* WOLFSSL_CERT_GEN || WOLFSSL_CERT_EXT */
 
-#if defined(WOLFSSL_CERT_GEN) || defined(OPENSSL_EXTRA) || defined(OPENSSL_EXTRA_X509_SMALL)
+#if defined(WOLFSSL_CERT_GEN)
 #ifdef WOLFSSL_MULTI_ATTRIB
 #ifndef CTC_MAX_ATTRIB
     #define CTC_MAX_ATTRIB 4
@@ -325,7 +325,7 @@ typedef struct CertExtension {
 #endif
 #endif /* WOLFSSL_CERT_GEN */
 
-#if defined(WOLFSSL_CERT_GEN) || defined(OPENSSL_EXTRA) || defined(OPENSSL_EXTRA_X509_SMALL)
+#if defined(WOLFSSL_CERT_GEN)
 typedef struct CertName {
     char country[CTC_NAME_SIZE];
     char countryEnc;
@@ -426,8 +426,7 @@ typedef struct Cert {
     byte    crlInfo[CTC_MAX_CRLINFO_SZ]; /* CRL Distribution points */
     int     crlInfoSz;
 #endif
-#if defined(WOLFSSL_CERT_EXT) || defined(OPENSSL_EXTRA) || \
-    defined(WOLFSSL_CERT_REQ)
+#if defined(WOLFSSL_CERT_EXT) ||  defined(WOLFSSL_CERT_REQ)
     byte     issRaw[sizeof(CertName)];   /* raw issuer info */
     byte     sbjRaw[sizeof(CertName)];   /* raw subject info */
 #endif
@@ -601,41 +600,26 @@ WOLFSSL_API void wc_FreeDer(DerBuffer** pDer);
                                 word32 outputSz, byte *cipherIno, int type);
 #endif
 
-#ifndef NO_RSA
     #if !defined(HAVE_USER_RSA)
     WOLFSSL_API int wc_RsaPublicKeyDecode_ex(const byte* input, word32* inOutIdx,
         word32 inSz, const byte** n, word32* nSz, const byte** e, word32* eSz);
     /* For FIPS v1/v2 and selftest this is in rsa.h */
-    #if !defined(HAVE_SELFTEST) && (!defined(HAVE_FIPS) || \
-         !defined(HAVE_FIPS_VERSION) || \
-         ((HAVE_FIPS_VERSION > 2) && \
-         (! ((HAVE_FIPS_VERSION == 5) && (HAVE_FIPS_VERSION_MINOR == 0)))))
+    #if !defined(HAVE_SELFTEST)
     WOLFSSL_API int wc_RsaKeyToPublicDer(RsaKey* key, byte* output, word32 inLen);
     #endif
     #endif
     WOLFSSL_API int wc_RsaPublicKeyDerSize(RsaKey* key, int with_header);
     WOLFSSL_API int wc_RsaKeyToPublicDer_ex(RsaKey* key, byte* output, word32 inLen,
         int with_header);
-#endif
 
-#ifndef NO_DSA
-    /* DSA parameter DER helper functions */
-    WOLFSSL_API int wc_DsaParamsDecode(const byte* input, word32* inOutIdx, DsaKey* key,
-                        word32 inSz);
-    WOLFSSL_API int wc_DsaKeyToParamsDer(DsaKey* key, byte* output,
-        word32 inLen);
-    WOLFSSL_API int wc_DsaKeyToParamsDer_ex(DsaKey* key, byte* output,
-        word32* inLen);
-#endif
 
-#if !defined(NO_DH) && defined(WOLFSSL_DH_EXTRA)
+#if defined(WOLFSSL_DH_EXTRA)
 WOLFSSL_LOCAL int wc_DhKeyToDer(DhKey* key, byte* output, word32* outSz, int exportPriv);
 WOLFSSL_API int wc_DhParamsToDer(DhKey* key, byte* out, word32* outSz);
 WOLFSSL_API int wc_DhPubKeyToDer(DhKey* key, byte* out, word32* outSz);
 WOLFSSL_API int wc_DhPrivKeyToDer(DhKey* key, byte* out, word32* outSz);
 #endif
 
-#ifdef HAVE_ECC
     /* private key helpers */
     WOLFSSL_API int wc_EccPrivateKeyDecode(const byte* input, word32* inOutIdx,
                                            ecc_key* key, word32 inSz);
@@ -654,101 +638,14 @@ WOLFSSL_API int wc_DhPrivKeyToDer(DhKey* key, byte* out, word32* outSz);
     WOLFSSL_API int wc_EccPublicKeyToDer(ecc_key* key, byte* output,
                                          word32 inLen, int with_AlgCurve);
     WOLFSSL_API int wc_EccPublicKeyDerSize(ecc_key* key, int with_AlgCurve);
-#endif
 
 /* RFC 5958 (Asymmetric Key Packages) */
-#if !defined(WC_ENABLE_ASYM_KEY_EXPORT) && \
-    ((defined(HAVE_ED25519)    && defined(HAVE_ED25519_KEY_EXPORT)) || \
-     (defined(HAVE_CURVE25519) && defined(HAVE_CURVE25519_KEY_EXPORT)) || \
-     (defined(HAVE_ED448)      && defined(HAVE_ED448_KEY_EXPORT)) || \
-     (defined(HAVE_CURVE448)   && defined(HAVE_CURVE448_KEY_EXPORT)) || \
-     (defined(HAVE_PQC) && defined(HAVE_FALCON)))
-    #define WC_ENABLE_ASYM_KEY_EXPORT
-#endif
 
-#if !defined(WC_ENABLE_ASYM_KEY_IMPORT) && \
-    ((defined(HAVE_ED25519)    && defined(HAVE_ED25519_KEY_IMPORT)) || \
-     (defined(HAVE_CURVE25519) && defined(HAVE_CURVE25519_KEY_IMPORT)) || \
-     (defined(HAVE_ED448)      && defined(HAVE_ED448_KEY_IMPORT)) || \
-     (defined(HAVE_CURVE448)   && defined(HAVE_CURVE448_KEY_IMPORT)) || \
-     (defined(HAVE_PQC)))
-    #define WC_ENABLE_ASYM_KEY_IMPORT
-#endif
 
-#ifdef HAVE_ED25519
-#ifdef HAVE_ED25519_KEY_IMPORT
-WOLFSSL_API int wc_Ed25519PrivateKeyDecode(const byte* input, word32* inOutIdx,
-                               ed25519_key* key, word32 inSz);
-WOLFSSL_API int wc_Ed25519PublicKeyDecode(const byte* input, word32* inOutIdx,
-                              ed25519_key* key, word32 inSz);
-#endif
-#ifdef HAVE_ED25519_KEY_EXPORT
-WOLFSSL_API int wc_Ed25519KeyToDer(ed25519_key* key, byte* output,
-                                   word32 inLen);
-WOLFSSL_API int wc_Ed25519PrivateKeyToDer(ed25519_key* key, byte* output,
-                                          word32 inLen);
-WOLFSSL_API int wc_Ed25519PublicKeyToDer(ed25519_key* key, byte* output,
-                                         word32 inLen, int withAlg);
-#endif
-#endif /* HAVE_ED25519 */
 
-#ifdef HAVE_CURVE25519
-#ifdef HAVE_CURVE25519_KEY_IMPORT
-WOLFSSL_API int wc_Curve25519PrivateKeyDecode(
-    const byte* input, word32* inOutIdx, curve25519_key* key, word32 inSz);
-WOLFSSL_API int wc_Curve25519PublicKeyDecode(
-    const byte* input, word32* inOutIdx, curve25519_key* key, word32 inSz);
-#endif
-#ifdef HAVE_CURVE25519_KEY_EXPORT
-WOLFSSL_API int wc_Curve25519PrivateKeyToDer(
-    curve25519_key* key, byte* output, word32 inLen);
-WOLFSSL_API int wc_Curve25519PublicKeyToDer(
-    curve25519_key* key, byte* output, word32 inLen, int withAlg);
-#endif
-#endif /* HAVE_CURVE25519 */
 
-#ifdef HAVE_ED448
-#ifdef HAVE_ED448_KEY_IMPORT
-WOLFSSL_API int wc_Ed448PrivateKeyDecode(
-    const byte* input, word32* inOutIdx, ed448_key* key, word32 inSz);
-WOLFSSL_API int wc_Ed448PublicKeyDecode(
-    const byte* input, word32* inOutIdx, ed448_key* key, word32 inSz);
-#endif
-#ifdef HAVE_ED448_KEY_EXPORT
-WOLFSSL_API int wc_Ed448KeyToDer(ed448_key* key, byte* output, word32 inLen);
-WOLFSSL_API int wc_Ed448PrivateKeyToDer(
-    ed448_key* key, byte* output, word32 inLen);
-WOLFSSL_API int wc_Ed448PublicKeyToDer(
-    ed448_key* key, byte* output, word32 inLen, int withAlg);
-#endif
-#endif /* HAVE_ED448 */
 
-#ifdef HAVE_PQC
-WOLFSSL_API int wc_Falcon_PrivateKeyDecode(const byte* input, word32* inOutIdx,
-                                     falcon_key* key, word32 inSz);
-WOLFSSL_API int wc_Falcon_PublicKeyDecode(const byte* input, word32* inOutIdx,
-                                    falcon_key* key, word32 inSz);
-WOLFSSL_API int wc_Falcon_KeyToDer(falcon_key* key, byte* output, word32 inLen);
-WOLFSSL_API int wc_Falcon_PrivateKeyToDer(falcon_key* key, byte* output,
-                                          word32 inLen);
-WOLFSSL_API int wc_Falcon_PublicKeyToDer(falcon_key* key, byte* output,
-                                         word32 inLen, int withAlg);
-#endif /* HAVE_PQC */
 
-#ifdef HAVE_CURVE448
-#ifdef HAVE_CURVE448_KEY_IMPORT
-WOLFSSL_API int wc_Curve448PrivateKeyDecode(const byte* input, word32* inOutIdx,
-                               curve448_key* key, word32 inSz);
-WOLFSSL_API int wc_Curve448PublicKeyDecode(const byte* input, word32* inOutIdx,
-                              curve448_key* key, word32 inSz);
-#endif
-#ifdef HAVE_CURVE448_KEY_EXPORT
-WOLFSSL_API int wc_Curve448PrivateKeyToDer(curve448_key* key, byte* output,
-                                           word32 inLen);
-WOLFSSL_API int wc_Curve448PublicKeyToDer(curve448_key* key, byte* output,
-                                          word32 inLen, int withAlg);
-#endif
-#endif /* HAVE_CURVE448 */
 
 
 /* DER encode signature */
