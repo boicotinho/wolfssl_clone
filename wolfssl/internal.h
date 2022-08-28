@@ -2330,20 +2330,6 @@ typedef struct BuildMsgArgs {
 } BuildMsgArgs;
 
 
-#ifdef HAVE_WRITE_DUP
-
-    #define WRITE_DUP_SIDE 1
-    #define READ_DUP_SIDE 2
-
-    typedef struct WriteDup {
-        wolfSSL_Mutex   dupMutex;       /* reference count mutex */
-        int             dupCount;       /* reference count */
-        int             dupErr;         /* under dupMutex, pass to other side */
-    } WriteDup;
-
-    WOLFSSL_LOCAL void FreeWriteDup(WOLFSSL* ssl);
-    WOLFSSL_LOCAL int  NotifyWriteSide(WOLFSSL* ssl, int err);
-#endif /* HAVE_WRITE_DUP */
 
 
 
@@ -2359,11 +2345,6 @@ struct WOLFSSL {
     void*           verifyCbCtx;        /* cert verify callback user ctx*/
     VerifyCallback  verifyCallback;     /* cert verification callback */
     void*           heap;               /* for user overrides */
-#ifdef HAVE_WRITE_DUP
-    WriteDup*       dupWrite;           /* valid pointer indicates ON */
-             /* side that decrements dupCount to zero frees overall structure */
-    byte            dupSide;            /* write side or read side */
-#endif
     CallbackIORecv  CBIORecv;
     CallbackIOSend  CBIOSend;
 #ifndef NO_HANDSHAKE_DONE_CB

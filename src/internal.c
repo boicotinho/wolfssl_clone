@@ -1532,12 +1532,6 @@ int InitSSL(WOLFSSL* ssl, WOLFSSL_CTX* ctx, int writeDup)
         }
     }
 
-#ifdef HAVE_WRITE_DUP
-    if (writeDup) {
-        /* all done */
-        return 0;
-    }
-#endif
 
     /* hsHashes */
     ret = InitHandshakeHashes(ssl);
@@ -1815,11 +1809,6 @@ void SSL_ResourceFree(WOLFSSL* ssl)
 
     if (ssl->session != NULL)
         wolfSSL_FreeSession(ssl->ctx, ssl->session);
-#ifdef HAVE_WRITE_DUP
-    if (ssl->dupWrite) {
-        FreeWriteDup(ssl);
-    }
-#endif
 
 #if defined(HAVE_LIGHTY)
     wolfSSL_sk_X509_NAME_pop_free(ssl->ca_names, NULL);
@@ -7521,25 +7510,6 @@ int SendAlert(WOLFSSL* ssl, int severity, int type)
 
     WOLFSSL_ENTER("SendAlert");
 
-#ifdef HAVE_WRITE_DUP
-    if (ssl->dupWrite && ssl->dupSide == READ_DUP_SIDE) {
-        int notifyErr = 0;
-
-        WOLFSSL_MSG("Read dup side cannot write alerts, notifying sibling");
-
-        if (type == close_notify) {
-            notifyErr = ZERO_RETURN;
-        } else if (severity == alert_fatal) {
-            notifyErr = FATAL_ERROR;
-        }
-
-        if (notifyErr != 0) {
-            return NotifyWriteSide(ssl, notifyErr);
-        }
-
-        return 0;
-    }
-#endif
 
     /* if sendalert is called again for nonblocking */
     if (ssl->options.sendAlertState != 0) {
