@@ -128,9 +128,6 @@ static int InitSha256(wc_Sha256* sha256)
     sha256->buffLen = 0;
     sha256->loLen   = 0;
     sha256->hiLen   = 0;
-#ifdef WOLFSSL_HASH_FLAGS
-    sha256->flags = 0;
-#endif
 #ifdef WOLFSSL_HASH_KEEP
     sha256->msg  = NULL;
     sha256->len  = 0;
@@ -894,9 +891,6 @@ static int InitSha256(wc_Sha256* sha256)
 
         /* choose best Transform function under this runtime environment */
         Sha256_SetTransform();
-    #ifdef WOLFSSL_HASH_FLAGS
-        sha224->flags = 0;
-    #endif
     #ifdef WOLFSSL_HASH_KEEP
         sha224->msg  = NULL;
         sha224->len  = 0;
@@ -1116,9 +1110,6 @@ int wc_Sha224_Grow(wc_Sha224* sha224, const byte* in, int inSz)
     #endif
 
 
-    #ifdef WOLFSSL_HASH_FLAGS
-        dst->flags |= WC_HASH_FLAG_ISCOPY;
-    #endif
     #if defined(WOLFSSL_HASH_KEEP)
         if (src->msg != NULL) {
             dst->msg = (byte*)XMALLOC(src->len, dst->heap,
@@ -1134,22 +1125,6 @@ int wc_Sha224_Grow(wc_Sha224* sha224, const byte* in, int inSz)
 
 #endif /* WOLFSSL_KCAPI_HASH && !WOLFSSL_NO_KCAPI_SHA224 */
 
-#ifdef WOLFSSL_HASH_FLAGS
-    int wc_Sha224SetFlags(wc_Sha224* sha224, word32 flags)
-    {
-        if (sha224) {
-            sha224->flags = flags;
-        }
-        return 0;
-    }
-    int wc_Sha224GetFlags(wc_Sha224* sha224, word32* flags)
-    {
-        if (sha224 && flags) {
-            *flags = sha224->flags;
-        }
-        return 0;
-    }
-#endif
 
 
 #ifdef WOLFSSL_AFALG_HASH
@@ -1230,9 +1205,6 @@ int wc_Sha256Copy(wc_Sha256* src, wc_Sha256* dst)
      dst->ctx.isfirstblock = src->ctx.isfirstblock;
      dst->ctx.sha_type = src->ctx.sha_type;
 #endif
-#ifdef WOLFSSL_HASH_FLAGS
-     dst->flags |= WC_HASH_FLAG_ISCOPY;
-#endif
 #if defined(WOLFSSL_HASH_KEEP)
     if (src->msg != NULL) {
         dst->msg = (byte*)XMALLOC(src->len, dst->heap, DYNAMIC_TYPE_TMP_BUFFER);
@@ -1246,22 +1218,6 @@ int wc_Sha256Copy(wc_Sha256* src, wc_Sha256* dst)
 }
 #endif
 
-#ifdef WOLFSSL_HASH_FLAGS
-int wc_Sha256SetFlags(wc_Sha256* sha256, word32 flags)
-{
-    if (sha256) {
-        sha256->flags = flags;
-    }
-    return 0;
-}
-int wc_Sha256GetFlags(wc_Sha256* sha256, word32* flags)
-{
-    if (sha256 && flags) {
-        *flags = sha256->flags;
-    }
-    return 0;
-}
-#endif
 #endif /* !WOLFSSL_TI_HASH */
 
 #endif /* NO_SHA256 */

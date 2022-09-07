@@ -98,9 +98,6 @@ struct wc_Sha3 {
 
     void*  heap;
 
-#ifdef WOLFSSL_HASH_FLAGS
-    word32 flags; /* enum wc_HashFlags in hash.h */
-#endif
 };
 
 #ifndef WC_SHA3_TYPE_DEFINED
@@ -154,10 +151,6 @@ WOLFSSL_API void wc_Shake256_Free(wc_Shake* shake);
 WOLFSSL_API int wc_Shake256_Copy(wc_Shake* src, wc_Sha3* dst);
 #endif
 
-#ifdef WOLFSSL_HASH_FLAGS
-    WOLFSSL_API int wc_Sha3_SetFlags(wc_Sha3* sha3, word32 flags);
-    WOLFSSL_API int wc_Sha3_GetFlags(wc_Sha3* sha3, word32* flags);
-#endif
 
 #ifdef __cplusplus
     } /* extern "C" */

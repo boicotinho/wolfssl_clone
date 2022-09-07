@@ -88,9 +88,6 @@ typedef struct wc_Md5 {
     hashUpdCache cache; /* cache for updates */
 #endif
 #endif /* STM32_HASH */
-#ifdef WOLFSSL_HASH_FLAGS
-    word32 flags; /* enum wc_HashFlags in hash.h */
-#endif
 } wc_Md5;
 
 #endif /* WOLFSSL_TI_HASH */
@@ -108,10 +105,6 @@ WOLFSSL_API int  wc_Md5Copy(wc_Md5* src, wc_Md5* dst);
 WOLFSSL_API void wc_Md5SizeSet(wc_Md5* md5, word32 len);
 #endif
 
-#ifdef WOLFSSL_HASH_FLAGS
-    WOLFSSL_API int wc_Md5SetFlags(wc_Md5* md5, word32 flags);
-    WOLFSSL_API int wc_Md5GetFlags(wc_Md5* md5, word32* flags);
-#endif
 
 #ifdef __cplusplus
     } /* extern "C" */

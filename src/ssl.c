@@ -1264,29 +1264,6 @@ WOLFSSL_API int wolfSSL_UseTrustedCA(WOLFSSL* ssl, byte type,
 
 
 
-#ifdef HAVE_CERTIFICATE_STATUS_REQUEST_V2
-
-int wolfSSL_UseOCSPStaplingV2(WOLFSSL* ssl, byte status_type, byte options)
-{
-    if (ssl == NULL || ssl->options.side != WOLFSSL_CLIENT_END)
-        return BAD_FUNC_ARG;
-
-    return TLSX_UseCertificateStatusRequestV2(&ssl->extensions, status_type,
-                                                options, ssl->heap, ssl->devId);
-}
-
-
-int wolfSSL_CTX_UseOCSPStaplingV2(WOLFSSL_CTX* ctx, byte status_type,
-                                                                   byte options)
-{
-    if (ctx == NULL || ctx->method->side != WOLFSSL_CLIENT_END)
-        return BAD_FUNC_ARG;
-
-    return TLSX_UseCertificateStatusRequestV2(&ctx->extensions, status_type,
-                                                options, ctx->heap, ctx->devId);
-}
-
-#endif /* HAVE_CERTIFICATE_STATUS_REQUEST_V2 */
 
 /* Elliptic Curves */
 
@@ -3805,11 +3782,7 @@ int wolfSSL_CertManagerEnableOCSPStapling(WOLFSSL_CERT_MANAGER* cm)
     if (cm == NULL)
         return BAD_FUNC_ARG;
 
-#if defined(HAVE_CERTIFICATE_STATUS_REQUEST_V2)
-    cm->ocspStaplingEnabled = 1;
-#else
     ret = NOT_COMPILED_IN;
-#endif
 
     return ret;
 }
@@ -3823,11 +3796,7 @@ int wolfSSL_CertManagerDisableOCSPStapling(WOLFSSL_CERT_MANAGER* cm)
     if (cm == NULL)
         return BAD_FUNC_ARG;
 
-#if defined(HAVE_CERTIFICATE_STATUS_REQUEST_V2)
-    cm->ocspStaplingEnabled = 0;
-#else
     ret = NOT_COMPILED_IN;
-#endif
     return ret;
 }
 
@@ -3841,12 +3810,7 @@ int wolfSSL_CertManagerEnableOCSPMustStaple(WOLFSSL_CERT_MANAGER* cm)
     if (cm == NULL)
         return BAD_FUNC_ARG;
 
-#if defined(HAVE_CERTIFICATE_STATUS_REQUEST_V2)
-        cm->ocspMustStaple = 1;
-    ret = WOLFSSL_SUCCESS;
-#else
     ret = NOT_COMPILED_IN;
-#endif
 
     return ret;
 }
@@ -3860,12 +3824,7 @@ int wolfSSL_CertManagerDisableOCSPMustStaple(WOLFSSL_CERT_MANAGER* cm)
     if (cm == NULL)
         return BAD_FUNC_ARG;
 
-#if defined(HAVE_CERTIFICATE_STATUS_REQUEST_V2)
-        cm->ocspMustStaple = 0;
-    ret = WOLFSSL_SUCCESS;
-#else
     ret = NOT_COMPILED_IN;
-#endif
     return ret;
 }
 
@@ -7059,51 +7018,6 @@ int  wolfSSL_SSL_renegotiate_pending(WOLFSSL *s)
 }
 
 
-#ifdef WOLFSSL_HAVE_TLS_UNIQUE
-WOLFSSL_API size_t wolfSSL_get_finished(const WOLFSSL *ssl, void *buf, size_t count)
-{
-    byte len = 0;
-
-    WOLFSSL_ENTER("SSL_get_finished");
-
-    if (!ssl || !buf || count < TLS_FINISHED_SZ) {
-        WOLFSSL_MSG("Bad parameter");
-        return WOLFSSL_FAILURE;
-    }
-
-    if (ssl->options.side == WOLFSSL_SERVER_END) {
-        len = ssl->serverFinished_len;
-        XMEMCPY(buf, ssl->serverFinished, len);
-    }
-    else {
-        len = ssl->clientFinished_len;
-        XMEMCPY(buf, ssl->clientFinished, len);
-    }
-    return len;
-}
-
-WOLFSSL_API size_t wolfSSL_get_peer_finished(const WOLFSSL *ssl, void *buf, size_t count)
-{
-    byte len = 0;
-    WOLFSSL_ENTER("SSL_get_peer_finished");
-
-    if (!ssl || !buf || count < TLS_FINISHED_SZ) {
-        WOLFSSL_MSG("Bad parameter");
-        return WOLFSSL_FAILURE;
-    }
-
-    if (ssl->options.side == WOLFSSL_CLIENT_END) {
-        len = ssl->serverFinished_len;
-        XMEMCPY(buf, ssl->serverFinished, len);
-    }
-    else {
-        len = ssl->clientFinished_len;
-        XMEMCPY(buf, ssl->clientFinished, len);
-    }
-
-    return len;
-}
-#endif /* WOLFSSL_HAVE_TLS_UNIQUE */
 
 
 

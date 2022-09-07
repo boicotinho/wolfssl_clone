@@ -559,9 +559,6 @@ static int InitSha3(wc_Sha3* sha3)
     for (i = 0; i < 25; i++)
         sha3->s[i] = 0;
     sha3->i = 0;
-#ifdef WOLFSSL_HASH_FLAGS
-    sha3->flags = 0;
-#endif
 
     return 0;
 }
@@ -629,10 +626,6 @@ static int Sha3Final(wc_Sha3* sha3, byte padChar, byte* hash, byte p, word32 l)
     word32 i;
 
     sha3->t[rate - 1]  = 0x00;
-#ifdef WOLFSSL_HASH_FLAGS
-    if (p == WC_SHA3_256_COUNT && sha3->flags & WC_HASH_SHA3_KECCAK256)
-        padChar = 0x01;
-#endif
     sha3->t[sha3->i ]  = padChar;
     sha3->t[rate - 1] |= 0x80;
     for (i=sha3->i + 1; i < rate - 1; i++)
@@ -760,9 +753,6 @@ static int wc_Sha3Copy(wc_Sha3* src, wc_Sha3* dst)
 
     XMEMCPY(dst, src, sizeof(wc_Sha3));
 
-#ifdef WOLFSSL_HASH_FLAGS
-     dst->flags |= WC_HASH_FLAG_ISCOPY;
-#endif
 
     return ret;
 }
@@ -1080,22 +1070,6 @@ int wc_Sha3_512_Copy(wc_Sha3* src, wc_Sha3* dst)
     return wc_Sha3Copy(src, dst);
 }
 
-#ifdef WOLFSSL_HASH_FLAGS
-int wc_Sha3_SetFlags(wc_Sha3* sha3, word32 flags)
-{
-    if (sha3) {
-        sha3->flags = flags;
-    }
-    return 0;
-}
-int wc_Sha3_GetFlags(wc_Sha3* sha3, word32* flags)
-{
-    if (sha3 && flags) {
-        *flags = sha3->flags;
-    }
-    return 0;
-}
-#endif
 
 #ifdef WOLFSSL_SHAKE256
 /* Initialize the state for a Shake256 hash operation.

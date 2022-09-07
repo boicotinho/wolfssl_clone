@@ -126,9 +126,6 @@ struct wc_Sha512 {
     word32 used;
     word32 len;
 #endif
-#ifdef WOLFSSL_HASH_FLAGS
-    word32 flags; /* enum wc_HashFlags in hash.h */
-#endif
 #endif /* WOLFSSL_PSOC6_CRYPTO */
 };
 
@@ -158,10 +155,6 @@ WOLFSSL_API int wc_Sha512Copy(wc_Sha512* src, wc_Sha512* dst);
 #if defined(WOLFSSL_HASH_KEEP)
     WOLFSSL_API int wc_Sha512_Grow(wc_Sha512* sha512, const byte* in, int inSz);
 #endif
-#ifdef WOLFSSL_HASH_FLAGS
-    WOLFSSL_API int wc_Sha512SetFlags(wc_Sha512* sha512, word32 flags);
-    WOLFSSL_API int wc_Sha512GetFlags(wc_Sha512* sha512, word32* flags);
-#endif
 
 
 #if !defined(WOLFSSL_NOSHA512_224)
@@ -173,10 +166,6 @@ WOLFSSL_API int wc_Sha512_224Final(wc_Sha512* sha512, byte* hash);
 WOLFSSL_API void wc_Sha512_224Free(wc_Sha512* sha);
 WOLFSSL_API int wc_Sha512_224GetHash(wc_Sha512* sha512, byte* hash);
 WOLFSSL_API int wc_Sha512_224Copy(wc_Sha512* src, wc_Sha512* dst);
-#ifdef WOLFSSL_HASH_FLAGS
-    WOLFSSL_API int wc_Sha512_224SetFlags(wc_Sha512* sha512, word32 flags);
-    WOLFSSL_API int wc_Sha512_224GetFlags(wc_Sha512* sha512, word32* flags);
-#endif
 
 #endif /* !WOLFSSL_NOSHA512_224 */
 
@@ -189,10 +178,6 @@ WOLFSSL_API int wc_Sha512_256Final(wc_Sha512* sha512, byte* hash);
 WOLFSSL_API void wc_Sha512_256Free(wc_Sha512* sha);
 WOLFSSL_API int wc_Sha512_256GetHash(wc_Sha512* sha512, byte* hash);
 WOLFSSL_API int wc_Sha512_256Copy(wc_Sha512* src, wc_Sha512* dst);
-#ifdef WOLFSSL_HASH_FLAGS
-    WOLFSSL_API int wc_Sha512_256SetFlags(wc_Sha512* sha512, word32 flags);
-    WOLFSSL_API int wc_Sha512_256GetFlags(wc_Sha512* sha512, word32* flags);
-#endif
 
 #endif /* !WOLFSSL_NOSHA512_256 */
 
@@ -239,10 +224,6 @@ WOLFSSL_API int wc_Sha384Copy(wc_Sha384* src, wc_Sha384* dst);
 
 #if defined(WOLFSSL_HASH_KEEP)
     WOLFSSL_API int wc_Sha384_Grow(wc_Sha384* sha384, const byte* in, int inSz);
-#endif
-#ifdef WOLFSSL_HASH_FLAGS
-    WOLFSSL_API int wc_Sha384SetFlags(wc_Sha384* sha384, word32 flags);
-    WOLFSSL_API int wc_Sha384GetFlags(wc_Sha384* sha384, word32* flags);
 #endif
 
 

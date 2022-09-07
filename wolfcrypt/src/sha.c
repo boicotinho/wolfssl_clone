@@ -286,9 +286,6 @@
         sha->buffLen = 0;
         sha->loLen   = 0;
         sha->hiLen   = 0;
-    #ifdef WOLFSSL_HASH_FLAGS
-        sha->flags = 0;
-    #endif
 
         return ret;
     }
@@ -755,29 +752,10 @@ int wc_ShaCopy(wc_Sha* src, wc_Sha* dst)
      dst->ctx.isfirstblock = src->ctx.isfirstblock;
      dst->ctx.sha_type = src->ctx.sha_type;
 #endif
-#ifdef WOLFSSL_HASH_FLAGS
-     dst->flags |= WC_HASH_FLAG_ISCOPY;
-#endif
     return ret;
 }
 #endif /* defined(WOLFSSL_RENESAS_TSIP_CRYPT) ... */
 #endif /* !WOLFSSL_TI_HASH && !WOLFSSL_IMXRT_DCP */
 #endif /* !defined(WOLFSSL_HAVE_PSA) || defined(WOLFSSL_PSA_NO_HASH) */
 
-#ifdef WOLFSSL_HASH_FLAGS
-int wc_ShaSetFlags(wc_Sha* sha, word32 flags)
-{
-    if (sha) {
-        sha->flags = flags;
-    }
-    return 0;
-}
-int wc_ShaGetFlags(wc_Sha* sha, word32* flags)
-{
-    if (sha && flags) {
-        *flags = sha->flags;
-    }
-    return 0;
-}
-#endif
 

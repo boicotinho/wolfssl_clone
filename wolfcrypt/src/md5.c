@@ -298,9 +298,6 @@ static int _InitMd5(wc_Md5* md5)
     md5->buffLen = 0;
     md5->loLen   = 0;
     md5->hiLen   = 0;
-#ifdef WOLFSSL_HASH_FLAGS
-    md5->flags = 0;
-#endif
 
     return ret;
 }
@@ -515,28 +512,9 @@ int wc_Md5Copy(wc_Md5* src, wc_Md5* dst)
 #ifdef WOLFSSL_PIC32MZ_HASH
     ret = wc_Pic32HashCopy(&src->cache, &dst->cache);
 #endif
-#ifdef WOLFSSL_HASH_FLAGS
-    dst->flags |= WC_HASH_FLAG_ISCOPY;
-#endif
 
     return ret;
 }
-#ifdef WOLFSSL_HASH_FLAGS
-int wc_Md5SetFlags(wc_Md5* md5, word32 flags)
-{
-    if (md5) {
-        md5->flags = flags;
-    }
-    return 0;
-}
-int wc_Md5GetFlags(wc_Md5* md5, word32* flags)
-{
-    if (md5 && flags) {
-        *flags = md5->flags;
-    }
-    return 0;
-}
-#endif
 
 #endif /* WOLFSSL_TI_HASH */
 #endif /* NO_MD5 */

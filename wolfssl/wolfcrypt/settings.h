@@ -1813,8 +1813,7 @@ extern void uITRON4_free(void *p) ;
  * and serverFinished for more information.
  */
 #if defined(WOLFSSL_HAPROXY) || defined(WOLFSSL_WPAS)
-    #undef  WOLFSSL_HAVE_TLS_UNIQUE
-    #define WOLFSSL_HAVE_TLS_UNIQUE
+// error : inserted by coan: "#define WOLFSSL_HAVE_TLS_UNIQUE" contradicts -U or --implicit at /home/fabio/dev/cpp-core-gh/extern/wolfssl_prebuilt/download/wolfssl/wolfcrypt/settings.h(1817)
 #endif
 
 /* RAW hash function APIs are not implemented */

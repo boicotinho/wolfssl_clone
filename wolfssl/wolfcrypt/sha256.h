@@ -153,9 +153,6 @@ struct wc_Sha256 {
 #ifdef WOLFSSL_KCAPI_HASH
     wolfssl_KCAPI_Hash kcapi;
 #endif
-#ifdef WOLFSSL_HASH_FLAGS
-    word32 flags; /* enum wc_HashFlags in hash.h */
-#endif
 };
 
 #ifndef WC_SHA256_TYPE_DEFINED
@@ -182,10 +179,6 @@ WOLFSSL_API int wc_Sha256Copy(wc_Sha256* src, wc_Sha256* dst);
 WOLFSSL_API void wc_Sha256SizeSet(wc_Sha256* sha256, word32 len);
 #endif
 
-#ifdef WOLFSSL_HASH_FLAGS
-    WOLFSSL_API int wc_Sha256SetFlags(wc_Sha256* sha256, word32 flags);
-    WOLFSSL_API int wc_Sha256GetFlags(wc_Sha256* sha256, word32* flags);
-#endif
 
 /* avoid redefinition of structs */
 
@@ -226,10 +219,6 @@ WOLFSSL_API int wc_Sha224_Grow(wc_Sha224* sha224, const byte* in, int inSz);
 WOLFSSL_API int wc_Sha224GetHash(wc_Sha224* sha224, byte* hash);
 WOLFSSL_API int wc_Sha224Copy(wc_Sha224* src, wc_Sha224* dst);
 
-#ifdef WOLFSSL_HASH_FLAGS
-    WOLFSSL_API int wc_Sha224SetFlags(wc_Sha224* sha224, word32 flags);
-    WOLFSSL_API int wc_Sha224GetFlags(wc_Sha224* sha224, word32* flags);
-#endif
 
 
 #ifdef __cplusplus

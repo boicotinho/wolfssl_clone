@@ -2586,15 +2586,6 @@ enum {
     WOLFSSL_CSR2_OCSP_USE_NONCE = 0x01
 };
 
-#ifdef HAVE_CERTIFICATE_STATUS_REQUEST_V2
-
-WOLFSSL_API int wolfSSL_UseOCSPStaplingV2(WOLFSSL* ssl,
-                              unsigned char status_type, unsigned char options);
-
-WOLFSSL_API int wolfSSL_CTX_UseOCSPStaplingV2(WOLFSSL_CTX* ctx,
-                              unsigned char status_type, unsigned char options);
-
-#endif
 
 /* Named Groups */
 enum {
@@ -3097,10 +3088,6 @@ WOLFSSL_API int wolfSSL_X509_check_ip_asc(WOLFSSL_X509 *x, const char *ipasc,
 
 
 
-#ifdef WOLFSSL_HAVE_TLS_UNIQUE
-WOLFSSL_API size_t wolfSSL_get_finished(const WOLFSSL *ssl, void *buf, size_t count);
-WOLFSSL_API size_t wolfSSL_get_peer_finished(const WOLFSSL *ssl, void *buf, size_t count);
-#endif /* WOLFSSL_HAVE_TLS_UNIQUE */
 
 
 WOLFSSL_API int wolfSSL_CTX_AllowEncryptThenMac(WOLFSSL_CTX* ctx, int set);

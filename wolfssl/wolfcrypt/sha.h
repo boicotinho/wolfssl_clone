@@ -122,9 +122,6 @@ struct wc_Sha {
    !defined(NO_WOLFSSL_ESP32WROOM32_CRYPT_HASH)
     WC_ESP32SHA ctx;
 #endif
-#ifdef WOLFSSL_HASH_FLAGS
-    word32 flags; /* enum wc_HashFlags in hash.h */
-#endif
 };
 
 #ifndef WC_SHA_TYPE_DEFINED
@@ -150,10 +147,6 @@ WOLFSSL_API int wc_ShaCopy(wc_Sha* src, wc_Sha* dst);
 WOLFSSL_API void wc_ShaSizeSet(wc_Sha* sha, word32 len);
 #endif
 
-#ifdef WOLFSSL_HASH_FLAGS
-    WOLFSSL_API int wc_ShaSetFlags(wc_Sha* sha, word32 flags);
-    WOLFSSL_API int wc_ShaGetFlags(wc_Sha* sha, word32* flags);
-#endif
 
 #ifdef __cplusplus
     } /* extern "C" */

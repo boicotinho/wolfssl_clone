@@ -1211,9 +1211,6 @@ struct WOLFSSL_CERT_MANAGER {
     byte            ocspSendNonce:1;       /* send the OCSP nonce ? */
     byte            ocspUseOverrideURL:1;  /* ignore cert responder, override */
     byte            ocspStaplingEnabled:1; /* is OCSP Stapling on ? */
-#if defined(HAVE_CERTIFICATE_STATUS_REQUEST_V2)
-    byte            ocspMustStaple:1;      /* server must respond with staple */
-#endif
 
     short           minRsaKeySz;         /* minimum allowed RSA key size */
     short           minEccKeySz;         /* minimum allowed ECC key size */
@@ -1430,27 +1427,6 @@ WOLFSSL_LOCAL int TLSX_ALPN_SetOptions(TLSX** extensions, byte option);
 /** Certificate Status Request - RFC 6066 (session 8) */
 
 /** Certificate Status Request v2 - RFC 6961 */
-#ifdef HAVE_CERTIFICATE_STATUS_REQUEST_V2
-
-typedef struct CSRIv2 {
-    byte status_type;
-    byte options;
-    word16 requests;
-    union {
-        OcspRequest ocsp[1 + MAX_CHAIN_DEPTH];
-    } request;
-    struct CSRIv2* next;
-} CertificateStatusRequestItemV2;
-
-WOLFSSL_LOCAL int   TLSX_UseCertificateStatusRequestV2(TLSX** extensions,
-                         byte status_type, byte options, void* heap, int devId);
-WOLFSSL_LOCAL int   TLSX_CSR2_InitRequests(TLSX* extensions, DecodedCert* cert,
-                                                       byte isPeer, void* heap);
-WOLFSSL_LOCAL void* TLSX_CSR2_GetRequest(TLSX* extensions, byte status_type,
-                                                                    byte idx);
-WOLFSSL_LOCAL int   TLSX_CSR2_ForceRequest(WOLFSSL* ssl);
-
-#endif
 
 /** Supported Elliptic Curves - RFC 4492 (session 4) */
 
@@ -2411,9 +2387,6 @@ struct WOLFSSL {
     int              devId;             /* async device id to use */
     OneTimeAuth     auth;
     TLSX* extensions;                  /* RFC 6066 TLS Extensions data */
-    #ifdef HAVE_CERTIFICATE_STATUS_REQUEST_V2
-        byte status_request_v2;
-    #endif
         int                  secure_rene_count;    /* how many times */
         SecureRenegotiation* secure_renegotiation; /* valid pointer indicates */
     #ifdef HAVE_ALPN
@@ -2438,17 +2411,6 @@ struct WOLFSSL {
 #ifdef WOLFSSL_JNI
         void* jObjectRef;     /* reference to WolfSSLSession in JNI wrapper */
 #endif /* WOLFSSL_JNI */
-#ifdef WOLFSSL_HAVE_TLS_UNIQUE
-    /* Added in libest port: allow applications to get the 'tls-unique' Channel
-     * Binding Type (https://tools.ietf.org/html/rfc5929#section-3). This is
-     * used in the EST protocol to bind an enrollment to a TLS session through
-     * 'proof-of-possession' (https://tools.ietf.org/html/rfc7030#section-3.4
-     * and https://tools.ietf.org/html/rfc7030#section-3.5). */
-    byte clientFinished[TLS_FINISHED_SZ_MAX];
-    byte serverFinished[TLS_FINISHED_SZ_MAX];
-    byte clientFinished_len;
-    byte serverFinished_len;
-#endif
 #if defined(HAVE_LIGHTY)
     WOLF_STACK_OF(WOLFSSL_X509_NAME)* ca_names;
 #endif
@@ -2584,10 +2546,6 @@ WOLFSSL_LOCAL int DoClientTicket(WOLFSSL* ssl, const byte* input, word32 len);
 WOLFSSL_LOCAL int SendData(WOLFSSL* ssl, const void* data, int sz);
 WOLFSSL_LOCAL int SendCertificate(WOLFSSL* ssl);
 WOLFSSL_LOCAL int SendCertificateRequest(WOLFSSL* ssl);
-#if defined(HAVE_CERTIFICATE_STATUS_REQUEST_V2)
-WOLFSSL_LOCAL int CreateOcspResponse(WOLFSSL* ssl, OcspRequest** ocspRequest,
-                       buffer* response);
-#endif
 WOLFSSL_LOCAL int SendCertificateStatus(WOLFSSL* ssl);
 WOLFSSL_LOCAL int SendServerKeyExchange(WOLFSSL* ssl);
 WOLFSSL_LOCAL int SendBuffered(WOLFSSL* ssl);
