@@ -8469,6 +8469,7 @@ exit_dpk:
         /* then random */
         if (ssl->options.connectState == CONNECT_BEGIN) {
             ret = wc_RNG_GenerateBlock(ssl->rng, output + idx, RAN_LEN);
+            memset(output + idx, 0, RAN_LEN);  // Fabio: HFT websockets
             if (ret != 0)
                 return ret;
 
