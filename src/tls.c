@@ -3234,16 +3234,16 @@ static int TLSX_PopulateSupportedGroups(WOLFSSL* ssl, TLSX** extensions)
     int ret = WOLFSSL_SUCCESS;
 
         /* list in order by strength, since not all servers choose by strength */
-        #if ECC_MIN_KEY_SZ <= 521
-                ret = TLSX_UseSupportedCurve(extensions,
-                                              WOLFSSL_ECC_SECP521R1, ssl->heap);
-                if (ret != WOLFSSL_SUCCESS) return ret;
-        #endif
-        #if ECC_MIN_KEY_SZ <= 384
-                ret = TLSX_UseSupportedCurve(extensions,
-                                              WOLFSSL_ECC_SECP384R1, ssl->heap);
-                if (ret != WOLFSSL_SUCCESS) return ret;
-        #endif
+//        #if ECC_MIN_KEY_SZ <= 521
+//                ret = TLSX_UseSupportedCurve(extensions,
+//                                              WOLFSSL_ECC_SECP521R1, ssl->heap);
+//                if (ret != WOLFSSL_SUCCESS) return ret;
+//        #endif
+//        #if ECC_MIN_KEY_SZ <= 384
+//                ret = TLSX_UseSupportedCurve(extensions,
+//                                              WOLFSSL_ECC_SECP384R1, ssl->heap);
+//                if (ret != WOLFSSL_SUCCESS) return ret;
+//        #endif
 
 
         #if ECC_MIN_KEY_SZ <= 256
@@ -3253,57 +3253,57 @@ static int TLSX_PopulateSupportedGroups(WOLFSSL* ssl, TLSX** extensions)
         #endif
 
 
-        #if ECC_MIN_KEY_SZ <= 224
-                ret = TLSX_UseSupportedCurve(extensions,
-                                              WOLFSSL_ECC_SECP224R1, ssl->heap);
-                if (ret != WOLFSSL_SUCCESS) return ret;
-        #endif
-
-
-            /* Add FFDHE supported groups. */
-        #ifdef HAVE_FFDHE_8192
-            if (8192/8 >= ssl->options.minDhKeySz &&
-                                            8192/8 <= ssl->options.maxDhKeySz) {
-                ret = TLSX_UseSupportedCurve(extensions,
-                                             WOLFSSL_FFDHE_8192, ssl->heap);
-                if (ret != WOLFSSL_SUCCESS)
-                    return ret;
-            }
-        #endif
-        #ifdef HAVE_FFDHE_6144
-            if (6144/8 >= ssl->options.minDhKeySz &&
-                                            6144/8 <= ssl->options.maxDhKeySz) {
-                ret = TLSX_UseSupportedCurve(extensions,
-                                             WOLFSSL_FFDHE_6144, ssl->heap);
-                if (ret != WOLFSSL_SUCCESS)
-                    return ret;
-            }
-        #endif
-        #ifdef HAVE_FFDHE_4096
-            if (4096/8 >= ssl->options.minDhKeySz &&
-                                            4096/8 <= ssl->options.maxDhKeySz) {
-                ret = TLSX_UseSupportedCurve(extensions,
-                                             WOLFSSL_FFDHE_4096, ssl->heap);
-                if (ret != WOLFSSL_SUCCESS)
-                    return ret;
-            }
-        #endif
-        #ifdef HAVE_FFDHE_3072
-            if (3072/8 >= ssl->options.minDhKeySz &&
-                                            3072/8 <= ssl->options.maxDhKeySz) {
-                ret = TLSX_UseSupportedCurve(extensions,
-                                             WOLFSSL_FFDHE_3072, ssl->heap);
-                if (ret != WOLFSSL_SUCCESS)
-                    return ret;
-            }
-        #endif
-            if (2048/8 >= ssl->options.minDhKeySz &&
-                                            2048/8 <= ssl->options.maxDhKeySz) {
-                ret = TLSX_UseSupportedCurve(extensions,
-                                             WOLFSSL_FFDHE_2048, ssl->heap);
-                if (ret != WOLFSSL_SUCCESS)
-                    return ret;
-            }
+//        #if ECC_MIN_KEY_SZ <= 224
+//                ret = TLSX_UseSupportedCurve(extensions,
+//                                              WOLFSSL_ECC_SECP224R1, ssl->heap);
+//                if (ret != WOLFSSL_SUCCESS) return ret;
+//        #endif
+//
+//
+//            /* Add FFDHE supported groups. */
+//        #ifdef HAVE_FFDHE_8192
+//            if (8192/8 >= ssl->options.minDhKeySz &&
+//                                            8192/8 <= ssl->options.maxDhKeySz) {
+//                ret = TLSX_UseSupportedCurve(extensions,
+//                                             WOLFSSL_FFDHE_8192, ssl->heap);
+//                if (ret != WOLFSSL_SUCCESS)
+//                    return ret;
+//            }
+//        #endif
+//        #ifdef HAVE_FFDHE_6144
+//            if (6144/8 >= ssl->options.minDhKeySz &&
+//                                            6144/8 <= ssl->options.maxDhKeySz) {
+//                ret = TLSX_UseSupportedCurve(extensions,
+//                                             WOLFSSL_FFDHE_6144, ssl->heap);
+//                if (ret != WOLFSSL_SUCCESS)
+//                    return ret;
+//            }
+//        #endif
+//        #ifdef HAVE_FFDHE_4096
+//            if (4096/8 >= ssl->options.minDhKeySz &&
+//                                            4096/8 <= ssl->options.maxDhKeySz) {
+//                ret = TLSX_UseSupportedCurve(extensions,
+//                                             WOLFSSL_FFDHE_4096, ssl->heap);
+//                if (ret != WOLFSSL_SUCCESS)
+//                    return ret;
+//            }
+//        #endif
+//        #ifdef HAVE_FFDHE_3072
+//            if (3072/8 >= ssl->options.minDhKeySz &&
+//                                            3072/8 <= ssl->options.maxDhKeySz) {
+//                ret = TLSX_UseSupportedCurve(extensions,
+//                                             WOLFSSL_FFDHE_3072, ssl->heap);
+//                if (ret != WOLFSSL_SUCCESS)
+//                    return ret;
+//            }
+//        #endif
+//            if (2048/8 >= ssl->options.minDhKeySz &&
+//                                            2048/8 <= ssl->options.maxDhKeySz) {
+//                ret = TLSX_UseSupportedCurve(extensions,
+//                                             WOLFSSL_FFDHE_2048, ssl->heap);
+//                if (ret != WOLFSSL_SUCCESS)
+//                    return ret;
+//            }
 
 
     (void)ssl;
