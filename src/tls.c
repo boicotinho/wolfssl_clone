@@ -3245,7 +3245,7 @@ static int TLSX_PopulateSupportedGroups(WOLFSSL* ssl, TLSX** extensions)
 //                if (ret != WOLFSSL_SUCCESS) return ret;
 //        #endif
 
-
+        // Fabio: commented out other support groups
         #if ECC_MIN_KEY_SZ <= 256
                 ret = TLSX_UseSupportedCurve(extensions,
                                               WOLFSSL_ECC_SECP256R1, ssl->heap);
