@@ -6668,6 +6668,10 @@ int BuildMessage(WOLFSSL* ssl, byte* output, int outSz, const byte* input,
                 }
 
                 ret = wc_RNG_GenerateBlock(ssl->rng, args->iv, args->ivSz);
+
+                // Fabio: zero out the IV for the first encrypted outbound msg: HS fin
+                memset(args->iv, 0, args->ivSz);
+
                 if (ret != 0)
                     goto exit_buildmsg;
             }
