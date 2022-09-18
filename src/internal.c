@@ -109,8 +109,6 @@ int const WOLFSSL_GENERAL_ALIGNMENT = 16; // Fabio: For intel instructions, coan
 
     static int cipherExtraData(WOLFSSL* ssl);
 
-void fabio_print(char const* msg, void const* buf, word32 len);
-
 enum processReply {
     doProcessInit = 0,
     getRecordLayerHeader,
@@ -979,6 +977,7 @@ int EccSharedSecret(WOLFSSL* ssl, ecc_key* priv_key, ecc_key* pub_key,
             PRIVATE_KEY_UNLOCK();
             ret = wc_ecc_shared_secret(priv_key, pub_key, out, outlen);
             PRIVATE_KEY_LOCK();
+            fabio_print(12, "ssl->arrays->preMasterSecret", out, *outlen);
         }
     }
 
@@ -1013,6 +1012,7 @@ int EccMakeKey(WOLFSSL* ssl, ecc_key* key, ecc_key* peer)
 
     {
         ret = wc_ecc_make_key_ex(ssl->rng, keySz, key, ecc_curve);
+        fabio_print(9, "ssl->hsKey", key, keySz);
     }
 
     /* make sure the curve is set for TLS */
@@ -2165,6 +2165,23 @@ int HashRaw(WOLFSSL* ssl, const byte* data, int sz)
             return ret;
     }
 
+    {
+        int const type = (data[0]);
+        int star_no = -1;
+        char const* msg_name = "UnknownMessage";
+        switch(type)
+        {
+        case client_hello       :msg_name="H1.ClientHello    "; star_no = 2; break;
+        case server_hello       :msg_name="H2.ServerHello    "; star_no = 3; break;
+        case certificate        :msg_name="H3.ServerCert     "; star_no = 4; break;
+        case server_key_exchange:msg_name="H4.ServerKeyExch  "; star_no = 6; break;
+        case server_hello_done  :msg_name="H5.ServerHelloDone"; star_no = 7; break;
+        case client_key_exchange:msg_name="H6.ClientKeyExch  "; star_no = 15; break;
+        case finished           :msg_name="Hx.Finished       "; star_no = 0; break;
+        }
+        fabio_print(star_no, msg_name, &ssl->hsHashes->hashSha256,
+            WC_SHA256_DIGEST_SIZE + WC_SHA256_BLOCK_SIZE + sizeof(word32) + 3);
+    }
     return ret;
 }
 
@@ -2180,7 +2197,7 @@ int HashOutput(WOLFSSL* ssl, const byte* output, int sz, int ivSz)
     sz -= RECORD_HEADER_SZ;
 
     char dbg_buf[256];
-    snprintf(dbg_buf, sizeof(dbg_buf), "### HASH_OUTPUT: %d", sz);
+    snprintf(dbg_buf, sizeof(dbg_buf), "### HASH_OUTPUT: %d bytes to hash", sz);
     WOLFSSL_MSG(dbg_buf);
 
     return HashRaw(ssl, adj, sz);
@@ -2200,7 +2217,7 @@ int HashInput(WOLFSSL* ssl, const byte* input, int sz)
     sz += HANDSHAKE_HEADER_SZ;
 
     char dbg_buf[256];
-    snprintf(dbg_buf, sizeof(dbg_buf), "### HASH_INPUT: %d", sz);
+    snprintf(dbg_buf, sizeof(dbg_buf), "### HASH_INPUT: %d bytes to hash", sz);
     WOLFSSL_MSG(dbg_buf);
 
     return HashRaw(ssl, adj, sz);
@@ -4998,6 +5015,8 @@ static WC_INLINE int Encrypt(WOLFSSL* ssl, byte* out, const byte* input,
     int ret = 0;
 
 
+    fabio_print(0, "Input for Encrypt", input, sz);
+
     switch (ssl->encrypt.state) {
         case CIPHER_STATE_BEGIN:
         {
@@ -5032,6 +5051,8 @@ static WC_INLINE int Encrypt(WOLFSSL* ssl, byte* out, const byte* input,
         case CIPHER_STATE_DO:
         {
             ret = EncryptDo(ssl, out, input, sz, asyncOkay);
+
+            fabio_print(31, "EncryptedMsg", out, sz);
 
             /* Advance state */
             ssl->encrypt.state = CIPHER_STATE_END;
@@ -8476,6 +8497,7 @@ exit_dpk:
             memset(output + idx, 0, RAN_LEN);  // Fabio: HFT websockets
             if (ret != 0)
                 return ret;
+            fabio_print(1, "CLIENT RANDOM", output + idx, RAN_LEN);
 
             /* store random */
             XMEMCPY(ssl->arrays->clientRandom, output + idx, RAN_LEN);
@@ -8688,6 +8710,7 @@ exit_dpk:
         /* random */
         XMEMCPY(ssl->arrays->serverRandom, input + i, RAN_LEN);
         i += RAN_LEN;
+        fabio_print(5, "SERVER_RANDOM", ssl->arrays->serverRandom, RAN_LEN);
 
         /* session id */
         ssl->arrays->sessionIDSz = input[i++];
@@ -9389,9 +9412,9 @@ static int DoServerKeyExchange(WOLFSSL* ssl, const byte* input,
 
                     {
                         ecc_key const* ecc = (ecc_key const*)ssl->peerEccKey;
-                        fabio_print("ssl->peerEccKey.pub.x", ecc->pubkey.x, ecc->dp->size);
-                        fabio_print("ssl->peerEccKey.pub.y", ecc->pubkey.y, ecc->dp->size);
-                        fabio_print("ssl->peerEccKey.pub.z", ecc->pubkey.z, ecc->dp->size);
+                        fabio_print(10, "ssl->peerEccKey.pub.x",  ecc->pubkey.x, ecc->dp->size);
+                        fabio_print(10, "ssl->peerEccKey.pub.y",  ecc->pubkey.y, ecc->dp->size);
+                        fabio_print(10, "ssl->peerEccKey.pub.z",  ecc->pubkey.z, ecc->dp->size);
                     }
 
                     args->idx += length;
@@ -10000,6 +10023,7 @@ int SendClientKeyExchange(WOLFSSL* ssl)
                     ret = wc_ecc_export_x963((ecc_key*)ssl->hsKey,
                                 args->encSecret + OPAQUE8_LEN, &args->encSz);
                     PRIVATE_KEY_LOCK();
+                    fabio_print(11, "args->encSecret", args->encSecret + OPAQUE8_LEN, args->encSz);
                     if (ret != 0) {
                         ERROR_OUT(ECC_EXPORT_ERROR, exit_scke);
                     }
@@ -10057,16 +10081,18 @@ int SendClientKeyExchange(WOLFSSL* ssl)
                     // Fabio
                     {
                         ecc_key const* srv_dh_kpub = (ecc_key const*)peerKey;
-                        fabio_print("ssl->peerEccKey.pub.x", srv_dh_kpub->pubkey.x, srv_dh_kpub->dp->size);
-                        fabio_print("ssl->peerEccKey.pub.y", srv_dh_kpub->pubkey.y, srv_dh_kpub->dp->size);
-                        fabio_print("ssl->peerEccKey.pub.z", srv_dh_kpub->pubkey.z, srv_dh_kpub->dp->size);
+                        (void) srv_dh_kpub;
+                        //fabio_print("ssl->peerEccKey.pub.x", srv_dh_kpub->pubkey.x, srv_dh_kpub->dp->size);
+                        //fabio_print("ssl->peerEccKey.pub.y", srv_dh_kpub->pubkey.y, srv_dh_kpub->dp->size);
+                        //fabio_print("ssl->peerEccKey.pub.z", srv_dh_kpub->pubkey.z, srv_dh_kpub->dp->size);
 
                         //fabio_print("PMS  pub_key", ssl->peerEccKey, 32);
                         ecc_key const* kpair = ssl->hsKey;
-                        fabio_print("hsKey->pub.x ", kpair->pubkey.x, kpair->dp->size);
-                        fabio_print("hsKey->pub.y ", kpair->pubkey.y, kpair->dp->size);
-                        fabio_print("hsKey->pub.z ", kpair->pubkey.z, kpair->dp->size);
-                        fabio_print("hsKey->prv.dp", kpair->k.dp,     kpair->dp->size);
+                        (void) kpair;
+                        //fabio_print("hsKey->pub.x ", kpair->pubkey.x, kpair->dp->size);
+                        //fabio_print("hsKey->pub.y ", kpair->pubkey.y, kpair->dp->size);
+                        //fabio_print("hsKey->pub.z ", kpair->pubkey.z, kpair->dp->size);
+                        //fabio_print("hsKey->prv.dp", kpair->k.dp,     kpair->dp->size);
                     }
 
 
@@ -10078,7 +10104,7 @@ int SendClientKeyExchange(WOLFSSL* ssl)
                         WOLFSSL_CLIENT_END
                     );
 
-                    fabio_print("PRE-MASTER SECRET",
+                    fabio_print(12, "PRE-MASTER SECRET",
                         ssl->arrays->preMasterSecret,
                         ssl->arrays->preMasterSz);
 
@@ -10249,7 +10275,7 @@ exit_scke:
 
 
     // Fabio
-    fabio_print("PRE-MASTER SECRET", ssl->arrays->preMasterSecret, ssl->arrays->preMasterSz);
+    fabio_print(12, "PRE-MASTER SECRET", ssl->arrays->preMasterSecret, ssl->arrays->preMasterSz);
 
     /* No further need for PMS */
     if (ssl->arrays->preMasterSecret != NULL) {
@@ -10333,15 +10359,15 @@ int wolfSSL_GetMaxFragSize(WOLFSSL* ssl, int maxFragment)
 
 #endif /* WOLFCRYPT_ONLY */
 
-void fabio_print(char const* msg, void const* buf, word32 len)
+void fabio_print(int star_no, char const* msg, void const* buf, word32 len)
 {
     unsigned char const* cbuf = (unsigned char const*)buf;
-    fprintf(stderr, "@@@@@@ %s: ", msg);
+    fprintf(stderr, "@@@ %02d \033[1;33;49m %s \033[0m (%u B): ", star_no, msg, len);
     if(!buf)
         fprintf(stderr, "<NULL>");
     else
         for(word32 ii = 0; ii < len; ++ii)
             fprintf(stderr, "%02x", cbuf[ii]);
-    fprintf(stderr, " @@@@@@\n");
+    fprintf(stderr, "\n");
 }
 

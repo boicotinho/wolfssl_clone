@@ -58,6 +58,7 @@
 #include <wolfssl/wolfcrypt/wc_encrypt.h>
 #include <wolfssl/wolfcrypt/hash.h>
 
+void fabio_print(int star_no, char const* msg, void const* buf, word32 len);
 
 #if defined(THREADX)
         #include "tx_api.h"

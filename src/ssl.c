@@ -89,7 +89,6 @@
 
 
 
-void fabio_print(char const* msg, void const* buf, word32 len);
 
 /* prevent multiple mutex initializations */
 static volatile WOLFSSL_GLOBAL int initRefCount = 0;
