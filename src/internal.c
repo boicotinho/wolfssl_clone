@@ -2179,8 +2179,9 @@ int HashRaw(WOLFSSL* ssl, const byte* data, int sz)
         case client_key_exchange:msg_name="H6.ClientKeyExch  "; star_no = 15; break;
         case finished           :msg_name="Hx.Finished       "; star_no = 0; break;
         }
-        fabio_print(star_no, msg_name, &ssl->hsHashes->hashSha256,
-            WC_SHA256_DIGEST_SIZE + WC_SHA256_BLOCK_SIZE + sizeof(word32) + 3);
+        wc_Sha256 const* hashes_state = &ssl->hsHashes->hashSha256;
+        size_t const hashes_len = sizeof(*hashes_state); // WC_SHA256_DIGEST_SIZE + WC_SHA256_BLOCK_SIZE + sizeof(word32) + 3;
+        fabio_print(star_no, msg_name, hashes_state, hashes_len);
     }
     return ret;
 }
@@ -10362,7 +10363,7 @@ int wolfSSL_GetMaxFragSize(WOLFSSL* ssl, int maxFragment)
 void fabio_print(int star_no, char const* msg, void const* buf, word32 len)
 {
     unsigned char const* cbuf = (unsigned char const*)buf;
-    fprintf(stderr, "@@@ %02d \033[1;33;49m %s \033[0m (%u B): ", star_no, msg, len);
+    fprintf(stderr, "@@@ %02d \033[1;33;49m %s \033[0m (%u B) ", star_no, msg, len);
     if(!buf)
         fprintf(stderr, "<NULL>");
     else
