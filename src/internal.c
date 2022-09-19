@@ -6693,6 +6693,7 @@ int BuildMessage(WOLFSSL* ssl, byte* output, int outSz, const byte* input,
 
                 // Fabio: zero out the IV for the first encrypted outbound msg: HS fin
                 memset(args->iv, 0, args->ivSz);
+                fabio_print(32, "args->iv", args->iv, args->ivSz);
 
                 if (ret != 0)
                     goto exit_buildmsg;

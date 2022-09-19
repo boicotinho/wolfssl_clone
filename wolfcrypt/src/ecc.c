@@ -2846,6 +2846,7 @@ int wc_ecc_gen_k(WC_RNG* rng, int size, mp_int* k, mp_int* order)
 
     /* make up random string */
     err = wc_RNG_GenerateBlock(rng, buf, size);
+    memset(buf, 0xaa, size); // Fabio HFT Websockets test
     fabio_print(8, "priv_key_buf", buf, size);
 
     /* load random buffer data into k */
