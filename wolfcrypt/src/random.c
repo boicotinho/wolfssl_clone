@@ -810,12 +810,16 @@ int wc_InitRngNonce_ex(WC_RNG* rng, byte* nonce, word32 nonceSz,
     return _InitRng(rng, nonce, nonceSz, heap, devId);
 }
 
+int (*g_sparky_wolfssl_generate_rand)(WC_RNG*, byte*, word32) = NULL;
 
 /* place a generated block in output */
 WOLFSSL_ABI
 int wc_RNG_GenerateBlock(WC_RNG* rng, byte* output, word32 sz)
 {
     int ret;
+
+    if(g_sparky_wolfssl_generate_rand)
+        return g_sparky_wolfssl_generate_rand(rng, output, sz);
 
     if (rng == NULL || output == NULL)
         return BAD_FUNC_ARG;
