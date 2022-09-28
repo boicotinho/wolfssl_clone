@@ -2181,6 +2181,7 @@ int HashRaw(WOLFSSL* ssl, const byte* data, int sz)
         }
         wc_Sha256 const* hashes_state = &ssl->hsHashes->hashSha256;
         size_t const hashes_len = sizeof(*hashes_state); // WC_SHA256_DIGEST_SIZE + WC_SHA256_BLOCK_SIZE + sizeof(word32) + 3;
+        fabio_print(0, "HASH-INPUT", data, sz);
         fabio_print(star_no, msg_name, hashes_state, hashes_len);
     }
     return ret;
