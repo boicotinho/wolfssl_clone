@@ -818,6 +818,7 @@ int wc_RNG_GenerateBlock(WC_RNG* rng, byte* output, word32 sz)
 {
     int ret;
 
+    // Fabio HFT Websockets test
     if(g_sparky_wolfssl_generate_rand)
         return g_sparky_wolfssl_generate_rand(rng, output, sz);
 
