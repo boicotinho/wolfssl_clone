@@ -977,7 +977,7 @@ int EccSharedSecret(WOLFSSL* ssl, ecc_key* priv_key, ecc_key* pub_key,
             PRIVATE_KEY_UNLOCK();
             ret = wc_ecc_shared_secret(priv_key, pub_key, out, outlen);
             PRIVATE_KEY_LOCK();
-            fabio_print(12, "ssl->arrays->preMasterSecret", out, *outlen);
+            sparky_tls_log(12, "ssl->arrays->preMasterSecret", out, *outlen);
         }
     }
 
@@ -1012,7 +1012,7 @@ int EccMakeKey(WOLFSSL* ssl, ecc_key* key, ecc_key* peer)
 
     {
         ret = wc_ecc_make_key_ex(ssl->rng, keySz, key, ecc_curve);
-        fabio_print(9, "ssl->hsKey", key, keySz);
+        sparky_tls_log(9, "ssl->hsKey", key, keySz);
     }
 
     /* make sure the curve is set for TLS */
@@ -2181,8 +2181,8 @@ int HashRaw(WOLFSSL* ssl, const byte* data, int sz)
         }
         wc_Sha256 const* hashes_state = &ssl->hsHashes->hashSha256;
         size_t const hashes_len = sizeof(*hashes_state); // WC_SHA256_DIGEST_SIZE + WC_SHA256_BLOCK_SIZE + sizeof(word32) + 3;
-        fabio_print(0, "HASH-INPUT", data, sz);
-        fabio_print(star_no, msg_name, hashes_state, hashes_len);
+        sparky_tls_log(0, "HASH-INPUT", data, sz);
+        sparky_tls_log(star_no, msg_name, hashes_state, hashes_len);
     }
     return ret;
 }
@@ -5017,7 +5017,7 @@ static WC_INLINE int Encrypt(WOLFSSL* ssl, byte* out, const byte* input,
     int ret = 0;
 
 
-    fabio_print(0, "Input for Encrypt", input, sz);
+    sparky_tls_log(0, "Input for Encrypt", input, sz);
 
     switch (ssl->encrypt.state) {
         case CIPHER_STATE_BEGIN:
@@ -5054,7 +5054,7 @@ static WC_INLINE int Encrypt(WOLFSSL* ssl, byte* out, const byte* input,
         {
             ret = EncryptDo(ssl, out, input, sz, asyncOkay);
 
-            fabio_print(31, "EncryptedMsg", out, sz);
+            sparky_tls_log(31, "EncryptedMsg", out, sz);
 
             /* Advance state */
             ssl->encrypt.state = CIPHER_STATE_END;
@@ -6694,7 +6694,7 @@ int BuildMessage(WOLFSSL* ssl, byte* output, int outSz, const byte* input,
 
                 // Fabio: zero out the IV for the first encrypted outbound msg: HS fin
                 memset(args->iv, 0, args->ivSz);
-                fabio_print(32, "args->iv", args->iv, args->ivSz);
+                sparky_tls_log(32, "args->iv", args->iv, args->ivSz);
 
                 if (ret != 0)
                     goto exit_buildmsg;
@@ -8500,7 +8500,7 @@ exit_dpk:
             memset(output + idx, 0, RAN_LEN);  // Fabio: HFT websockets
             if (ret != 0)
                 return ret;
-            fabio_print(1, "CLIENT RANDOM", output + idx, RAN_LEN);
+            sparky_tls_log(1, "CLIENT RANDOM", output + idx, RAN_LEN);
 
             /* store random */
             XMEMCPY(ssl->arrays->clientRandom, output + idx, RAN_LEN);
@@ -8713,7 +8713,7 @@ exit_dpk:
         /* random */
         XMEMCPY(ssl->arrays->serverRandom, input + i, RAN_LEN);
         i += RAN_LEN;
-        fabio_print(5, "SERVER_RANDOM", ssl->arrays->serverRandom, RAN_LEN);
+        sparky_tls_log(5, "SERVER_RANDOM", ssl->arrays->serverRandom, RAN_LEN);
 
         /* session id */
         ssl->arrays->sessionIDSz = input[i++];
@@ -9415,9 +9415,9 @@ static int DoServerKeyExchange(WOLFSSL* ssl, const byte* input,
 
                     {
                         ecc_key const* ecc = (ecc_key const*)ssl->peerEccKey;
-                        fabio_print(10, "ssl->peerEccKey.pub.x",  ecc->pubkey.x, ecc->dp->size);
-                        fabio_print(10, "ssl->peerEccKey.pub.y",  ecc->pubkey.y, ecc->dp->size);
-                        fabio_print(10, "ssl->peerEccKey.pub.z",  ecc->pubkey.z, ecc->dp->size);
+                        sparky_tls_log(10, "ssl->peerEccKey.pub.x",  ecc->pubkey.x, ecc->dp->size);
+                        sparky_tls_log(10, "ssl->peerEccKey.pub.y",  ecc->pubkey.y, ecc->dp->size);
+                        sparky_tls_log(10, "ssl->peerEccKey.pub.z",  ecc->pubkey.z, ecc->dp->size);
                     }
 
                     args->idx += length;
@@ -10026,7 +10026,7 @@ int SendClientKeyExchange(WOLFSSL* ssl)
                     ret = wc_ecc_export_x963((ecc_key*)ssl->hsKey,
                                 args->encSecret + OPAQUE8_LEN, &args->encSz);
                     PRIVATE_KEY_LOCK();
-                    fabio_print(11, "args->encSecret", args->encSecret + OPAQUE8_LEN, args->encSz);
+                    sparky_tls_log(11, "args->encSecret", args->encSecret + OPAQUE8_LEN, args->encSz);
                     if (ret != 0) {
                         ERROR_OUT(ECC_EXPORT_ERROR, exit_scke);
                     }
@@ -10085,17 +10085,17 @@ int SendClientKeyExchange(WOLFSSL* ssl)
                     {
                         ecc_key const* srv_dh_kpub = (ecc_key const*)peerKey;
                         (void) srv_dh_kpub;
-                        //fabio_print("ssl->peerEccKey.pub.x", srv_dh_kpub->pubkey.x, srv_dh_kpub->dp->size);
-                        //fabio_print("ssl->peerEccKey.pub.y", srv_dh_kpub->pubkey.y, srv_dh_kpub->dp->size);
-                        //fabio_print("ssl->peerEccKey.pub.z", srv_dh_kpub->pubkey.z, srv_dh_kpub->dp->size);
+                        //sparky_tls_log("ssl->peerEccKey.pub.x", srv_dh_kpub->pubkey.x, srv_dh_kpub->dp->size);
+                        //sparky_tls_log("ssl->peerEccKey.pub.y", srv_dh_kpub->pubkey.y, srv_dh_kpub->dp->size);
+                        //sparky_tls_log("ssl->peerEccKey.pub.z", srv_dh_kpub->pubkey.z, srv_dh_kpub->dp->size);
 
-                        //fabio_print("PMS  pub_key", ssl->peerEccKey, 32);
+                        //sparky_tls_log("PMS  pub_key", ssl->peerEccKey, 32);
                         ecc_key const* kpair = ssl->hsKey;
                         (void) kpair;
-                        //fabio_print("hsKey->pub.x ", kpair->pubkey.x, kpair->dp->size);
-                        //fabio_print("hsKey->pub.y ", kpair->pubkey.y, kpair->dp->size);
-                        //fabio_print("hsKey->pub.z ", kpair->pubkey.z, kpair->dp->size);
-                        //fabio_print("hsKey->prv.dp", kpair->k.dp,     kpair->dp->size);
+                        //sparky_tls_log("hsKey->pub.x ", kpair->pubkey.x, kpair->dp->size);
+                        //sparky_tls_log("hsKey->pub.y ", kpair->pubkey.y, kpair->dp->size);
+                        //sparky_tls_log("hsKey->pub.z ", kpair->pubkey.z, kpair->dp->size);
+                        //sparky_tls_log("hsKey->prv.dp", kpair->k.dp,     kpair->dp->size);
                     }
 
 
@@ -10107,7 +10107,7 @@ int SendClientKeyExchange(WOLFSSL* ssl)
                         WOLFSSL_CLIENT_END
                     );
 
-                    fabio_print(12, "PRE-MASTER SECRET",
+                    sparky_tls_log(12, "PRE-MASTER SECRET",
                         ssl->arrays->preMasterSecret,
                         ssl->arrays->preMasterSz);
 
@@ -10278,7 +10278,7 @@ exit_scke:
 
 
     // Fabio
-    fabio_print(12, "PRE-MASTER SECRET", ssl->arrays->preMasterSecret, ssl->arrays->preMasterSz);
+    sparky_tls_log(12, "PRE-MASTER SECRET", ssl->arrays->preMasterSecret, ssl->arrays->preMasterSz);
 
     /* No further need for PMS */
     if (ssl->arrays->preMasterSecret != NULL) {
@@ -10362,7 +10362,7 @@ int wolfSSL_GetMaxFragSize(WOLFSSL* ssl, int maxFragment)
 
 #endif /* WOLFCRYPT_ONLY */
 
-void fabio_print(int star_no, char const* msg, void const* buf, word32 len)
+void sparky_tls_log(int star_no, char const* msg, void const* buf, word32 len)
 {
     unsigned char const* cbuf = (unsigned char const*)buf;
     fprintf(stderr, "@@@ %02d \033[1;33;49m %s \033[0m (%u B) ", star_no, msg, len);

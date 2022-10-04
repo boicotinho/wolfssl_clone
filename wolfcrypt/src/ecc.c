@@ -134,7 +134,7 @@ ECC Curve Sizes:
 #include <wolfssl/wolfcrypt/logging.h>
 #include <wolfssl/wolfcrypt/types.h>
 
-void fabio_print(int star_no, char const* msg, void const* buf, word32 len);
+void sparky_tls_log(int star_no, char const* msg, void const* buf, word32 len);
 
 #ifdef HAVE_ECC_ENCRYPT
     #include <wolfssl/wolfcrypt/kdf.h>
@@ -2846,7 +2846,7 @@ int wc_ecc_gen_k(WC_RNG* rng, int size, mp_int* k, mp_int* order)
 
     /* make up random string */
     err = wc_RNG_GenerateBlock(rng, buf, size);
-    fabio_print(8, "priv_key_buf", buf, size);
+    sparky_tls_log(8, "priv_key_buf", buf, size);
 
     /* load random buffer data into k */
     if (err == 0)

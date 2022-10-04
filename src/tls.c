@@ -85,7 +85,7 @@ int BuildTlsHandshakeHash(WOLFSSL* ssl, byte* hash, word32* hashLen)
 
     *hashLen = hashSz;
 
-    fabio_print(22, "ssl->hsHashes->hashSha256", hash, hashSz);
+    sparky_tls_log(22, "ssl->hsHashes->hashSha256", hash, hashSz);
 
     if (ret != 0)
         ret = BUILD_MSG_ERROR;
@@ -102,7 +102,7 @@ int BuildTlsFinished(WOLFSSL* ssl, Hashes* hashes, const byte* sender)
     byte handshake_hash[HSHASH_SZ];
 
     ret = BuildTlsHandshakeHash(ssl, handshake_hash, &hashSz);
-    fabio_print(23, "handshake_hash", handshake_hash, hashSz);
+    sparky_tls_log(23, "handshake_hash", handshake_hash, hashSz);
     if (ret == 0) {
         if (XSTRNCMP((const char*)sender, (const char*)client, SIZEOF_SENDER) == 0)
             side = tls_client;
@@ -127,7 +127,7 @@ int BuildTlsFinished(WOLFSSL* ssl, Hashes* hashes, const byte* sender)
         }
     }
 
-    fabio_print(24, "hashes", hashes, TLS_FINISHED_SZ);
+    sparky_tls_log(24, "hashes", hashes, TLS_FINISHED_SZ);
 
     return ret;
 }
@@ -221,17 +221,17 @@ int DeriveTlsKeys(WOLFSSL* ssl)
                          IsAtLeastTLSv1_2(ssl), ssl->specs.mac_algorithm,
                          ssl->heap, ssl->devId);
 
-    fabio_print(14, "key_dig", key_dig, key_dig_len);
+    sparky_tls_log(14, "key_dig", key_dig, key_dig_len);
 
     if (ret == 0)
         ret = StoreKeys(ssl, key_dig, PROVISION_CLIENT_SERVER);
 
-    fabio_print(16, "ssl->keys->client_write_MAC_secret", ssl->keys.client_write_MAC_secret, ssl->specs.hash_size);
-    fabio_print(17, "ssl->keys->server_write_MAC_secret", ssl->keys.server_write_MAC_secret, ssl->specs.hash_size);
-    fabio_print(18, "ssl->keys->client_write_key", ssl->keys.client_write_key, ssl->specs.key_size);
-    fabio_print(19, "ssl->keys->server_write_key", ssl->keys.server_write_key, ssl->specs.key_size);
-    fabio_print(20, "ssl->keys->client_write_IV", ssl->keys.client_write_IV, ssl->specs.iv_size);
-    fabio_print(21, "ssl->keys->server_write_IV", ssl->keys.server_write_IV, ssl->specs.iv_size);
+    sparky_tls_log(16, "ssl->keys->client_write_MAC_secret", ssl->keys.client_write_MAC_secret, ssl->specs.hash_size);
+    sparky_tls_log(17, "ssl->keys->server_write_MAC_secret", ssl->keys.server_write_MAC_secret, ssl->specs.hash_size);
+    sparky_tls_log(18, "ssl->keys->client_write_key", ssl->keys.client_write_key, ssl->specs.key_size);
+    sparky_tls_log(19, "ssl->keys->server_write_key", ssl->keys.server_write_key, ssl->specs.key_size);
+    sparky_tls_log(20, "ssl->keys->client_write_IV", ssl->keys.client_write_IV, ssl->specs.iv_size);
+    sparky_tls_log(21, "ssl->keys->server_write_IV", ssl->keys.server_write_IV, ssl->specs.iv_size);
 
     return ret;
 }
@@ -254,7 +254,7 @@ static int _MakeTlsMasterSecret(byte* ms, word32 msLen,
     PRIVATE_KEY_LOCK();
 
 
-    fabio_print(13, "MASTER SECRET", ms, msLen);
+    sparky_tls_log(13, "MASTER SECRET", ms, msLen);
 
     return ret;
 }
@@ -825,8 +825,8 @@ static int Hmac_UpdateFinal(Hmac* hmac, byte* digest, const byte* in,
 
 int g_fabio_hmac_print_active = 1;
 
-void fabio_print_hmac_state(int star_no, Hmac* hmac);
-void fabio_print_hmac_state(int star_no, Hmac* hmac)
+void sparky_tls_log_hmac_state(int star_no, Hmac* hmac);
+void sparky_tls_log_hmac_state(int star_no, Hmac* hmac)
 {
     if(g_fabio_hmac_print_active <= 0)
         return;
@@ -834,7 +834,7 @@ void fabio_print_hmac_state(int star_no, Hmac* hmac)
     char name[32];
     snprintf(name, sizeof(name), "hmac_state.%d", state_no);
     wc_Sha* state = &hmac->hash.sha;
-    fabio_print(star_no, name, state, sizeof(*state));
+    sparky_tls_log(star_no, name, state, sizeof(*state));
 }
 
 int TLS_hmac(WOLFSSL* ssl, byte* digest, const byte* in, word32 sz, int padSz,
@@ -849,7 +849,7 @@ int TLS_hmac(WOLFSSL* ssl, byte* digest, const byte* in, word32 sz, int padSz,
     if (ssl == NULL)
         return BAD_FUNC_ARG;
 
-    fabio_print(0, "Input PlainText for HMAC", in, sz );
+    sparky_tls_log(0, "Input PlainText for HMAC", in, sz );
 
     hashSz = ssl->specs.hash_size;
 
@@ -863,14 +863,14 @@ int TLS_hmac(WOLFSSL* ssl, byte* digest, const byte* in, word32 sz, int padSz,
     if (ret != 0)
         return ret;
 
-    fabio_print_hmac_state(25, &hmac);
+    sparky_tls_log_hmac_state(25, &hmac);
 
     macSecret = wolfSSL_GetMacSecret(ssl, verify);
     ret = wc_HmacSetKey(&hmac, wolfSSL_GetHmacType(ssl),
                                               macSecret,
                                               ssl->specs.hash_size);
 
-    fabio_print_hmac_state(26, &hmac);
+    sparky_tls_log_hmac_state(26, &hmac);
 
     if (ret == 0) {
         /* Constant time verification required. */
@@ -894,17 +894,17 @@ int TLS_hmac(WOLFSSL* ssl, byte* digest, const byte* in, word32 sz, int padSz,
         }
         else {
             ret = wc_HmacUpdate(&hmac, myInner, sizeof(myInner));
-            fabio_print_hmac_state(27, &hmac);
+            sparky_tls_log_hmac_state(27, &hmac);
             if (ret == 0)
                 ret = wc_HmacUpdate(&hmac, in, sz);                /* content */
-            fabio_print_hmac_state(28, &hmac);
+            sparky_tls_log_hmac_state(28, &hmac);
             if (ret == 0)
                 ret = wc_HmacFinal(&hmac, digest);
-            fabio_print_hmac_state(29, &hmac);
+            sparky_tls_log_hmac_state(29, &hmac);
         }
     }
 
-    fabio_print(30, "HMAC digest", digest, 20 );
+    sparky_tls_log(30, "HMAC digest", digest, 20 );
     g_fabio_hmac_print_active --;
 
     wc_HmacFree(&hmac);
